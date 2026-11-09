@@ -20,7 +20,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="A pencil drawing of mountains under a pale morning sky, with the words: Hi, I'm Kaisar. I live in Kazakhstan and I build things with computers.">
 <meta name="twitter:card" content="summary_large_image">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","name":"Kaisar","url":"https://kekaisik1.github.io/portfolio/","description":"Kaisar builds things with computers in Kazakhstan: voice AI for work, games and story tools after hours.","homeLocation":{"@type":"Country","name":"Kazakhstan"},"knowsLanguage":["kk","ru","en"],"sameAs":["https://github.com/kekaisik1"]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","name":"Kaisar","url":"https://kekaisik1.github.io/portfolio/","description":"Kaisar builds things with computers in Kazakhstan: voice AI for work, games and story tools after hours.","homeLocation":{"@type":"Country","name":"Kazakhstan"},"knowsLanguage":["kk","ru","en"],"email":"mailto:kaisar.turysbek@gmail.com","sameAs":["https://github.com/kekaisik1","https://t.me/kekaisik"]}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Spectral:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
@@ -103,6 +103,7 @@ html.js:not(.ready-nav) .horizon{opacity:0}
 #night{--ink:#E8E6F0;--ink-soft:#D6D4E6;--focus:#F2CF73;color:#E8E6F0}
 .write p{font-size:18px}
 .write .big a{font:700 30px/1 var(--hand);display:inline-flex;align-items:center;min-height:44px}
+.write .gh{margin:0}
 .write .gh a{display:inline-flex;align-items:center;min-height:44px}
 #moon-spot{width:112px;height:112px;margin:0 0 30px 40px}
 
@@ -213,6 +214,11 @@ html.wide #night > #about{margin-right:clamp(40px,4vw,72px)}
 html.wide .write{flex:none;margin:calc(var(--top) * .7) 0 0;width:clamp(280px,23vw,340px)}
 html.wide .stretch > .block.sky{width:clamp(250px,19vw,300px);margin-right:clamp(130px,11vw,210px)}
 html.wide .stretch > .block.readme{width:clamp(290px,22vw,340px)}
+/* short screens: lift the last lines clear of the water */
+@media (max-height:700px){
+  html.wide #moon-spot{height:92px;margin-bottom:6px}
+  html.wide .write{margin-top:8px}
+}
 @media (max-height:780px){
   html.wide{--top:40px}
   html.wide body{font-size:16px}
@@ -407,7 +413,9 @@ html:not(.wide) .lonely .cst{width:92px}
           <div id="moon-spot" aria-hidden="true"></div>
           <div class="block">
             <p>If you want to talk — about work, a project, or just to say hi —</p>
-            <p class="big"><a id="write" href="https://github.com/kekaisik1" target="_blank" rel="noopener">write me</a></p>
+            <p class="big"><a id="write" href="mailto:kaisar.turysbek@gmail.com">write me</a></p>
+            <p class="gh">Email: <a href="mailto:kaisar.turysbek@gmail.com">kaisar.turysbek@gmail.com</a></p>
+            <p class="gh">Telegram: <a href="https://t.me/kekaisik" target="_blank" rel="noopener">@kekaisik</a></p>
             <p class="gh">GitHub: <a href="https://github.com/kekaisik1" target="_blank" rel="noopener">github.com/kekaisik1</a></p>
           </div>
         </div>
