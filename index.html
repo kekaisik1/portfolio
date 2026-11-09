@@ -3,9 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kaisar</title>
+<title>Kaisar — I build things with computers</title>
 <meta name="description" content="Kaisar builds things with computers in Kazakhstan: voice AI for work, games and story tools after hours.">
 <meta name="color-scheme" content="light">
+<meta name="theme-color" content="#D3D8E0">
+<link rel="canonical" href="https://kekaisik1.github.io/portfolio/">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%23F1F1EC'/%3E%3Ccircle cx='46' cy='19' r='7' fill='%23E9C46A'/%3E%3Cpath d='M5 49 L20 24 L28 35 L38 17 L59 49 Z' fill='%238EA7C2' fill-opacity='.55'/%3E%3Cpath d='M4 50 L20 23.5 L28 35.5 L38 16.5 L60 50 M3 51 C20 49 44 52 61 50' fill='none' stroke='%232B2D33' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<!-- the card people see when the link is pasted somewhere. og.jpg is a picture of the first screen. -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://kekaisik1.github.io/portfolio/">
+<meta property="og:site_name" content="Kaisar">
+<meta property="og:title" content="Hi, I'm Kaisar.">
+<meta property="og:description" content="Kaisar builds things with computers in Kazakhstan: voice AI for work, games and story tools after hours.">
+<meta property="og:image" content="https://kekaisik1.github.io/portfolio/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A pencil drawing of mountains under a pale morning sky, with the words: Hi, I'm Kaisar. I live in Kazakhstan and I build things with computers.">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","name":"Kaisar","url":"https://kekaisik1.github.io/portfolio/","description":"Kaisar builds things with computers in Kazakhstan: voice AI for work, games and story tools after hours.","homeLocation":{"@type":"Country","name":"Kazakhstan"},"knowsLanguage":["kk","ru","en"],"sameAs":["https://github.com/kekaisik1"]}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Spectral:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
@@ -229,6 +244,27 @@ html:not(.wide) .lonely .cst{width:92px}
   .c-dash,.c-star,.c-g,.sky-obj .ring,.thread .t-mask,.lantern-btn .lb-body{transition:none}
   #reel[open]::backdrop{animation:none}
   #reel.closing::backdrop{transition:none}
+}
+
+/* on paper: just the words, in order */
+@media print{
+  #scene,.grain,.horizon,.skip,.thread,.obj,.sky-obj,.cst,.lantern-btn,#moon-spot,#reel{display:none!important}
+  html,body{background:#fff!important}
+  body{font-size:11.5pt;overflow:visible}
+  #journey{height:auto!important}
+  .stage{position:static!important;height:auto!important;overflow:visible!important}
+  .track{display:block!important;width:auto!important;height:auto!important;transform:none!important}
+  .stretch{display:block!important;height:auto!important;padding:0!important}
+  .hero{width:auto!important;height:auto!important;min-height:0!important;padding:0!important;margin:0 0 20pt}
+  .hero-text{position:static!important;text-shadow:none!important}
+  .live a,.write a{display:inline!important}
+  .hero h1{font-size:40pt}
+  .stretch > .block,.sign,.write{width:auto!important;max-width:36rem!important;margin:0 0 16pt!important;padding:0!important;text-shadow:none!important;break-inside:avoid}
+  .sign{margin-top:26pt!important;break-after:avoid}
+  .lonely{display:block}
+  #night{--ink:#2B2D33;--ink-soft:#3E414A;color:#2B2D33}
+  a[href^="http"]::after{content:" (" attr(href) ")";font:400 10pt var(--serif);text-decoration:none;display:inline-block;margin-left:4px}
+  .gh a::after{content:none}
 }
 </style>
 </head>
@@ -479,7 +515,7 @@ const S = {
   lastMove: 0, lastY: 0, nudge: 0,
   objs: [], avoid: [], yurtX: null, yurtZ: 1, treeX: null, pierX: null, pierLen: 340,
   nlayers: [], dusk: { w0: 1e9, w1: 1e9 + 1, i0: 1e9, i1: 1e9 + 1, deep: 1 }, D: { w: 0, ind: 0, deep: 0 },
-  sunU: 0, fireT: null, sNight: 0, lanterns: [], threadC: ''
+  sunU: 0, fireT: null, sNight: 0, lanterns: [], threadC: '', hashY: 0
 };
 const hz = document.createElement('canvas'), hzc = hz.getContext('2d');
 /* the day sky is painted once per frame here, so the mist around the words can borrow it */
@@ -1904,6 +1940,8 @@ function duskNow(){
 }
 function draw(){
   const vw = S.vw, H = S.H, D = S.D;
+  /* opened in a tab or pane with no size yet: nothing to draw on until the resize that follows */
+  if (!canvas.width || !canvas.height) return;
   if (D.ind < 1) drawDay(ctx);
   if (D.ind <= 0) return;
   if (D.ind >= 1){ drawNight(ctx); return; }
@@ -2435,7 +2473,12 @@ function applyDom(){
   const key = x.toFixed(1) + ',' + y.toFixed(1);
   if (key !== S.lastDot){ youG.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`); S.lastDot = key; }
   const p = currentPlace();
-  if (p !== S.lastPlace){ places.forEach((a, i) => i === p ? a.setAttribute('aria-current', 'location') : a.removeAttribute('aria-current')); S.lastPlace = p; }
+  if (p !== S.lastPlace){
+    places.forEach((a, i) => i === p ? a.setAttribute('aria-current', 'location') : a.removeAttribute('aria-current'));
+    /* the address follows you, so a copied link opens where you were standing */
+    if (S.lastPlace !== -1) try { history.replaceState(null, '', p ? '#' + sections[p].id : location.pathname + location.search); } catch (_) { /* file:// or a sandbox: the address just stays put */ }
+    S.lastPlace = p;
+  }
   const D = S.D, sky = D.ind > .5 ? 'night' : 'day';
   if (sky !== S.sky){ root.dataset.sky = sky; S.sky = sky; }
   /* the thread is graphite by day, chalk by night */
@@ -2508,6 +2551,28 @@ track.addEventListener('focusin', e => {
   S.target = S.s = clamp(window.scrollY, 0, S.sMax);
   duskNow(); applyDom(); requestDraw();
 });
+/* a link to a place (#sea) or to one thing (#emberquill) opens there. The browser's own jump can't be trusted:
+   wide, the track moves sideways under a sticky stage; narrow, the drawings change the page's length after load. */
+function goHash(){
+  let id = '';
+  try { id = decodeURIComponent(location.hash.slice(1)); } catch (_) { return false; }
+  const el = id && document.getElementById(id);
+  if (!el || !track.contains(el)) return false;
+  const si = sections.indexOf(el);
+  let y;
+  if (si >= 0) y = S.targets[si];
+  else if (S.wide){
+    const host = el.closest('.block, .hero-text, .sign') || el, r = host.getBoundingClientRect(), tr = track.getBoundingClientRect();
+    y = clamp(r.left - tr.left + r.width / 2 - S.vw / 2, 0, S.sMax);
+  } else y = clamp(el.getBoundingClientRect().top + window.scrollY - S.vh * .12, 0, S.maxScroll);
+  window.scrollTo(0, y);
+  S.hashY = window.scrollY;
+  S.target = S.s = readTarget();
+  S.lastPlace = -1;
+  duskNow(); applyDom(); requestDraw();
+  return true;
+}
+window.addEventListener('hashchange', goHash);
 stage.addEventListener('scroll', () => { if (stage.scrollLeft || stage.scrollTop){ stage.scrollLeft = 0; stage.scrollTop = 0; } });
 document.querySelector('.skip').addEventListener('click', e => { e.preventDefault(); goTo(0, true); });
 
@@ -2527,13 +2592,16 @@ setupObjects();
 S.lanterns = loadLanterns();
 lanternBtn.addEventListener('click', lightLantern);
 layout(true);
+/* a fresh visit with a #link goes there; a reload or Back keeps the spot the browser remembered */
+const navEntry = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
+const hashed = (!navEntry || navEntry.type === 'navigate') && goHash();
 probeVideos();
 if (!S.reduce && window.scrollY < 20){
   S.intro = { t0: 0, y0: window.scrollY, skip: false };
   setTimeout(() => { if (S.intro || !root.classList.contains('ready')) reveal(); }, 1400);
 } else reveal();
 requestDraw();
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layout(true); requestDraw(); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layout(true); if (hashed && Math.abs(window.scrollY - S.hashY) < 4) goHash(); requestDraw(); });
 })();
 </script>
 </body>
