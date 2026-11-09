@@ -20,6 +20,9 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="A pencil drawing of mountains under a pale morning sky, with the words: Hi, I'm Kaisar. I live in Kazakhstan and I build things with computers.">
 <meta name="twitter:card" content="summary_large_image">
+<!-- the small API in server/ (shared lanterns, notes). Put its address here once it is deployed.
+     Empty = the page works on its own: lanterns stay in your browser and the note button is not shown. -->
+<meta name="portfolio-api" content="">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","name":"Kaisar","url":"https://kekaisik1.github.io/portfolio/","description":"Kaisar builds things with computers in Kazakhstan: voice AI for work, games and story tools after hours.","homeLocation":{"@type":"Country","name":"Kazakhstan"},"knowsLanguage":["kk","ru","en"],"email":"mailto:kaisar.turysbek@gmail.com","sameAs":["https://github.com/kekaisik1","https://t.me/kekaisik"]}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -181,7 +184,34 @@ html:not(.wide) .obj canvas{position:static}
 .lantern-btn:active .lb-body{fill:rgba(242,190,110,.7)}
 html.wide #night{position:relative}
 html.wide .lantern-btn{position:absolute;left:0;top:0;z-index:1}
-html:not(.wide) .lantern-btn{margin:-20vh auto 50vh}
+html:not(.wide) .lantern-btn{margin:-20vh auto 0}
+/* how many lanterns everyone has lit, chalked beside the one on the sand */
+.lantern-n{font:400 19px/1.2 var(--hand);color:var(--ink-soft);margin:0;white-space:nowrap}
+html.wide .lantern-n{position:absolute;left:0;top:0;z-index:1;transform:rotate(-1.6deg);transform-origin:left center}
+html:not(.wide) .lantern-n{margin:4px auto 0;height:50vh;text-align:center}
+
+/* leave a note: a slip of paper that goes to me */
+.note-link{font:400 21px/1 var(--hand);color:inherit;background:none;border:0;padding:0 2px;margin:0 0 0 14px;min-height:44px;cursor:pointer;text-decoration:underline;text-decoration-style:wavy;text-decoration-thickness:1px;text-underline-offset:5px}
+.note-link:hover{text-decoration-thickness:2px}
+#note{border:0;padding:0;margin:auto;background:transparent;color:#2B2D33;width:min(460px,calc(100vw - 32px));max-width:none;max-height:calc(100dvh - 24px);overflow:visible}
+#note[open]::backdrop{background:rgba(24,26,36,.62);animation:reel-bd .3s ease both}
+#note .reel-in{padding:30px clamp(18px,4vw,32px) 28px}
+#note h2{font-size:34px;line-height:1.05;margin:0 0 4px;padding-right:40px}
+#note :focus-visible{outline-color:#1B5A85}
+.note-lede{margin:0;color:#3E414A}
+#note label{display:block;font:700 21px/1.2 var(--hand);margin:18px 0 6px}
+#note label small{font:400 17px/1 var(--hand);color:#3E414A;margin-left:4px}
+#note textarea,#note input{display:block;width:100%;font:16px/1.5 var(--serif);color:#2B2D33;background:#FBFAF6;border:1.5px solid #2B2D33;border-radius:5px 8px 6px 9px;padding:10px 12px;min-height:44px}
+#note textarea{resize:vertical;min-height:124px}
+#note textarea:focus-visible,#note input:focus-visible{outline-offset:2px;border-radius:5px 8px 6px 9px}
+#note [aria-invalid="true"]{border-color:#A3352B;border-width:2px}
+.note-msg{min-height:1.5em;margin:10px 0 2px;color:#A3352B;font-size:15.5px;line-height:1.45}
+.note-send{font:700 23px/1 var(--hand);min-height:46px;padding:0 22px;color:#F4F3EE;background:#2B2D33;border:0;border-radius:8px 12px 9px 13px;cursor:pointer;transition:background .15s ease,transform .1s ease}
+.note-send:hover{background:#44474F}
+.note-send:active{transform:translateY(1px)}
+.note-send[disabled]{opacity:.6;cursor:progress}
+.note-trap{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.note-done{font:700 28px/1.2 var(--hand);margin:18px 0 8px}
 
 /* horizon progress */
 .horizon{position:fixed;left:0;right:0;bottom:0;height:var(--bar);z-index:5;padding:0 clamp(16px,4vw,56px);background:linear-gradient(to top,var(--navmist) 0,var(--navmist) calc(var(--bar) - 26px),rgba(0,0,0,0) var(--bar));color:var(--nav-ink);transition:opacity 1.2s ease,transform .35s ease}
@@ -257,13 +287,14 @@ html:not(.wide) .lonely .cst{width:92px}
 @media (prefers-reduced-motion:reduce){
   .horizon,.hint,html.travelled .hint{transition:none}
   .c-dash,.c-star,.c-g,.sky-obj .ring,.thread .t-mask,.lantern-btn .lb-body{transition:none}
-  #reel[open]::backdrop{animation:none}
+  #reel[open]::backdrop,#note[open]::backdrop{animation:none}
+  .note-send{transition:none}
   #reel.closing::backdrop{transition:none}
 }
 
 /* on paper: just the words, in order */
 @media print{
-  #scene,.grain,.horizon,.skip,.hint,.thread,.obj,.sky-obj,.cst,.lantern-btn,#moon-spot,#reel{display:none!important}
+  #scene,.grain,.horizon,.skip,.hint,.thread,.obj,.sky-obj,.cst,.lantern-btn,#moon-spot,#reel,#note,.note-link,.lantern-n{display:none!important}
   html,body{background:#fff!important}
   body{font-size:11.5pt;overflow:visible}
   #journey{height:auto!important}
@@ -386,6 +417,7 @@ html:not(.wide) .lonely .cst{width:92px}
         </article>
 
         <button class="lantern-btn" id="lantern" type="button" aria-label="Light a lantern"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="M8.5 40.6 C15 39.8 22 40.9 29 40.2 C33 39.9 37 40.6 40.5 40.1" stroke-width="1.1" opacity=".75"/><path d="M12 42.8 C17 42.3 21 42.9 25.5 42.6" stroke-width=".8" opacity=".45"/><path class="lb-body" d="M17.6 21.2 C16.4 25 16.5 31.2 17.9 35.4 L30.3 35.5 C31.7 31 31.6 25.1 30.2 21.1 Z" stroke-width="1.15"/><path d="M17.2 21.3 L30.7 21.1 M17.6 35.6 L30.4 35.3 M19.6 21 L20.3 18.9 L27.8 18.8 L28.4 21 M21 35.5 L21.4 37.7 L26.7 37.6 L27.1 35.4" stroke-width="1"/><path d="M20.4 18.9 C20.6 14.2 27.4 14.1 27.6 18.8" stroke-width=".9"/><path d="M20.1 25.4 C22.6 25.9 25.6 25.8 28 25.2 M19.9 30.5 C22.6 31 25.8 31 28.3 30.3" stroke-width=".7" opacity=".55"/></svg></button>
+        <p class="lantern-n" id="lantern-n" aria-live="polite"></p>
 
         <div class="block sky" style="--dy:150px">
           <div class="cst" data-c="pingpong" aria-hidden="true"></div>
@@ -413,7 +445,7 @@ html:not(.wide) .lonely .cst{width:92px}
           <div id="moon-spot" aria-hidden="true"></div>
           <div class="block">
             <p>If you want to talk — about work, a project, or just to say hi —</p>
-            <p class="big"><a id="write" href="mailto:kaisar.turysbek@gmail.com">write me</a></p>
+            <p class="big"><a id="write" href="mailto:kaisar.turysbek@gmail.com">write me</a><button class="note-link" id="note-open" type="button" aria-haspopup="dialog" hidden>or leave a note</button></p>
             <p class="gh">Email: <a href="mailto:kaisar.turysbek@gmail.com">kaisar.turysbek@gmail.com</a></p>
             <p class="gh">Telegram: <a href="https://t.me/kekaisik" target="_blank" rel="noopener">@kekaisik</a></p>
             <p class="gh">GitHub: <a href="https://github.com/kekaisik1" target="_blank" rel="noopener">github.com/kekaisik1</a></p>
@@ -451,6 +483,24 @@ html:not(.wide) .lonely .cst{width:92px}
         <div class="reel-body"></div>
       </div>
     </div>
+  </div>
+</dialog>
+
+<dialog id="note" aria-labelledby="note-t">
+  <div class="reel-in">
+    <button class="reel-x" type="button" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5.2 5.6 C9 9.4 14.6 14.8 18.9 18.6 M18.4 5.1 C14.3 9.6 9.7 14 5.3 18.8 M6.1 4.9 C10 8.6 14 12.9 18.1 19.2"/></svg></button>
+    <h2 id="note-t">Leave a note</h2>
+    <form id="note-form" novalidate>
+      <p class="note-lede">It goes straight to me.</p>
+      <label for="note-text">Your note</label>
+      <textarea id="note-text" name="text" rows="5" maxlength="600" required aria-describedby="note-msg"></textarea>
+      <label for="note-contact">Where can I answer? <small>(only if you want an answer)</small></label>
+      <input id="note-contact" name="contact" type="text" maxlength="120" autocomplete="off">
+      <div class="note-trap" aria-hidden="true"><label>Website <input name="website" type="text" tabindex="-1" autocomplete="off"></label></div>
+      <p class="note-msg" id="note-msg" role="alert"></p>
+      <button class="note-send" type="submit">send it</button>
+    </form>
+    <p class="note-done" id="note-done" tabindex="-1" hidden>Sent. Thank you.</p>
   </div>
 </dialog>
 
@@ -533,7 +583,7 @@ const S = {
   lastMove: 0, lastY: 0, nudge: 0,
   objs: [], avoid: [], yurtX: null, yurtZ: 1, treeX: null, pierX: null, pierLen: 340,
   nlayers: [], dusk: { w0: 1e9, w1: 1e9 + 1, i0: 1e9, i1: 1e9 + 1, deep: 1 }, D: { w: 0, ind: 0, deep: 0 },
-  sunU: 0, fireT: null, sNight: 0, lanterns: [], threadC: '', hashY: 0
+  sunU: 0, fireT: null, sNight: 0, lanterns: [], shared: [], threadC: '', hashY: 0
 };
 const hz = document.createElement('canvas'), hzc = hz.getContext('2d');
 /* the day sky is painted once per frame here, so the mist around the words can borrow it */
@@ -1687,6 +1737,20 @@ const reel = document.getElementById('reel'), reelIn = reel.querySelector('.reel
 const reelT = document.getElementById('reel-t'), reelBody = reel.querySelector('.reel-body');
 const reelFrame = reel.querySelector('.frame'), reelPf = reel.querySelector('.pf');
 let reelObj = null, reelAnim = null, reelClosing = false;
+/* the API is optional: no address (or no answer) and the page carries on by itself */
+const API = (() => {
+  const m = document.querySelector('meta[name="portfolio-api"]');
+  let u = m ? m.content.trim() : '';
+  if (!u && /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) u = 'http://' + location.hostname + ':8787';
+  return /^https?:\/\//.test(u) ? u.replace(/\/+$/, '') : '';
+})();
+async function api(path, body){
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 12000);
+  try {
+    return await fetch(API + path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctl.signal } : { signal: ctl.signal });
+  } finally { clearTimeout(timer); }
+}
+const noteDlg = document.getElementById('note');
 /* Which videos exist comes from videos/manifest.json (a list of file names, rebuilt on every deploy), so
    missing files are never requested. No manifest (opened from disk, or unreadable) means no videos yet.
    No <video> is made until a file is listed. */
@@ -1793,7 +1857,7 @@ reel.addEventListener('keydown', e => {
   if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
   else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
 });
-const holdScroll = e => { if (!reel.open) return; const box = e.target.closest && e.target.closest('.reel-in'); if (box && box.scrollHeight > box.clientHeight + 1) return; e.preventDefault(); };
+const holdScroll = e => { if (!reel.open && !noteDlg.open) return; const box = e.target.closest && e.target.closest('.reel-in'); if (box && box.scrollHeight > box.clientHeight + 1) return; e.preventDefault(); };
 window.addEventListener('wheel', holdScroll, { passive: false });
 window.addEventListener('touchmove', holdScroll, { passive: false });
 reel.addEventListener('click', e => { if (e.target === reel) closeReel(); });
@@ -2413,14 +2477,45 @@ function loadLanterns(){
 function saveLanterns(){
   try { window.localStorage.setItem(LKEY, JSON.stringify(S.lanterns.map(l => ({ x: +l.fx.toFixed(4), y: +l.fy.toFixed(4), s: +l.fs.toFixed(4) })))); } catch (_) { /* no storage: it stays for this visit */ }
 }
+const lanternN = document.getElementById('lantern-n');
+function setLanternCount(n){
+  if (typeof n !== 'number' || !isFinite(n) || n < 0) return;
+  lanternN.textContent = n < 1 ? 'none up there yet. light the first one.' : n < 2 ? '1 lantern up there so far.' : Math.floor(n) + ' lanterns up there so far.';
+}
+const lkey = (x, y) => (+x).toFixed(4) + ',' + (+y).toFixed(4);
+/* everyone else's lanterns: smaller and further off than your own, spread a little so they don't stack */
+async function loadShared(){
+  if (!API) return;
+  try {
+    const r = await api('/api/lanterns'); if (!r.ok) return;
+    const d = await r.json();
+    if (!d || !Array.isArray(d.lanterns)) return;
+    const mine = new Set(S.lanterns.map(l => lkey(l.fx, l.fy)));
+    S.shared = d.lanterns
+      .filter(l => l && [l.x, l.y, l.s].every(v => typeof v === 'number' && isFinite(v) && v >= 0 && v <= 1) && !mine.has(lkey(l.x, l.y)))
+      .slice(-80)
+      .map((l, i) => ({ fx: l.x + ((i * .7548) % 1 - .5) * .34, fy: clamp(l.y + ((i * .5698) % 1 - .5) * .1, .05, .4), fs: l.s, t0: -1, ph: (i * 2.399) % 6.283, far: .42 + ((i * .618) % 1) * .3 }));
+    setLanternCount(d.count);
+    requestDraw();
+  } catch (_) { /* offline, or the API is asleep: your own lanterns still work */ }
+}
+async function shareLantern(l){
+  if (!API) return;
+  try {
+    const r = await api('/api/lanterns', { x: +l.fx.toFixed(4), y: +l.fy.toFixed(4), s: +l.fs.toFixed(4) });
+    if (r.ok){ const d = await r.json(); setLanternCount(d && d.count); }
+  } catch (_) { /* it still hangs in this browser */ }
+}
 function placeLantern(){
-  if (!S.wide){ lanternBtn.style.left = lanternBtn.style.top = ''; return; }
+  if (!S.wide){ lanternBtn.style.left = lanternBtn.style.top = lanternN.style.left = lanternN.style.top = ''; return; }
   const sec = sections[3], tr = track.getBoundingClientRect(), secL = sec.getBoundingClientRect().left - tr.left;
   const q = dndEl.getBoundingClientRect(), next = dndEl.nextElementSibling && dndEl.parentElement.querySelector('.block.sky:not(#dnd)');
   const r1 = q.right - tr.left, r2 = next ? next.getBoundingClientRect().left - tr.left : r1 + 160;
   const x = (r1 + r2) / 2, noise = makeNoise(37), ground = heightFor('near', noise, x, placeAt(x, S.T), S.H);
   lanternBtn.style.left = (x - secL - 24) + 'px';
   lanternBtn.style.top = (ground - 40) + 'px';
+  lanternN.style.left = (x - secL + 32) + 'px';
+  lanternN.style.top = (ground - 36) + 'px';
 }
 function lanternPos(l){ return { x: l.fx * S.vw + l.fs * S.sMax * .06 - S.s * .06, y: l.fy * S.H }; }
 function lightLantern(){
@@ -2431,11 +2526,12 @@ function lightLantern(){
   S.lanterns.push(l);
   while (S.lanterns.length > LMAX) S.lanterns.shift();
   saveLanterns();
+  shareLantern(l);
   requestDraw();
 }
 function drawLanterns(c, s, t){
-  for (const l of S.lanterns){
-    const end = lanternPos(l);
+  for (const l of S.shared.concat(S.lanterns)){
+    const end = lanternPos(l), far = l.far || 1;
     let x = end.x, y = end.y, sway = Math.sin(t * .9 + (l.ph || 0)) * .06;
     if (l.t0 >= 0){
       const p = clamp((t - l.t0) / 7, 0, 1), e = 1 - Math.pow(1 - p, 2.2);
@@ -2446,9 +2542,9 @@ function drawLanterns(c, s, t){
       if (p >= 1) l.t0 = -1;
     }
     if (x < -40 || x > S.vw + 40) continue;
-    const k = clamp(1 - (y / S.H - .1) * .35, .72, 1.05);
-    glow(c, x, y, 30 * k, '255,190,112', .32);
-    c.save(); c.translate(x, y); c.rotate(S.reduce ? 0 : sway); c.scale(k, k);
+    const k = clamp(1 - (y / S.H - .1) * .35, .72, 1.05) * far;
+    glow(c, x, y, 30 * k, '255,190,112', far < 1 ? .22 : .32);
+    c.save(); c.translate(x, y); c.rotate(S.reduce ? 0 : sway); c.scale(k, k); c.globalAlpha = far < 1 ? .6 + far * .4 : 1;
     c.fillStyle = 'rgba(244,170,92,.95)';
     c.beginPath(); c.moveTo(-5.6, -7); c.bezierCurveTo(-8.4, -2.5, -8.2, 3.5, -5.2, 7.6); c.lineTo(5.2, 7.6); c.bezierCurveTo(8.2, 3.5, 8.4, -2.5, 5.6, -7); c.closePath(); c.fill();
     c.fillStyle = 'rgba(255,232,170,.95)'; c.beginPath(); c.ellipse(0, 1.5, 2.6, 4, 0, 0, 6.283); c.fill();
@@ -2547,7 +2643,7 @@ function goTo(i, focus){
 }
 places.forEach(a => a.addEventListener('click', e => { e.preventDefault(); goTo(+a.dataset.i, true); }));
 document.addEventListener('keydown', e => {
-  if (!S.wide || e.altKey || e.ctrlKey || e.metaKey || reel.open) return;
+  if (!S.wide || e.altKey || e.ctrlKey || e.metaKey || reel.open || noteDlg.open) return;
   const tag = (e.target && e.target.tagName) || '';
   if (/INPUT|TEXTAREA|SELECT/.test(tag)) return;
   if (e.key === 'ArrowRight' || e.key === 'ArrowLeft'){
@@ -2610,6 +2706,35 @@ makeGrain();
 setupObjects();
 S.lanterns = loadLanterns();
 lanternBtn.addEventListener('click', lightLantern);
+window.requestIdleCallback ? requestIdleCallback(loadShared, { timeout: 4000 }) : setTimeout(loadShared, 1500);
+
+/* ---------- leave a note ---------- */
+(() => {
+  const open = document.getElementById('note-open'), form = document.getElementById('note-form'), done = document.getElementById('note-done');
+  const text = document.getElementById('note-text'), msg = document.getElementById('note-msg'), send = form.querySelector('.note-send');
+  if (!API) return;
+  open.hidden = false;
+  const say = (m, bad) => { msg.textContent = m; bad ? text.setAttribute('aria-invalid', 'true') : text.removeAttribute('aria-invalid'); };
+  open.addEventListener('click', () => { form.hidden = false; done.hidden = true; say(''); noteDlg.showModal(); text.focus(); });
+  noteDlg.querySelector('.reel-x').addEventListener('click', () => noteDlg.close());
+  noteDlg.addEventListener('click', e => { if (e.target === noteDlg) noteDlg.close(); });
+  text.addEventListener('input', () => { if (msg.textContent) say(''); });
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (send.disabled) return;
+    const f = new FormData(form), body = { text: String(f.get('text') || '').trim(), contact: String(f.get('contact') || '').trim(), website: String(f.get('website') || '') };
+    if (!body.text){ say('Write something first.', true); text.focus(); return; }
+    send.disabled = true; send.textContent = 'sending…'; say('');
+    try {
+      const r = await api('/api/notes', body);
+      if (r.ok){ form.reset(); form.hidden = true; done.hidden = false; done.focus(); }
+      else if (r.status === 429) say("That's a lot of notes. Try again in an hour, or email me instead.");
+      else if (r.status === 422) say('That note is too long for the paper. Keep it under 600 characters.', true);
+      else say("It didn't go through. Try again, or email me instead.");
+    } catch (_) { say("It didn't go through. Try again, or email me instead."); }
+    finally { send.disabled = false; send.textContent = 'send it'; }
+  });
+})();
 layout(true);
 /* a fresh visit with a #link goes there; a reload or Back keeps the spot the browser remembered */
 const navEntry = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
