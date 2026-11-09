@@ -71,6 +71,15 @@ a:hover{text-decoration-thickness:2px}
 .hero h1{font-size:clamp(54px,6.6vw,108px);line-height:.92;letter-spacing:-.01em}
 .hero .quiet{font-size:clamp(19px,1.55vw,24px);max-width:30ch;margin-top:20px}
 
+/* a pencilled note for the first screen only: how to move, and that the drawings open. Gone once you set off. */
+.hint{display:flex;align-items:center;gap:10px;font:400 21px/1.2 var(--hand);color:var(--ink-soft);margin:28px 0 0 2px;max-width:none;transform:rotate(-1.6deg);transform-origin:left center;transition:opacity .7s ease,visibility 0s linear 0s}
+.hint svg{flex:none;width:34px;height:16px;overflow:visible}
+.hint path{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+html:not(.wide) .hint svg{transform:rotate(90deg);width:26px}
+html:not(.js) .hint{display:none}
+html.js:not(.ready-nav) .hint{opacity:0}
+html.travelled .hint{opacity:0;visibility:hidden;transition:opacity .5s ease,visibility 0s linear .5s}
+
 html.js:not(.ready-nav) .horizon{opacity:0}
 
 /* text sits straight on the drawn sky */
@@ -240,7 +249,7 @@ html:not(.wide) .sky .cst{max-width:300px}
 html:not(.wide) .lonely .cst{width:92px}
 
 @media (prefers-reduced-motion:reduce){
-  .horizon{transition:none}
+  .horizon,.hint,html.travelled .hint{transition:none}
   .c-dash,.c-star,.c-g,.sky-obj .ring,.thread .t-mask,.lantern-btn .lb-body{transition:none}
   #reel[open]::backdrop{animation:none}
   #reel.closing::backdrop{transition:none}
@@ -248,7 +257,7 @@ html:not(.wide) .lonely .cst{width:92px}
 
 /* on paper: just the words, in order */
 @media print{
-  #scene,.grain,.horizon,.skip,.thread,.obj,.sky-obj,.cst,.lantern-btn,#moon-spot,#reel{display:none!important}
+  #scene,.grain,.horizon,.skip,.hint,.thread,.obj,.sky-obj,.cst,.lantern-btn,#moon-spot,#reel{display:none!important}
   html,body{background:#fff!important}
   body{font-size:11.5pt;overflow:visible}
   #journey{height:auto!important}
@@ -283,6 +292,7 @@ html:not(.wide) .lonely .cst{width:92px}
           <div class="hero-text">
             <h1>Hi, I'm Kaisar.</h1>
             <p class="quiet">I live in Kazakhstan and I build things with computers.</p>
+            <p class="hint"><span>scroll to walk. the drawings open if you poke them.</span><svg viewBox="0 0 34 16" aria-hidden="true" focusable="false"><path d="M1.5 8.6 C9 7.2 19 9.4 31 7.8 M24.6 2.6 C27 4.6 29.4 6.3 31.6 7.7 C29 9.4 26.6 11.4 24.9 13.6"/></svg></p>
           </div>
         </header>
 
@@ -2505,6 +2515,7 @@ function frame(now){
   if (!S.wide) nav.classList.toggle('tuck', sy > 120 && sy < S.maxScroll - 60);
   else nav.classList.remove('tuck');
   S.lastY = sy;
+  if (!S.travelled && sy > 40){ S.travelled = true; root.classList.add('travelled'); }
   if (S.intro && S.intro.skip === false && Math.abs(window.scrollY - S.intro.y0) > 40){ S.intro.t0 = Math.min(S.intro.t0, S.time - 2.6); S.intro.skip = true; reveal(); }
   duskNow();
   applyDom();
