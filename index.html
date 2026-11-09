@@ -20,9 +20,9 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="A pencil drawing of mountains under a pale morning sky, with the words: Hi, I'm Kaisar. I live in Kazakhstan and I build things with computers.">
 <meta name="twitter:card" content="summary_large_image">
-<!-- the small API in server/ (shared lanterns, notes). Put its address here once it is deployed.
+<!-- the small API behind the lanterns, notes, weather and growth (its code is in a private repo).
      Empty = the page works on its own: lanterns stay in your browser and the note button is not shown. -->
-<meta name="portfolio-api" content="">
+<meta name="portfolio-api" content="https://api-production-2660.up.railway.app">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","name":"Kaisar","url":"https://kekaisik1.github.io/portfolio/","description":"Kaisar builds things with computers in Kazakhstan: voice AI for work, games and story tools after hours.","homeLocation":{"@type":"Country","name":"Kazakhstan"},"knowsLanguage":["kk","ru","en"],"email":"mailto:kaisar.turysbek@gmail.com","sameAs":["https://github.com/kekaisik1","https://t.me/kekaisik"]}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1749,7 +1749,8 @@ let reelObj = null, reelAnim = null, reelClosing = false;
 const API = (() => {
   const m = document.querySelector('meta[name="portfolio-api"]');
   let u = m ? m.content.trim() : '';
-  if (!u && /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) u = 'http://' + location.hostname + ':8787';
+  /* on my own machine the page talks to a local copy, so trying things out never touches the real one */
+  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) u = 'http://' + location.hostname + ':8787';
   return /^https?:\/\//.test(u) ? u.replace(/\/+$/, '') : '';
 })();
 async function api(path, body){
