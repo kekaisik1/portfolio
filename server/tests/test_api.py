@@ -9,6 +9,7 @@ from app.config import Settings
 from app.db import Store
 from app.main import create_app
 from app.ratelimit import RateLimiter
+from app.weather import Weather, kind_for
 
 ORIGIN = "https://kekaisik1.github.io"
 
@@ -23,11 +24,18 @@ class FakeNotifier:
         return self.works
 
 
+def snowing() -> dict[str, object]:
+    return {"current": {"temperature_2m": -13.6, "weather_code": 73, "is_day": 1}}
+
+
 def make(notifier: FakeNotifier | None = None, **overrides: int) -> tuple[TestClient, Store, FakeNotifier]:
-    settings = Settings(database_path=Path(":memory:"), allowed_origins=(ORIGIN,), **overrides)
+    settings = Settings(
+        database_path=Path(":memory:"), allowed_origins=(ORIGIN,), now_token="s3cret", **overrides
+    )
     store = Store(settings.database_path)
     fake = notifier or FakeNotifier()
-    return TestClient(create_app(settings, store, fake)), store, fake
+    weather = Weather("Astana", snowing)
+    return TestClient(create_app(settings, store, fake, weather)), store, fake
 
 
 def test_lit_lantern_is_stored_and_listed_with_the_count() -> None:
@@ -172,3 +180,94 @@ def test_rate_limiter_forgets_hits_after_the_window() -> None:
     third = limiter.allow("a")
 
     assert (first, second, third) == (True, False, True)
+
+
+def test_today_gives_the_weather_and_nothing_for_now_until_it_is_set() -> None:
+    client, _, _ = make()
+
+    body = client.get("/api/today").json()
+
+    assert body == {"weather": {"place": "Astana", "temp": -14, "kind": "snow", "day": True}, "now": None}
+
+
+def test_now_is_set_with_the_token_and_shown_with_its_time() -> None:
+    client, _, _ = make()
+
+    res = client.post("/api/now", json={"label": "  Emberquill "}, headers={"authorization": "Bearer s3cret"})
+    now = client.get("/api/today").json()["now"]
+
+    assert res.status_code == 201
+    assert now["label"] == "Emberquill"
+    assert now["at"].endswith("Z")
+
+
+@pytest.mark.parametrize("headers", [{}, {"authorization": "Bearer wrong"}, {"authorization": "s3cret"}])
+def test_now_is_refused_without_the_right_token(headers: dict[str, str]) -> None:
+    client, store, _ = make()
+
+    res = client.post("/api/now", json={"label": "a secret client project"}, headers=headers)
+
+    assert res.status_code == 401
+    assert store.get_now() is None
+
+
+def test_now_endpoint_does_not_exist_when_no_token_is_configured() -> None:
+    settings = Settings(database_path=Path(":memory:"), allowed_origins=(ORIGIN,))
+    client = TestClient(
+        create_app(settings, Store(settings.database_path), FakeNotifier(), Weather("Astana", snowing))
+    )
+
+    res = client.post("/api/now", json={"label": "x"}, headers={"authorization": "Bearer "})
+
+    assert res.status_code == 404
+
+
+@pytest.mark.parametrize("label", ["", "x" * 61])
+def test_now_label_must_be_short_and_not_empty(label: str) -> None:
+    client, _, _ = make()
+
+    res = client.post("/api/now", json={"label": label}, headers={"authorization": "Bearer s3cret"})
+
+    assert res.status_code == 422
+
+
+@pytest.mark.parametrize(
+    ("code", "kind"),
+    [(73, "snow"), (86, "snow"), (61, "rain"), (95, "rain"), (45, "fog"), (3, "cloud"), (0, "clear")],
+)
+def test_weather_codes_fold_into_what_the_drawing_can_show(code: int, kind: str) -> None:
+    assert kind_for(code) == kind
+
+
+def test_weather_is_asked_once_per_ttl_and_survives_an_outage() -> None:
+    now = [0.0]
+    calls = [0]
+
+    def fetch() -> dict[str, object]:
+        calls[0] += 1
+        if calls[0] > 1:
+            raise ValueError("source down")
+        return snowing()
+
+    weather = Weather("Astana", fetch, ttl_s=900, clock=lambda: now[0])
+
+    first = weather.current()
+    weather.current()
+    now[0] = 901.0
+    after_outage = weather.current()
+
+    assert calls[0] == 2
+    assert first is not None and first.kind == "snow"
+    assert after_outage == first
+
+
+def test_today_has_no_weather_when_it_was_never_fetched() -> None:
+    def broken() -> dict[str, object]:
+        raise ValueError("down")
+
+    settings = Settings(database_path=Path(":memory:"), allowed_origins=(ORIGIN,))
+    client = TestClient(
+        create_app(settings, Store(settings.database_path), FakeNotifier(), Weather("Astana", broken))
+    )
+
+    assert client.get("/api/today").json() == {"weather": None, "now": None}

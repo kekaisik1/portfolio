@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hmac
 import logging
+from functools import partial
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,6 +14,7 @@ from app.config import Settings
 from app.db import Lantern, Store
 from app.notify import LogOnlyNotifier, Notifier, TelegramNotifier
 from app.ratelimit import RateLimiter
+from app.weather import Weather, fetch_open_meteo
 
 log = logging.getLogger(__name__)
 
@@ -42,6 +45,18 @@ class NoteIn(BaseModel):
         return "".join(ch for ch in v if ch in "\n\t" or ch.isprintable())
 
 
+class NowIn(BaseModel):
+    """What Kaisar is working on: a short public label, never free text from a session."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    label: str = Field(min_length=1, max_length=60)
+
+    @field_validator("label")
+    @classmethod
+    def one_clean_line(cls, v: str) -> str:
+        return "".join(ch for ch in v if ch.isprintable())
+
+
 def client_ip(request: Request) -> str:
     """The visitor's address as the proxy reports it (Railway sets X-Real-IP), else the socket's."""
     real = request.headers.get("x-real-ip")
@@ -53,7 +68,12 @@ def client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
-def create_app(settings: Settings, store: Store | None = None, notifier: Notifier | None = None) -> FastAPI:
+def create_app(
+    settings: Settings,
+    store: Store | None = None,
+    notifier: Notifier | None = None,
+    weather: Weather | None = None,
+) -> FastAPI:
     """Build the app. Storage and the notifier can be passed in: that is how the tests run offline."""
     db = store or Store(settings.database_path)
     if notifier is None:
@@ -62,6 +82,10 @@ def create_app(settings: Settings, store: Store | None = None, notifier: Notifie
         else:
             notifier = LogOnlyNotifier()
     out: Notifier = notifier
+    sky = weather or Weather(
+        settings.weather_place, partial(fetch_open_meteo, settings.weather_lat, settings.weather_lon)
+    )
+    now_writes = RateLimiter(60, HOUR)
 
     lantern_each = RateLimiter(settings.lanterns_per_hour, HOUR)
     lantern_all = RateLimiter(settings.lanterns_per_day_everyone, DAY)
@@ -103,6 +127,29 @@ def create_app(settings: Settings, store: Store | None = None, notifier: Notifie
         if not lantern_each.allow(client_ip(request)) or not lantern_all.allow("everyone"):
             raise HTTPException(429, "That's a lot of lanterns. The sky needs a rest; try again in an hour.")
         return {"count": db.add_lantern(Lantern(body.x, body.y, body.s))}
+
+    @app.get("/api/today")
+    def today(response: Response) -> dict[str, object]:
+        """What the first screen needs in one request: the weather, and what Kaisar was last working on."""
+        w = sky.current()
+        now = db.get_now()
+        response.headers["Cache-Control"] = "public, max-age=120"
+        return {
+            "weather": {"place": w.place, "temp": w.temp, "kind": w.kind, "day": w.day} if w else None,
+            "now": {"label": now[0], "at": now[1]} if now else None,
+        }
+
+    @app.post("/api/now", status_code=201)
+    def post_now(body: NowIn, request: Request) -> dict[str, object]:
+        if not settings.now_token:
+            raise HTTPException(404, "Not found")
+        given = request.headers.get("authorization", "")
+        if not hmac.compare_digest(given.encode(), f"Bearer {settings.now_token}".encode()):
+            raise HTTPException(401, "Wrong or missing token.")
+        if not now_writes.allow("now"):
+            raise HTTPException(429, "Too many updates; try again later.")
+        db.set_now(body.label)
+        return {"ok": True}
 
     @app.post("/api/notes", status_code=201)
     def post_note(body: NoteIn, request: Request, tasks: BackgroundTasks) -> dict[str, object]:

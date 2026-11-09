@@ -92,6 +92,10 @@ html.js:not(.ready-nav) .horizon{opacity:0}
 .note{font:400 20px/1.2 var(--hand);color:var(--ink-soft);transform:rotate(-1.6deg);transform-origin:left center;margin:6px 0 12px 12px;display:block}
 #crm .note,#bookforge .note{transform:rotate(1.2deg);margin-left:28px}
 .aside-line{font-style:italic;color:var(--ink-soft)}
+/* two pencilled lines that come from the API: the weather where I am, and what I was last working on.
+   The room for them is kept either way, so nothing below moves when they arrive. */
+.today{min-height:24px;margin-top:10px;margin-bottom:0}
+.today + .today{margin-top:4px}
 .live{margin-top:4px}
 .live a{font:700 23px/1.1 var(--hand);display:inline-flex;align-items:center;min-height:44px;padding:0 2px}
 .bits{list-style:none;padding:0;margin:0 0 12px}
@@ -294,7 +298,7 @@ html:not(.wide) .lonely .cst{width:92px}
 
 /* on paper: just the words, in order */
 @media print{
-  #scene,.grain,.horizon,.skip,.hint,.thread,.obj,.sky-obj,.cst,.lantern-btn,#moon-spot,#reel,#note,.note-link,.lantern-n{display:none!important}
+  #scene,.grain,.horizon,.skip,.hint,.thread,.obj,.sky-obj,.cst,.lantern-btn,#moon-spot,#reel,#note,.note-link,.lantern-n,.today{display:none!important}
   html,body{background:#fff!important}
   body{font-size:11.5pt;overflow:visible}
   #journey{height:auto!important}
@@ -336,6 +340,8 @@ html:not(.wide) .lonely .cst{width:92px}
         <article class="block intro" style="--dy:34px">
           <p>For work that's mostly voice AI — agents that pick up the phone and actually help someone. After hours it's games, story tools, and whatever I can't stop thinking about.</p>
           <p>Some of it is finished. A lot of it isn't. This is all of it, more or less.</p>
+          <aside class="note today" id="wx"></aside>
+          <aside class="note today" id="now"></aside>
         </article>
 
         <h2 class="sign" id="work"><span>Work stuff</span></h2>
@@ -583,7 +589,7 @@ const S = {
   lastMove: 0, lastY: 0, nudge: 0,
   objs: [], avoid: [], yurtX: null, yurtZ: 1, treeX: null, pierX: null, pierLen: 340,
   nlayers: [], dusk: { w0: 1e9, w1: 1e9 + 1, i0: 1e9, i1: 1e9 + 1, deep: 1 }, D: { w: 0, ind: 0, deep: 0 },
-  sunU: 0, fireT: null, sNight: 0, lanterns: [], shared: [], threadC: '', hashY: 0
+  sunU: 0, fireT: null, sNight: 0, lanterns: [], shared: [], threadC: '', hashY: 0, wx: '', flakes: []
 };
 const hz = document.createElement('canvas'), hzc = hz.getContext('2d');
 /* the day sky is painted once per frame here, so the mist around the words can borrow it */
@@ -2000,6 +2006,8 @@ function genMoving(){
     const yr = Math.pow(rnd(), .8), f = .5 + yr * .5, t = t0 + rnd() * span;
     S.waves.push({ u: tToU(t, f), f, y: H * (.625 + yr * .33), len: 10 + yr * 30 + rnd() * 10, ph: rnd() * 6.283, b: k % 4 });
   }
+  S.flakes = []; const fr = mulberry32(91), fn = clamp(Math.round(vw * H / 9000), 50, 170);
+  for (let k = 0; k < fn; k++) S.flakes.push({ x: fr(), y: fr(), z: .35 + fr() * .65, ph: fr() * 6.283 });
   S.mists = []; const mz = tToU(S.B[1], .5) + 400;
   for (let k = 0; k < 4; k++) S.mists.push({ u: rnd() * mz, y: H * (.5 + rnd() * .14), sc: .8 + rnd() * .9, sp: 4 + rnd() * 4, W: mz });
 }
@@ -2126,7 +2134,30 @@ function drawDay(c){
   c.globalAlpha = 1;
   drawSmoke(c, s, t);
   drawPierLamp(c, s, t, w);
+  drawWeather(c, false);
   if (w > 0){ c.fillStyle = `rgba(238,158,104,${(.1 * w).toFixed(3)})`; c.fillRect(0, 0, vw, H); }
+}
+/* the weather where I am falls here too: snow as soft dots, rain as short pencil strokes. Near ones are bigger and faster. */
+function drawWeather(c, night){
+  if (!S.wx) return;
+  const vw = S.vw, H = S.H, t = S.time, s = S.s, W = vw + 80;
+  if (S.wx === 'snow'){
+    c.fillStyle = night ? css(CHALK) : '#fff'; c.strokeStyle = css(INK[0]); c.lineWidth = .6;
+    for (const f of S.flakes){
+      const y = ((f.y + t * (.035 + f.z * .05)) % 1) * (H + 20) - 10;
+      let x = (f.x * W + Math.sin(t * .7 + f.ph) * 14 * f.z - s * .25 * f.z) % W; if (x < 0) x += W; x -= 40;
+      c.globalAlpha = .45 + f.z * .5; c.beginPath(); c.arc(x, y, 1 + f.z * 2.1, 0, 6.283); c.fill();
+      if (!night){ c.globalAlpha = .3 * f.z; c.stroke(); }
+    }
+  } else if (S.wx === 'rain'){
+    c.strokeStyle = night ? css(CHALK) : css(INK[0]); c.lineWidth = 1;
+    for (const f of S.flakes){
+      const len = 9 + f.z * 15, y = ((f.y + t * (.55 + f.z * .6)) % 1) * (H + 40) - 20;
+      let x = (f.x * W - y * .28 - s * .25 * f.z) % W; if (x < 0) x += W; x -= 40;
+      c.globalAlpha = .14 + f.z * .22; c.beginPath(); c.moveTo(x, y); c.lineTo(x - len * .28, y + len); c.stroke();
+    }
+  }
+  c.globalAlpha = 1;
 }
 function drawWaves(c, col, alpha){
   const s = S.s, vw = S.vw, t = S.time;
@@ -2191,6 +2222,7 @@ function drawNight(c){
   drawPierLamp(c, s, t, 1);
   drawFire(c, s, t);
   drawLanterns(c, s, t);
+  drawWeather(c, true);
 }
 
 /* ---------- the mist the words sit in (wide) ---------- */
@@ -2706,7 +2738,33 @@ makeGrain();
 setupObjects();
 S.lanterns = loadLanterns();
 lanternBtn.addEventListener('click', lightLantern);
-window.requestIdleCallback ? requestIdleCallback(loadShared, { timeout: 4000 }) : setTimeout(loadShared, 1500);
+
+/* ---------- today: the weather where I am, and what I was last working on ---------- */
+const wxEl = document.getElementById('wx'), nowEl = document.getElementById('now');
+function ago(iso){
+  const h = (Date.now() - Date.parse(iso)) / 36e5;
+  if (!(h >= 0) || h > 24 * 14) return null; /* older than two weeks is not "last seen" any more */
+  return h < 1.5 ? 'just now' : h < 24 ? Math.round(h) + ' hours ago' : h < 48 ? 'yesterday' : Math.floor(h / 24) + ' days ago';
+}
+function showToday(d){
+  const w = d && d.weather, n = d && d.now, words = { snow: 'snowing', rain: 'raining', fog: 'foggy', cloud: 'grey', clear: 'clear' };
+  if (w && typeof w.temp === 'number' && isFinite(w.temp) && typeof w.place === 'string' && words[w.kind]){
+    const deg = Math.round(w.temp);
+    wxEl.textContent = (deg < 0 ? '\u2212' : '') + Math.abs(deg) + '\u00B0 and ' + words[w.kind] + ' in ' + w.place.slice(0, 40) + ' right now.';
+    if (!forcedWx) S.wx = w.kind === 'snow' || w.kind === 'rain' ? w.kind : '';
+  }
+  if (n && typeof n.label === 'string' && n.label){ const a = ago(n.at); if (a) nowEl.textContent = 'last seen working on ' + n.label.slice(0, 60) + ', ' + a + '.'; }
+  measureHaze(); requestDraw();
+}
+/* ?weather=snow or ?weather=rain shows that weather whatever the real sky is doing */
+const forcedWx = (/[?&]weather=(snow|rain)\b/.exec(location.search) || [])[1] || '';
+S.wx = forcedWx;
+async function loadToday(){
+  if (!API) return;
+  try { const r = await api('/api/today'); if (r.ok) showToday(await r.json()); } catch (_) { /* no API: no weather line, the sky stays as drawn */ }
+}
+const whenIdle = fn => window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 4000 }) : setTimeout(fn, 1500);
+whenIdle(loadToday); whenIdle(loadShared);
 
 /* ---------- leave a note ---------- */
 (() => {

@@ -17,6 +17,10 @@ class Settings:
     allowed_origins: tuple[str, ...]
     telegram_bot_token: str | None = None
     telegram_chat_id: str | None = None
+    now_token: str | None = None
+    weather_place: str = "Astana"
+    weather_lat: float = 51.1694
+    weather_lon: float = 71.4491
     lanterns_shown: int = 80
     lanterns_per_hour: int = 6
     lanterns_per_day_everyone: int = 2000
@@ -36,4 +40,8 @@ class Settings:
             allowed_origins=origins,
             telegram_bot_token=os.environ.get("TELEGRAM_BOT_TOKEN") or None,
             telegram_chat_id=os.environ.get("TELEGRAM_CHAT_ID") or None,
+            now_token=os.environ.get("NOW_TOKEN") or None,
+            weather_place=os.environ.get("WEATHER_PLACE", "Astana"),
+            weather_lat=float(os.environ.get("WEATHER_LAT", "51.1694")),
+            weather_lon=float(os.environ.get("WEATHER_LON", "71.4491")),
         )
