@@ -19,8 +19,16 @@ CREATE TABLE IF NOT EXISTS notes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     text TEXT NOT NULL,
     contact TEXT NOT NULL DEFAULT '',
+    name TEXT NOT NULL DEFAULT '',
     delivered INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+);
+CREATE TABLE IF NOT EXISTS growth (
+    slug TEXT PRIMARY KEY,
+    total INTEGER NOT NULL,
+    week INTEGER NOT NULL,
+    day INTEGER NOT NULL,
+    at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS now (
     id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -28,6 +36,16 @@ CREATE TABLE IF NOT EXISTS now (
     at TEXT NOT NULL
 );
 """
+
+
+@dataclass(frozen=True)
+class Growth:
+    """How much work a project has had: commits in all, in the last week and in the last day."""
+
+    slug: str
+    total: int
+    week: int
+    day: int
 
 
 @dataclass(frozen=True)
@@ -49,6 +67,9 @@ class Store:
         self._lock = threading.Lock()
         with self._lock, self._db:
             self._db.executescript(SCHEMA)
+            # databases made before notes had a name
+            if "name" not in {row[1] for row in self._db.execute("PRAGMA table_info(notes)")}:
+                self._db.execute("ALTER TABLE notes ADD COLUMN name TEXT NOT NULL DEFAULT ''")
 
     def add_lantern(self, lantern: Lantern) -> int:
         """Hang a lantern; returns how many there are now."""
@@ -66,10 +87,12 @@ class Store:
             ).fetchall()
             return self._count(), [Lantern(*row) for row in reversed(rows)]
 
-    def add_note(self, text: str, contact: str) -> int:
+    def add_note(self, text: str, contact: str, name: str = "") -> int:
         """Keep a note; returns its id."""
         with self._lock, self._db:
-            cur = self._db.execute("INSERT INTO notes (text, contact) VALUES (?, ?)", (text, contact))
+            cur = self._db.execute(
+                "INSERT INTO notes (text, contact, name) VALUES (?, ?, ?)", (text, contact, name)
+            )
             return int(cur.lastrowid or 0)
 
     def mark_delivered(self, note_id: int) -> None:
@@ -81,6 +104,23 @@ class Store:
         """How many notes are stored but never reached Telegram."""
         with self._lock:
             return int(self._db.execute("SELECT COUNT(*) FROM notes WHERE delivered = 0").fetchone()[0])
+
+    def set_growth(self, items: list[Growth]) -> None:
+        """Replace the numbers for the given projects; others are left as they were."""
+        with self._lock, self._db:
+            self._db.executemany(
+                "INSERT INTO growth (slug, total, week, day, at) "
+                "VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now')) "
+                "ON CONFLICT(slug) DO UPDATE SET total = excluded.total, week = excluded.week, "
+                "day = excluded.day, at = excluded.at",
+                [(g.slug, g.total, g.week, g.day) for g in items],
+            )
+
+    def get_growth(self) -> list[tuple[Growth, str]]:
+        """Every project's numbers with the time they were reported (UTC, ISO)."""
+        with self._lock:
+            rows = self._db.execute("SELECT slug, total, week, day, at FROM growth ORDER BY slug").fetchall()
+            return [(Growth(str(r[0]), int(r[1]), int(r[2]), int(r[3])), str(r[4])) for r in rows]
 
     def set_now(self, label: str) -> None:
         """Replace the one "working on" line."""

@@ -5,6 +5,7 @@ The small backend behind the portfolio. Two things:
 - **Lanterns** — a lantern lit on the night beach is saved here, so the next visitor sees it in the sky, with a count.
 - **Notes** — "or leave a note" on the last screen stores the note and forwards it to Kaisar's Telegram.
 - **Weather** — what the sky is doing in Astana right now (from Open-Meteo, asked at most every 15 minutes). When it snows or rains there, it snows or rains in the drawing, and a pencilled line says so.
+- **Growth** — commit counts per project (all time, this week, today). Each project's drawing gives off its own thing (embers, pages, petals, rings…) and there is more of it, reaching further, the more work the project has had. A big day makes it bloom.
 - **Now** — "last seen working on …", set automatically by a Claude Code hook (see below).
 
 The page works without it: with no API address set (or the API down) lanterns stay in the visitor's own browser and the note button is not shown.
@@ -27,8 +28,9 @@ uv run pytest && uv run ruff check . && uv run mypy app
 |---|---|
 | `GET /api/lanterns` | `{count, lanterns: [{x, y, s}]}` — the total and the newest 80 |
 | `POST /api/lanterns` | `{x, y, s}` (0..1) → `{count}`. 6 an hour per visitor |
-| `POST /api/notes` | `{text, contact?}` → `{ok}`. Up to 600 characters, 3 an hour per visitor, 60 a day in total |
-| `GET /api/today` | `{weather: {place, temp, kind, day}, now: {label, at}}` — either can be `null` |
+| `POST /api/notes` | `{text, name?, contact?}` → `{ok}`. Up to 600 characters, 3 an hour per visitor, 60 a day in total |
+| `GET /api/today` | `{weather: {place, temp, kind, day}, now: {label, at}, growth: {slug: {total, week, day, at}}}` |
+| `POST /api/growth` | `{projects: [{slug, total, week, day}]}`, same token. Numbers only |
 | `POST /api/now` | `{label}` with `Authorization: Bearer <NOW_TOKEN>`. Off (404) until `NOW_TOKEN` is set |
 | `GET /healthz` | `{ok, undelivered_notes}` |
 
@@ -52,6 +54,10 @@ To read stored notes: `sqlite3 /data/portfolio.db "select created_at, text, cont
 ## Weather
 
 Nothing to set up: it is on as soon as the API is. To see snow or rain on a clear day, open the page with `?weather=snow` or `?weather=rain`. Another city: `WEATHER_PLACE`, `WEATHER_LAT`, `WEATHER_LON`.
+
+## Growth
+
+The same hook (below) counts commits in the folders listed under `"growth"` in `~/.claude/portfolio-now.json` (`folder: project slug`, slugs as in `PROJECTS` in `index.html`) and sends three numbers per project. Projects with no numbers get a small default. Preview the range with `?grow=big` or `?grow=small`. A sent note also goes up as a lantern and bursts.
 
 ## The "now" line and the Claude hook
 

@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.config import Settings
-from app.db import Lantern, Store
+from app.db import Growth, Lantern, Store
 from app.notify import LogOnlyNotifier, Notifier, TelegramNotifier
 from app.ratelimit import RateLimiter
 from app.weather import Weather, fetch_open_meteo
@@ -37,9 +37,10 @@ class NoteIn(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     text: str = Field(min_length=1, max_length=600)
     contact: str = Field(default="", max_length=120)
+    name: str = Field(default="", max_length=60)
     website: str = Field(default="", max_length=200)
 
-    @field_validator("text", "contact")
+    @field_validator("text", "contact", "name")
     @classmethod
     def no_control_chars(cls, v: str) -> str:
         return "".join(ch for ch in v if ch in "\n\t" or ch.isprintable())
@@ -55,6 +56,23 @@ class NowIn(BaseModel):
     @classmethod
     def one_clean_line(cls, v: str) -> str:
         return "".join(ch for ch in v if ch.isprintable())
+
+
+class GrowthItem(BaseModel):
+    """One project's commit counts. Numbers only: no messages, names or paths."""
+
+    model_config = ConfigDict(extra="forbid")
+    slug: str = Field(pattern=r"^[a-z0-9-]{1,40}$")
+    total: int = Field(ge=0, le=1_000_000)
+    week: int = Field(ge=0, le=100_000)
+    day: int = Field(ge=0, le=100_000)
+
+
+class GrowthIn(BaseModel):
+    """Commit counts for some projects."""
+
+    model_config = ConfigDict(extra="forbid")
+    projects: list[GrowthItem] = Field(min_length=1, max_length=30)
 
 
 def client_ip(request: Request) -> str:
@@ -135,20 +153,34 @@ def create_app(
         now = db.get_now()
         response.headers["Cache-Control"] = "public, max-age=120"
         return {
+            "growth": {
+                g.slug: {"total": g.total, "week": g.week, "day": g.day, "at": at}
+                for g, at in db.get_growth()
+            },
             "weather": {"place": w.place, "temp": w.temp, "kind": w.kind, "day": w.day} if w else None,
             "now": {"label": now[0], "at": now[1]} if now else None,
         }
 
-    @app.post("/api/now", status_code=201)
-    def post_now(body: NowIn, request: Request) -> dict[str, object]:
+    def owner_only(request: Request) -> None:
+        """Only Kaisar's own machine (it holds NOW_TOKEN) may write these."""
         if not settings.now_token:
             raise HTTPException(404, "Not found")
         given = request.headers.get("authorization", "")
         if not hmac.compare_digest(given.encode(), f"Bearer {settings.now_token}".encode()):
             raise HTTPException(401, "Wrong or missing token.")
-        if not now_writes.allow("now"):
+        if not now_writes.allow("owner"):
             raise HTTPException(429, "Too many updates; try again later.")
+
+    @app.post("/api/now", status_code=201)
+    def post_now(body: NowIn, request: Request) -> dict[str, object]:
+        owner_only(request)
         db.set_now(body.label)
+        return {"ok": True}
+
+    @app.post("/api/growth", status_code=201)
+    def post_growth(body: GrowthIn, request: Request) -> dict[str, object]:
+        owner_only(request)
+        db.set_growth([Growth(p.slug, p.total, p.week, p.day) for p in body.projects])
         return {"ok": True}
 
     @app.post("/api/notes", status_code=201)
@@ -158,8 +190,11 @@ def create_app(
             return {"ok": True}
         if not note_each.allow(client_ip(request)) or not note_all.allow("everyone"):
             raise HTTPException(429, "That's a lot of notes. Try again in an hour, or send an email instead.")
-        note_id = db.add_note(body.text, body.contact)
-        message = "A note from the portfolio:\n\n" + body.text
+        note_id = db.add_note(body.text, body.contact, body.name)
+        message = (
+            f"A note from the portfolio, from {body.name}:" if body.name else "A note from the portfolio:"
+        )
+        message += "\n\n" + body.text
         if body.contact:
             message += "\n\nAnswer to: " + body.contact
         tasks.add_task(deliver, note_id, message)

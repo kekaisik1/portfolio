@@ -203,10 +203,10 @@ html:not(.wide) .lantern-n{margin:4px auto 0;height:50vh;text-align:center}
 #note h2{font-size:34px;line-height:1.05;margin:0 0 4px;padding-right:40px}
 #note :focus-visible{outline-color:#1B5A85}
 .note-lede{margin:0;color:#3E414A}
-#note label{display:block;font:700 21px/1.2 var(--hand);margin:18px 0 6px}
+#note label{display:block;font:700 21px/1.2 var(--hand);margin:14px 0 5px}
 #note label small{font:400 17px/1 var(--hand);color:#3E414A;margin-left:4px}
 #note textarea,#note input{display:block;width:100%;font:16px/1.5 var(--serif);color:#2B2D33;background:#FBFAF6;border:1.5px solid #2B2D33;border-radius:5px 8px 6px 9px;padding:10px 12px;min-height:44px}
-#note textarea{resize:vertical;min-height:124px}
+#note textarea{resize:vertical;min-height:108px}
 #note textarea:focus-visible,#note input:focus-visible{outline-offset:2px;border-radius:5px 8px 6px 9px}
 #note [aria-invalid="true"]{border-color:#A3352B;border-width:2px}
 .note-msg{min-height:1.5em;margin:10px 0 2px;color:#A3352B;font-size:15.5px;line-height:1.45}
@@ -498,15 +498,17 @@ html:not(.wide) .lonely .cst{width:92px}
     <h2 id="note-t">Leave a note</h2>
     <form id="note-form" novalidate>
       <p class="note-lede">It goes straight to me.</p>
+      <label for="note-name">Your name <small>(if you like)</small></label>
+      <input id="note-name" name="name" type="text" maxlength="60" autocomplete="name">
       <label for="note-text">Your note</label>
-      <textarea id="note-text" name="text" rows="5" maxlength="600" required aria-describedby="note-msg"></textarea>
+      <textarea id="note-text" name="text" rows="4" maxlength="600" required aria-describedby="note-msg"></textarea>
       <label for="note-contact">Where can I answer? <small>(only if you want an answer)</small></label>
       <input id="note-contact" name="contact" type="text" maxlength="120" autocomplete="off">
       <div class="note-trap" aria-hidden="true"><label>Website <input name="website" type="text" tabindex="-1" autocomplete="off"></label></div>
       <p class="note-msg" id="note-msg" role="alert"></p>
       <button class="note-send" type="submit">send it</button>
     </form>
-    <p class="note-done" id="note-done" tabindex="-1" hidden>Sent. Thank you.</p>
+    <p class="note-done" id="note-done" tabindex="-1" hidden>Sent. Thank you. Look up.</p>
   </div>
 </dialog>
 
@@ -589,7 +591,7 @@ const S = {
   lastMove: 0, lastY: 0, nudge: 0,
   objs: [], avoid: [], yurtX: null, yurtZ: 1, treeX: null, pierX: null, pierLen: 340,
   nlayers: [], dusk: { w0: 1e9, w1: 1e9 + 1, i0: 1e9, i1: 1e9 + 1, deep: 1 }, D: { w: 0, ind: 0, deep: 0 },
-  sunU: 0, fireT: null, sNight: 0, lanterns: [], shared: [], threadC: '', hashY: 0, wx: '', flakes: []
+  sunU: 0, fireT: null, sNight: 0, lanterns: [], shared: [], threadC: '', hashY: 0, wx: '', flakes: [], growth: {}
 };
 const hz = document.createElement('canvas'), hzc = hz.getContext('2d');
 /* the day sky is painted once per frame here, so the mist around the words can borrow it */
@@ -1818,6 +1820,8 @@ function openReel(o){
   reelObj = o; reelClosing = false;
   reelT.textContent = o.p.title;
   reelBody.textContent = ''; reelBody.append(bodyFor(o));
+  const grown = S.growth[o.p.slug];
+  if (grown){ const a = document.createElement('aside'); a.className = 'note'; a.textContent = Math.floor(grown.total) + ' commits so far, ' + Math.floor(grown.week) + ' this week.'; reelBody.append(a); }
   reelScreen.textContent = '';
   reelFrame.classList.remove('has-video');
   reelScreen.classList.toggle('nightscreen', !!o.sky);
@@ -2134,8 +2138,127 @@ function drawDay(c){
   c.globalAlpha = 1;
   drawSmoke(c, s, t);
   drawPierLamp(c, s, t, w);
+  drawLife(c);
   drawWeather(c, false);
   if (w > 0){ c.fillStyle = `rgba(238,158,104,${(.1 * w).toFixed(3)})`; c.fillRect(0, 0, vw, H); }
+}
+/* ---------- life: every project gives off its own small thing, and the more work it has had, the more of it there is
+   and the further it spreads. The numbers are real commit counts (all time, this week, today) sent by a hook on my
+   machine; with no numbers each project gets a little. A big day of work makes its thing bloom across the screen. ---------- */
+const LIFE = {
+  'voice-receptionist': { kind: 'ring',   ax: .5,  ay: .42 },  /* calls going out */
+  'crm':                { kind: 'ticket', ax: .62, ay: .3 },   /* job tickets */
+  'data-assistant':     { kind: 'digit',  ax: .4,  ay: .15 },  /* numbers */
+  'lowl':               { kind: 'flower', ax: .5,  ay: 1 },    /* something growing under the sign */
+  'tools':              { kind: 'curl',   ax: .5,  ay: .45 },  /* shavings off the workbench */
+  'emberquill':         { kind: 'ember',  ax: .5,  ay: .12 },  /* embers */
+  'bookforge':          { kind: 'page',   ax: .5,  ay: .1 },   /* pages taking off from the light */
+  'kana-notebook':      { kind: 'petal',  ax: .5,  ay: .12 },  /* petals, and now and then a kana */
+  'small-things':       { kind: 'quiz',   ax: .5,  ay: .12 }   /* questions */
+};
+const forcedGrow = (/[?&]grow=(big|small)\b/.exec(location.search) || [])[1] || '';
+function vigour(slug){
+  if (forcedGrow) return forcedGrow === 'big' ? { g: 1, v: 1, bloom: true } : { g: .1, v: 0, bloom: false };
+  const d = S.growth[slug];
+  if (!d) return { g: .22, v: 0, bloom: false };
+  return { g: clamp(Math.log10(1 + d.total) / 3, .1, 1), v: clamp(d.week / 40, 0, 1), bloom: d.day >= 12 || d.week >= 50 };
+}
+const hsh = (i, k, sd) => { const x = Math.sin(i * 127.1 + k * 311.7 + sd) * 43758.5453; return x - Math.floor(x); };
+const KANA = '\u3042\u304B\u3055\u305F\u306A\u306F\u307E\u3084\u3089\u308F', DIGITS = '0123456789%+';
+/* things that drift up and away from where they start */
+function lifeRise(c, e, draw){
+  for (let i = 0; i < e.n; i++){
+    const r1 = hsh(i, 1, e.sd), r2 = hsh(i, 2, e.sd), r3 = hsh(i, 3, e.sd);
+    const p = (e.t * e.sp * (.6 + .8 * r1) + r2) % 1;
+    const x = e.ex + (r3 - .5) * e.R * 1.4 * (.25 + p) + Math.sin(p * 7 + r1 * 6.283) * 7, y = e.ey - p * e.R * (.55 + .6 * r1);
+    c.globalAlpha = Math.min(1, Math.sin(p * Math.PI) * e.boost);
+    draw(x, y, i, p, r1, r2);
+  }
+}
+const LIFEKIND = {
+  ember(c, e){
+    lifeRise(c, e, (x, y, i, p, r1, r2) => {
+      c.fillStyle = i % 3 ? 'rgb(236,140,62)' : 'rgb(244,190,96)'; c.beginPath(); c.arc(x, y, (1.4 + 2.4 * r2 * (1 - p * .5)) * e.z, 0, 6.283); c.fill();
+      if (i % 5 === 0){ const a = e.t * .8 + i, z = (5 + 3 * r1) * e.z; c.strokeStyle = e.ink; c.lineWidth = 1; c.beginPath(); for (let k = 0; k < 4; k++){ const q = a + k * 2.094; c[k ? 'lineTo' : 'moveTo'](x + Math.cos(q) * z, y + Math.sin(q) * z); } c.stroke(); }
+    });
+  },
+  ticket(c, e){
+    c.strokeStyle = e.ink; c.lineWidth = 1;
+    lifeRise(c, e, (x, y, i, p, r1) => { c.save(); c.translate(x, y); c.rotate(r1 * 6 + p * 1.6); c.scale(e.z, e.z); c.strokeRect(-5, -3.5, 10, 7); c.beginPath(); c.moveTo(-3, -1); c.lineTo(3, -1); c.moveTo(-3, 1.2); c.lineTo(1, 1.2); c.stroke(); c.restore(); });
+  },
+  digit(c, e){
+    c.fillStyle = e.ink; c.textAlign = 'center'; c.textBaseline = 'middle';
+    lifeRise(c, e, (x, y, i, p, r1, r2) => { c.font = `400 ${Math.round((13 + 7 * r2) * e.z)}px Gaegu, cursive`; c.fillText(DIGITS[i % DIGITS.length], x, y); });
+  },
+  quiz(c, e){
+    c.fillStyle = e.ink; c.textAlign = 'center'; c.textBaseline = 'middle';
+    lifeRise(c, e, (x, y, i, p, r1, r2) => { c.save(); c.translate(x, y); c.rotate((r1 - .5) * .9); c.font = `700 ${Math.round((15 + 9 * r2) * e.z)}px Gaegu, cursive`; c.fillText('?', 0, 0); c.restore(); });
+  },
+  curl(c, e){
+    c.strokeStyle = e.ink; c.lineWidth = 1.1;
+    lifeRise(c, e, (x, y, i, p, r1, r2) => { const z = (3 + 3 * r2) * e.z, a = r1 * 6 + p * 5; c.beginPath(); c.arc(x, y, z, a, a + 4.4); c.arc(x + Math.cos(a + 4.4) * z * .5, y + Math.sin(a + 4.4) * z * .5, z * .5, a + 4.4, a + 7.6); c.stroke(); });
+  },
+  /* petals come down across the gate instead of going up */
+  petal(c, e){
+    for (let i = 0; i < e.n; i++){
+      const r1 = hsh(i, 1, e.sd), r2 = hsh(i, 2, e.sd), r3 = hsh(i, 3, e.sd);
+      const p = (e.t * e.sp * (.5 + .6 * r1) + r2) % 1;
+      const x = e.ex + (r3 - .5) * e.R * 2 + p * e.R * .35 + Math.sin(p * 9 + r1 * 6.283) * 9, y = e.ey - e.R * .55 + p * e.R * 1.25;
+      c.globalAlpha = Math.min(1, Math.sin(p * Math.PI) * e.boost);
+      if (i % 7 === 3){ c.fillStyle = e.ink; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `400 ${Math.round((14 + 7 * r2) * e.z)}px serif`; c.globalAlpha *= .6; c.fillText(KANA[i % KANA.length], x, y); continue; }
+      c.fillStyle = i % 2 ? 'rgb(226,150,164)' : 'rgb(238,184,190)';
+      c.beginPath(); c.ellipse(x, y, 3.8 * e.z, 2.1 * e.z, r1 * 6 + p * 8, 0, 6.283); c.fill();
+    }
+  },
+  /* pages circle the light like birds */
+  page(c, e){
+    c.strokeStyle = e.ink; c.fillStyle = '#FBFAF6'; c.lineWidth = 1;
+    for (let i = 0; i < e.n; i++){
+      const r1 = hsh(i, 1, e.sd), r2 = hsh(i, 2, e.sd), r3 = hsh(i, 3, e.sd);
+      const a = r1 * 6.283 + e.t * e.sp * 5 * (.5 + r2) * (i % 2 ? 1 : -1), rad = e.R * (.22 + .78 * r3);
+      const x = e.ex + Math.cos(a) * rad, y = e.ey + Math.sin(a) * rad * .42 - e.R * .12, fl = Math.sin(e.t * 5 + i * 1.7) * 3.2 * e.z, z = (4.5 + 3 * r2) * e.z;
+      c.globalAlpha = Math.min(1, (.5 + .4 * r1) * e.boost);
+      c.beginPath(); c.moveTo(x - z, y - fl); c.lineTo(x, y + 1.5); c.lineTo(x + z, y - fl); c.lineTo(x, y - 1); c.closePath(); c.fill(); c.stroke();
+    }
+  },
+  /* the phone: rings going out, like a call */
+  ring(c, e){
+    c.strokeStyle = e.ink; c.lineWidth = 1.2;
+    const k = Math.max(3, Math.round(e.n / 6));
+    for (let i = 0; i < k; i++){
+      const p = (e.t * e.sp * 2.4 + i / k) % 1, rr = 14 + p * e.R;
+      c.globalAlpha = Math.min(1, (1 - p) * .7 * e.boost);
+      c.beginPath(); c.arc(e.ex, e.ey, rr, -.95, -.2); c.stroke();
+      c.beginPath(); c.arc(e.ex, e.ey, rr, Math.PI + .2, Math.PI + .95); c.stroke();
+    }
+  },
+  /* the sign: flowers in the ground around it */
+  flower(c, e){
+    const cols = ['rgb(201,165,91)', 'rgb(217,140,95)', 'rgb(233,196,106)'];
+    for (let i = 0; i < e.n; i++){
+      const r1 = hsh(i, 1, e.sd), r2 = hsh(i, 2, e.sd), r3 = hsh(i, 3, e.sd);
+      const x = e.ex + (r3 - .5) * e.R * 2.2, y = e.ey + 4 + r2 * 10, hgt = (14 + 40 * r1) * (.5 + e.R / 380) * e.z * .8, sw = Math.sin(e.t * .9 + i * 1.3) * 2.6;
+      c.globalAlpha = Math.min(1, (.55 + .35 * r2) * e.boost);
+      c.strokeStyle = e.ink; c.lineWidth = 1; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + sw * .3, y - hgt * .6, x + sw, y - hgt); c.stroke();
+      c.fillStyle = cols[i % 3]; c.beginPath(); c.arc(x + sw, y - hgt, (2.2 + 1.8 * r2) * e.z, 0, 6.283); c.fill();
+    }
+  }
+};
+function drawLife(c){
+  const t = S.time, ink = css(INK[0]);
+  for (const o of S.objs){
+    if (o.sky || !o.vis) continue;
+    const L = LIFE[o.p.slug]; if (!L) continue;
+    const q = o.btn.getBoundingClientRect();
+    if (!q.width || q.right < -500 || q.left > S.vw + 500 || q.bottom < -500 || q.top > S.H + 500) continue;
+    const V = vigour(o.p.slug), k = clamp(S.vw / 900, .62, 1);
+    LIFEKIND[L.kind](c, {
+      ex: q.left + q.width * L.ax, ey: q.top + q.height * L.ay, t, ink, sd: o.p.slug.length * 7.31,
+      R: (90 + 330 * V.g) * (V.bloom ? 1.8 : 1) * k, n: Math.min(180, Math.round((10 + 62 * V.g) * (V.bloom ? 2.2 : 1))),
+      sp: .07 + .07 * V.v, boost: (1 + .3 * V.v + .3 * clamp(o.hot, 0, 1)) * (S.wide ? 1 : .7), /* narrow: it drifts behind the words, so quieter */ z: (1.25 + .5 * V.g) * (V.bloom ? 1.25 : 1)
+    });
+  }
+  c.globalAlpha = 1;
 }
 /* the weather where I am falls here too: snow as soft dots, rain as short pencil strokes. Near ones are bigger and faster. */
 function drawWeather(c, night){
@@ -2550,11 +2673,12 @@ function placeLantern(){
   lanternN.style.top = (ground - 36) + 'px';
 }
 function lanternPos(l){ return { x: l.fx * S.vw + l.fs * S.sMax * .06 - S.s * .06, y: l.fy * S.H }; }
-function lightLantern(){
-  const q = lanternBtn.getBoundingClientRect(), rnd = Math.random;
+/* from the lantern on the sand, or (note = true) from a note that was just sent: that one goes higher and bursts */
+function lightLantern(ev, from, note){
+  const q = (from || lanternBtn).getBoundingClientRect(), rnd = Math.random;
   const x0 = q.left + q.width / 2, y0 = q.top + q.height * .55;
-  const fx = clamp(x0 / S.vw + (rnd() - .4) * .28, .06, .94), fy = .07 + rnd() * .26;
-  const l = { fx, fy, fs: S.s / Math.max(1, S.sMax), t0: S.reduce ? -1 : S.time, x0, y0, s0: S.s, ph: rnd() * 6.283 };
+  const fx = clamp(x0 / S.vw + (rnd() - .4) * .28, .06, .94), fy = note ? .06 + rnd() * .1 : .07 + rnd() * .26;
+  const l = { fx, fy, fs: S.s / Math.max(1, S.sMax), t0: S.reduce ? -1 : S.time, x0, y0, s0: S.s, ph: rnd() * 6.283, note: !!note };
   S.lanterns.push(l);
   while (S.lanterns.length > LMAX) S.lanterns.shift();
   saveLanterns();
@@ -2571,7 +2695,19 @@ function drawLanterns(c, s, t){
       x = sx + (end.x - sx) * e + Math.sin(t * 1.3 + l.ph) * 7 * (1 - e);
       y = l.y0 + (end.y - l.y0) * e;
       sway = Math.sin(t * 1.6 + l.ph) * .16 * (1 - e) + sway * e;
-      if (p >= 1) l.t0 = -1;
+      if (p >= 1){ l.t0 = -1; if (l.note) l.burst = t; }
+    }
+    if (l.burst !== undefined){
+      /* it reaches the sky and lets go of its sparks */
+      const b = (t - l.burst) / 2.8;
+      if (b >= 1) l.burst = undefined;
+      else {
+        const eo = 1 - Math.pow(1 - b, 3);
+        glow(c, x, y, 60 + 220 * eo, '255,206,130', .55 * (1 - b));
+        c.fillStyle = 'rgb(255,220,150)';
+        for (let j = 0; j < 44; j++){ const a = j / 44 * 6.283 + l.ph, d = (18 + (j % 3) * 16) + eo * (90 + (j % 5) * 38); c.globalAlpha = (1 - b) * (j % 2 ? .95 : .6); c.beginPath(); c.arc(x + Math.cos(a) * d, y + Math.sin(a) * d * .9 + eo * eo * 30, (2.2 + (j % 3)) * (1 - b * .7), 0, 6.283); c.fill(); }
+        c.globalAlpha = 1;
+      }
     }
     if (x < -40 || x > S.vw + 40) continue;
     const k = clamp(1 - (y / S.H - .1) * .35, .72, 1.05) * far;
@@ -2753,6 +2889,11 @@ function showToday(d){
     wxEl.textContent = (deg < 0 ? '\u2212' : '') + Math.abs(deg) + '\u00B0 and ' + words[w.kind] + ' in ' + w.place.slice(0, 40) + ' right now.';
     if (!forcedWx) S.wx = w.kind === 'snow' || w.kind === 'rain' ? w.kind : '';
   }
+  if (d && d.growth && typeof d.growth === 'object'){
+    const out = {};
+    for (const k of Object.keys(d.growth).slice(0, 40)){ const v = d.growth[k]; if (v && [v.total, v.week, v.day].every(x => typeof x === 'number' && isFinite(x) && x >= 0)) out[k] = { total: v.total, week: v.week, day: v.day }; }
+    S.growth = out;
+  }
   if (n && typeof n.label === 'string' && n.label){ const a = ago(n.at); if (a) nowEl.textContent = 'last seen working on ' + n.label.slice(0, 60) + ', ' + a + '.'; }
   measureHaze(); requestDraw();
 }
@@ -2773,21 +2914,26 @@ whenIdle(loadToday); whenIdle(loadShared);
   if (!API) return;
   open.hidden = false;
   const say = (m, bad) => { msg.textContent = m; bad ? text.setAttribute('aria-invalid', 'true') : text.removeAttribute('aria-invalid'); };
-  open.addEventListener('click', () => { form.hidden = false; done.hidden = true; say(''); noteDlg.showModal(); text.focus(); });
+  open.addEventListener('click', () => { form.hidden = false; done.hidden = true; say(''); noteDlg.showModal(); document.getElementById('note-name').focus(); });
   noteDlg.querySelector('.reel-x').addEventListener('click', () => noteDlg.close());
   noteDlg.addEventListener('click', e => { if (e.target === noteDlg) noteDlg.close(); });
   text.addEventListener('input', () => { if (msg.textContent) say(''); });
   form.addEventListener('submit', async e => {
     e.preventDefault();
     if (send.disabled) return;
-    const f = new FormData(form), body = { text: String(f.get('text') || '').trim(), contact: String(f.get('contact') || '').trim(), website: String(f.get('website') || '') };
+    const f = new FormData(form), body = { text: String(f.get('text') || '').trim(), name: String(f.get('name') || '').trim(), contact: String(f.get('contact') || '').trim(), website: String(f.get('website') || '') };
     if (!body.text){ say('Write something first.', true); text.focus(); return; }
     send.disabled = true; send.textContent = 'sending…'; say('');
     try {
       const r = await api('/api/notes', body);
-      if (r.ok){ form.reset(); form.hidden = true; done.hidden = false; done.focus(); }
+      if (r.ok){
+        form.reset(); form.hidden = true; done.hidden = false; done.focus();
+        /* the note goes up as a lantern: step out of the way so it can be seen */
+        if (S.reduce) lightLantern(null, open, true);
+        else setTimeout(() => { if (noteDlg.open) noteDlg.close(); lightLantern(null, open, true); }, 1100);
+      }
       else if (r.status === 429) say("That's a lot of notes. Try again in an hour, or email me instead.");
-      else if (r.status === 422) say('That note is too long for the paper. Keep it under 600 characters.', true);
+      else if (r.status === 422) say('That is too long for the paper: 600 characters for the note, 60 for the name.', true);
       else say("It didn't go through. Try again, or email me instead.");
     } catch (_) { say("It didn't go through. Try again, or email me instead."); }
     finally { send.disabled = false; send.textContent = 'send it'; }

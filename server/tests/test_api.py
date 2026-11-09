@@ -187,7 +187,11 @@ def test_today_gives_the_weather_and_nothing_for_now_until_it_is_set() -> None:
 
     body = client.get("/api/today").json()
 
-    assert body == {"weather": {"place": "Astana", "temp": -14, "kind": "snow", "day": True}, "now": None}
+    assert body == {
+        "growth": {},
+        "weather": {"place": "Astana", "temp": -14, "kind": "snow", "day": True},
+        "now": None,
+    }
 
 
 def test_now_is_set_with_the_token_and_shown_with_its_time() -> None:
@@ -270,4 +274,64 @@ def test_today_has_no_weather_when_it_was_never_fetched() -> None:
         create_app(settings, Store(settings.database_path), FakeNotifier(), Weather("Astana", broken))
     )
 
-    assert client.get("/api/today").json() == {"weather": None, "now": None}
+    assert client.get("/api/today").json() == {"growth": {}, "weather": None, "now": None}
+
+
+OWNER = {"authorization": "Bearer s3cret"}
+
+
+def test_note_with_a_name_says_who_it_is_from() -> None:
+    client, _, fake = make()
+
+    client.post("/api/notes", json={"text": "hello", "name": " Aigerim "})
+
+    assert fake.sent[0][1] == "A note from the portfolio, from Aigerim:\n\nhello"
+
+
+def test_growth_is_stored_per_project_and_updated_in_place() -> None:
+    client, _, _ = make()
+    first = {"projects": [{"slug": "emberquill", "total": 326, "week": 4, "day": 0}]}
+    second = {
+        "projects": [
+            {"slug": "emberquill", "total": 340, "week": 18, "day": 14},
+            {"slug": "bookforge", "total": 90, "week": 0, "day": 0},
+        ]
+    }
+
+    a = client.post("/api/growth", json=first, headers=OWNER)
+    b = client.post("/api/growth", json=second, headers=OWNER)
+    growth = client.get("/api/today").json()["growth"]
+
+    assert (a.status_code, b.status_code) == (201, 201)
+    assert set(growth) == {"emberquill", "bookforge"}
+    assert {k: growth["emberquill"][k] for k in ("total", "week", "day")} == {
+        "total": 340,
+        "week": 18,
+        "day": 14,
+    }
+
+
+def test_growth_needs_the_owner_token() -> None:
+    client, store, _ = make()
+
+    res = client.post("/api/growth", json={"projects": [{"slug": "x", "total": 1, "week": 0, "day": 0}]})
+
+    assert res.status_code == 401
+    assert store.get_growth() == []
+
+
+@pytest.mark.parametrize(
+    "item",
+    [
+        {"slug": "Has Spaces", "total": 1, "week": 0, "day": 0},
+        {"slug": "x", "total": -1, "week": 0, "day": 0},
+        {"slug": "x", "total": 1, "week": 0, "day": 0, "message": "fix client bug"},
+    ],
+)
+def test_growth_takes_numbers_only(item: dict[str, object]) -> None:
+    client, store, _ = make()
+
+    res = client.post("/api/growth", json={"projects": [item]}, headers=OWNER)
+
+    assert res.status_code == 422
+    assert store.get_growth() == []
