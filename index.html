@@ -2971,6 +2971,25 @@ layout(true);
 /* a fresh visit with a #link goes there; a reload or Back keeps the spot the browser remembered */
 const navEntry = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
 const hashed = (!navEntry || navEntry.type === 'navigate') && goHash();
+/* around the moment the page finishes loading the browser retries its own jump to the #link, and on the sideways track
+   that walks off towards the end. Hold the spot until it has given up, or until you move. */
+if (hashed){
+  const moves = ['wheel', 'touchstart', 'pointerdown', 'keydown'];
+  const want = location.hash; let holding = true;
+  const hold = () => {
+    if (!holding) return;
+    if (Math.abs(window.scrollY - S.hashY) > 4){
+      /* by now the address may already name the place it was dragged to: put the link back first */
+      if (location.hash !== want) try { history.replaceState(null, '', want); } catch (_) { /* file:// or a sandbox */ }
+      goHash();
+    }
+    requestAnimationFrame(hold);
+  };
+  const letGo = () => { holding = false; moves.forEach(m => window.removeEventListener(m, letGo)); };
+  moves.forEach(m => window.addEventListener(m, letGo, { passive: true }));
+  window.addEventListener('load', () => setTimeout(letGo, 3000), { once: true });
+  requestAnimationFrame(hold);
+}
 probeVideos();
 if (!S.reduce && window.scrollY < 20){
   S.intro = { t0: 0, y0: window.scrollY, skip: false };
