@@ -24,11 +24,17 @@
      Empty = the page works on its own: lanterns stay in your browser and the note button is not shown. -->
 <meta name="portfolio-api" content="https://api-production-2660.up.railway.app">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","name":"Kaisar","url":"https://kekaisik1.github.io/portfolio/","description":"Kaisar builds things with computers in Kazakhstan: voice AI for work, games and story tools after hours.","homeLocation":{"@type":"Country","name":"Kazakhstan"},"knowsLanguage":["kk","ru","en"],"email":"mailto:kaisar.turysbek@gmail.com","sameAs":["https://github.com/kekaisik1","https://t.me/kekaisik"]}</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Spectral:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<!-- the two typefaces live in fonts/ (Latin part only), so the first screen waits on no one else's server -->
+<link rel="preload" href="fonts/gaegu-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/gaegu-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/spectral-400.woff2" as="font" type="font/woff2" crossorigin>
 <script>document.documentElement.classList.add('js');</script>
 <style>
+@font-face{font-family:'Gaegu';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/gaegu-400.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Gaegu';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/gaegu-700.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Spectral';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/spectral-400.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Spectral';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/spectral-500.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Spectral';font-style:italic;font-weight:400;font-display:swap;src:url(fonts/spectral-400-italic.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 :root{
   --paper:#F1F1EC;
   --ink:#2B2D33;
@@ -591,7 +597,8 @@ const S = {
   lastMove: 0, lastY: 0, nudge: 0,
   objs: [], avoid: [], yurtX: null, yurtZ: 1, treeX: null, pierX: null, pierLen: 340,
   nlayers: [], dusk: { w0: 1e9, w1: 1e9 + 1, i0: 1e9, i1: 1e9 + 1, deep: 1 }, D: { w: 0, ind: 0, deep: 0 },
-  sunU: 0, fireT: null, sNight: 0, lanterns: [], shared: [], threadC: '', hashY: 0, wx: '', flakes: [], growth: {}
+  sunU: 0, fireT: null, sNight: 0, lanterns: [], shared: [], threadC: '', hashY: 0, wx: '', flakes: [], growth: {},
+  words: '', skyKey: '', skyV: 0, hazeKey: '', hazeV: 0, hazeAny: false
 };
 const hz = document.createElement('canvas'), hzc = hz.getContext('2d');
 /* the day sky is painted once per frame here, so the mist around the words can borrow it */
@@ -2076,8 +2083,10 @@ function sunPos(){
 }
 function drawDay(c){
   const vw = S.vw, H = S.H, s = S.s, t = S.time, D = S.D, w = D.w;
-  if (skyc.width !== canvas.width || skyc.height !== canvas.height){ skyc.width = canvas.width; skyc.height = canvas.height; }
-  paintSky(skyg);
+  if (skyc.width !== canvas.width || skyc.height !== canvas.height){ skyc.width = canvas.width; skyc.height = canvas.height; S.skyKey = ''; }
+  /* the sky only changes when you move (or the sun does), so standing still it is painted once and kept */
+  const skyKey = s + '|' + w;
+  if (skyKey !== S.skyKey){ paintSky(skyg); S.skyKey = skyKey; S.skyV++; }
   c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
   c.drawImage(skyc, 0, 0);
   c.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
@@ -2351,6 +2360,7 @@ function drawNight(c){
 
 /* ---------- the mist the words sit in (wide) ---------- */
 function measureHaze(){
+  S.hazeV++;
   if (!S.wide){ S.haze = []; return; }
   const tr = track.getBoundingClientRect(), st = stage.getBoundingClientRect();
   S.haze = Array.from(document.querySelectorAll('.hero-text, .block')).filter(el => !el.closest('#night')).map(el => {
@@ -2363,30 +2373,38 @@ function measureHaze(){
 }
 function drawHaze(c, s){
   const g = hzc, vw = S.vw, H = S.H;
-  g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
-  g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.clearRect(0, 0, vw, H);
-  let any = false;
-  for (const e of S.haze){
-    const x = e.x - s, y = e.y, x0 = x - e.pad, x1 = x + e.w + e.pad;
-    if (x1 < 0 || x0 > vw) continue;
-    any = true;
-    const gr = g.createLinearGradient(x0, 0, x1, 0), k = e.pad * .85 / (x1 - x0);
-    gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(k * .5, 'rgba(0,0,0,.6)'); gr.addColorStop(k, '#000');
-    gr.addColorStop(1 - k, '#000'); gr.addColorStop(1 - k * .5, 'rgba(0,0,0,.6)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
-    g.fillStyle = gr;
-    for (let j = 0; j < 8; j++){ g.globalAlpha = (j + 1) / 9; g.fillRect(x0, y - 62 + j * 7, x1 - x0, 7); }
-    g.globalAlpha = 1;
-    g.fillRect(x0, y - 7, x1 - x0, e.h + 21);
-    for (let j = 0; j < 12; j++){ g.globalAlpha = (12 - j) / 13; g.fillRect(x0, y + e.h + 14 + j * 7, x1 - x0, 7); }
-    g.globalAlpha = 1;
+  /* made of the sky, the words' places and where you stand: while none of those change, last frame's mist is still right */
+  const key = s + '|' + S.skyV + '|' + S.hazeV + '|' + S.D.w;
+  if (key !== S.hazeKey){
+    S.hazeKey = key;
+    g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+    g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.clearRect(0, 0, vw, H);
+    let any = false;
+    for (const e of S.haze){
+      const x = e.x - s, y = e.y, x0 = x - e.pad, x1 = x + e.w + e.pad;
+      if (x1 < 0 || x0 > vw) continue;
+      any = true;
+      const gr = g.createLinearGradient(x0, 0, x1, 0), k = e.pad * .85 / (x1 - x0);
+      gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(k * .5, 'rgba(0,0,0,.6)'); gr.addColorStop(k, '#000');
+      gr.addColorStop(1 - k, '#000'); gr.addColorStop(1 - k * .5, 'rgba(0,0,0,.6)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = gr;
+      for (let j = 0; j < 8; j++){ g.globalAlpha = (j + 1) / 9; g.fillRect(x0, y - 62 + j * 7, x1 - x0, 7); }
+      g.globalAlpha = 1;
+      g.fillRect(x0, y - 7, x1 - x0, e.h + 21);
+      for (let j = 0; j < 12; j++){ g.globalAlpha = (12 - j) / 13; g.fillRect(x0, y + e.h + 14 + j * 7, x1 - x0, 7); }
+      g.globalAlpha = 1;
+    }
+    S.hazeAny = any;
+    if (any){
+      /* the mist is the sky itself, brought down in front of the far hills */
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.globalCompositeOperation = 'source-in'; g.drawImage(skyc, 0, 0);
+      g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+      g.globalCompositeOperation = 'source-atop'; g.fillStyle = `rgba(250,249,244,${(.45 * (1 - .7 * S.D.w)).toFixed(3)})`; g.fillRect(0, 0, vw, H);
+      g.globalCompositeOperation = 'source-over';
+    }
   }
-  if (!any) return;
-  /* the mist is the sky itself, brought down in front of the far hills */
-  g.setTransform(1, 0, 0, 1, 0, 0);
-  g.globalCompositeOperation = 'source-in'; g.drawImage(skyc, 0, 0);
-  g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
-  g.globalCompositeOperation = 'source-atop'; g.fillStyle = `rgba(250,249,244,${(.45 * (1 - .7 * S.D.w)).toFixed(3)})`; g.fillRect(0, 0, vw, H);
-  g.globalCompositeOperation = 'source-over';
+  if (!S.hazeAny) return;
   c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = .9; c.drawImage(hz, 0, 0); c.globalAlpha = 1;
   c.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
 }
@@ -2482,6 +2500,13 @@ function seaEndWide(tr){
   for (const o of S.objs) if (!o.sky && seaEl.contains(o.host)) r = Math.max(r, o.x + o.def.full[2] * o.sc);
   return r;
 }
+/* where the words ended up. If the typefaces arrive and none of this has moved, the drawing made for it is still right. */
+function wordsAt(){
+  const tr = track.getBoundingClientRect();
+  let sig = track.scrollWidth + 'x' + root.scrollHeight;
+  for (const el of track.querySelectorAll('.hero-text, .block, .sign, .hero-text > *, .block > *')){ const q = el.getBoundingClientRect(); sig += '|' + (q.left - tr.left).toFixed(1) + ',' + (q.top - tr.top).toFixed(1) + ',' + q.width.toFixed(1) + ',' + q.height.toFixed(1); }
+  return sig;
+}
 function layout(force){
   const vw = document.documentElement.clientWidth, vh = window.innerHeight;
   const wide = mqWide.matches;
@@ -2556,6 +2581,7 @@ function layout(force){
   hz.width = canvas.width; hz.height = canvas.height;
   nc.width = canvas.width; nc.height = canvas.height;
   skyc.width = canvas.width; skyc.height = canvas.height;
+  S.skyKey = S.hazeKey = '';
   measureHaze();
   if (regen){
     S.gen++; S.introStrokes = [];
@@ -2576,6 +2602,7 @@ function layout(force){
   S.lastDot = '';
   duskNow();
   applyDom();
+  S.words = wordsAt();
 }
 
 /* ---------- a thread from the restarts in the sky, back along the horizon, to what they became ---------- */
@@ -2944,13 +2971,32 @@ layout(true);
 /* a fresh visit with a #link goes there; a reload or Back keeps the spot the browser remembered */
 const navEntry = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
 const hashed = (!navEntry || navEntry.type === 'navigate') && goHash();
+/* around the moment the page finishes loading the browser retries its own jump to the #link, and on the sideways track
+   that walks off towards the end. Hold the spot until it has given up, or until you move. */
+if (hashed){
+  const moves = ['wheel', 'touchstart', 'pointerdown', 'keydown'];
+  const want = location.hash; let holding = true;
+  const hold = () => {
+    if (!holding) return;
+    if (Math.abs(window.scrollY - S.hashY) > 4){
+      /* by now the address may already name the place it was dragged to: put the link back first */
+      if (location.hash !== want) try { history.replaceState(null, '', want); } catch (_) { /* file:// or a sandbox */ }
+      goHash();
+    }
+    requestAnimationFrame(hold);
+  };
+  const letGo = () => { holding = false; moves.forEach(m => window.removeEventListener(m, letGo)); };
+  moves.forEach(m => window.addEventListener(m, letGo, { passive: true }));
+  window.addEventListener('load', () => setTimeout(letGo, 3000), { once: true });
+  requestAnimationFrame(hold);
+}
 probeVideos();
 if (!S.reduce && window.scrollY < 20){
   S.intro = { t0: 0, y0: window.scrollY, skip: false };
   setTimeout(() => { if (S.intro || !root.classList.contains('ready')) reveal(); }, 1400);
 } else reveal();
 requestDraw();
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layout(true); if (hashed && Math.abs(window.scrollY - S.hashY) < 4) goHash(); requestDraw(); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (wordsAt() === S.words) return; layout(true); if (hashed && Math.abs(window.scrollY - S.hashY) < 4) goHash(); requestDraw(); });
 })();
 </script>
 </body>
