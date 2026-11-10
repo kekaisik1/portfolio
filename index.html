@@ -24,11 +24,17 @@
      Empty = the page works on its own: lanterns stay in your browser and the note button is not shown. -->
 <meta name="portfolio-api" content="https://api-production-2660.up.railway.app">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","name":"Kaisar","url":"https://kekaisik1.github.io/portfolio/","description":"Kaisar builds things with computers in Kazakhstan: voice AI for work, games and story tools after hours.","homeLocation":{"@type":"Country","name":"Kazakhstan"},"knowsLanguage":["kk","ru","en"],"email":"mailto:kaisar.turysbek@gmail.com","sameAs":["https://github.com/kekaisik1","https://t.me/kekaisik"]}</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Spectral:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<!-- the two typefaces live in fonts/ (Latin part only), so the first screen waits on no one else's server -->
+<link rel="preload" href="fonts/gaegu-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/gaegu-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/spectral-400.woff2" as="font" type="font/woff2" crossorigin>
 <script>document.documentElement.classList.add('js');</script>
 <style>
+@font-face{font-family:'Gaegu';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/gaegu-400.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Gaegu';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/gaegu-700.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Spectral';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/spectral-400.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Spectral';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/spectral-500.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Spectral';font-style:italic;font-weight:400;font-display:swap;src:url(fonts/spectral-400-italic.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 :root{
   --paper:#F1F1EC;
   --ink:#2B2D33;
