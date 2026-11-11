@@ -8,6 +8,7 @@ Vite + strict TypeScript, no framework. A canvas-drawn pencil journey with seven
 - `npm run check` — lint + typecheck + unit tests + build. Run before every commit.
 - `npm run test:e2e` — Playwright smoke suite against the real build under `/portfolio/` (rebuild first if a preview server is already running on 4173: it is reused)
 - `npm run format` — prettier
+- `npm run video -- <file> <slug>` — compress a video into `public/videos/<slug>.mp4` (H.264, 720p, at most 2 MB). Every video goes in this way, never as a raw copy: recorders write HEVC, which Firefox can't play, and a unit test fails above 2 MB.
 
 ## Conventions
 

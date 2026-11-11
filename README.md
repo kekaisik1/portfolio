@@ -61,7 +61,7 @@ A unit test fails until all three exist. Slugs are public: they are `#links`, vi
 
 ## Add a video
 
-Drop `public/videos/<slug>.mp4` (and optional captions `public/videos/<slug>.vtt`) in and commit. The list of videos is made at build time; a project without one shows a small empty frame that says so. Suggested: H.264 + AAC, 1280×720, up to 30 seconds and 8 MB, understandable with the sound off. Restart `npm run dev` after adding a file.
+Run `npm run video -- <your file> <slug>` (needs ffmpeg). It writes `public/videos/<slug>.mp4` as H.264 + AAC at 720p and at most 2 MB, which every browser plays and a phone loads quickly; a unit test fails on a bigger file, so don't copy a raw recording in. Optional captions go beside it as `public/videos/<slug>.vtt`. Commit both. The list of videos is made at build time; a project without one shows a small empty frame that says so. Keep it understandable with the sound off, and restart `npm run dev` after adding a file.
 
 ## Environment
 
