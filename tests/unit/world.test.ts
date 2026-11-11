@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { clamp, mulberry32, smooth } from '../../src/lib/math';
-import { phoneScale } from '../../src/places/size';
+import { PHONE_MIN_CORE_SHARE, phoneScale } from '../../src/places/size';
 import { dens, soft } from '../../src/world/draw/pencil';
 import { css, hex, mix, stop, wt } from '../../src/world/palette';
 import { ago, forcedWeather, nowLine, weatherLine } from '../../src/world/today-text';
@@ -156,7 +156,7 @@ describe('pencil helpers', () => {
 });
 
 describe('how big a place stands on a phone', () => {
-  it('stands about half the screen tall on a 390 x 844 phone', () => {
+  it('stands between a third and just over half the screen tall on a 390 x 844 phone', () => {
     for (const [coreW, hitH] of [
       [558, 398],
       [606, 428],
@@ -165,7 +165,7 @@ describe('how big a place stands on a phone', () => {
     ]) {
       const share = (phoneScale(390, 844, coreW, hitH) * hitH) / 844;
 
-      expect(share, `core ${coreW}, height ${hitH}`).toBeGreaterThanOrEqual(0.45);
+      expect(share, `core ${coreW}, height ${hitH}`).toBeGreaterThanOrEqual(0.36);
       expect(share).toBeLessThanOrEqual(0.55);
     }
   });
@@ -175,7 +175,7 @@ describe('how big a place stands on a phone', () => {
   });
 
   it('never crops the middle of the scene past its limit', () => {
-    expect(phoneScale(320, 2000, 600, 300)).toBeCloseTo(320 / 600 / 0.58, 6);
+    expect(phoneScale(320, 2000, 600, 300)).toBeCloseTo(320 / 600 / PHONE_MIN_CORE_SHARE, 6);
   });
 });
 

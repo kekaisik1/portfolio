@@ -264,8 +264,8 @@ test('on a phone each place stands about half the screen tall and fits the width
   for (const b of boxes) {
     expect(b.left).toBeGreaterThanOrEqual(0);
     expect(b.left + b.w).toBeLessThanOrEqual(PHONE.width + 0.5);
-    /* the button is the building plus its strip of ground; the building alone is 45-55% of the screen */
-    expect(b.h / PHONE.height).toBeGreaterThan(0.55);
+    /* the button is the building plus its strip of ground; the building alone is 36-55% of the screen */
+    expect(b.h / PHONE.height).toBeGreaterThan(0.42);
   }
 });
 

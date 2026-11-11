@@ -3,8 +3,9 @@ import { clamp } from '../lib/math';
 
 /** the building aims to stand this much of the screen's height */
 export const PHONE_HEIGHT_SHARE = 0.5;
-/** ...but never so large that less than this share of the scene's middle fits across the screen */
-export const PHONE_MIN_CORE_SHARE = 0.58;
+/** ...but never so large that less than this share of the scene's middle fits across the screen
+ * (0.58 stood taller but cut Kana Notebook's gate and brush off the sides) */
+export const PHONE_MIN_CORE_SHARE = 0.72;
 
 /**
  * Scale (CSS px per drawing unit) of a place in the narrow layout.
