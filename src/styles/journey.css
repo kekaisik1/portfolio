@@ -1,0 +1,125 @@
+/* The words on the journey: the greeting, each place's name and line, about and contact. */
+/* hero: the name, written into the morning sky */
+.hero {
+  position: relative;
+}
+.hero-text {
+  position: relative;
+  max-width: 720px;
+}
+.hero h1 {
+  font-size: clamp(54px, 6.6vw, 108px);
+  line-height: 0.92;
+  letter-spacing: -0.01em;
+}
+.hero .quiet {
+  font-size: clamp(19px, 1.55vw, 24px);
+  max-width: 30ch;
+  margin-top: 20px;
+}
+html.js:not(.ready-nav) .horizon {
+  opacity: 0;
+}
+
+/* a place: its name and one line, pencilled into the sky beside it. Everything else is inside. */
+.spot {
+  position: relative;
+}
+.cap h2 {
+  font-size: clamp(38px, 3.5vw, 54px);
+  line-height: 0.98;
+  letter-spacing: -0.005em;
+}
+.cap p {
+  font: italic 400 clamp(17px, 1.3vw, 20px)/1.35 var(--serif);
+  margin: 6px 0 0 2px;
+  color: var(--ink-soft);
+}
+/* what is written inside a place. With JavaScript it is read inside the place (and stays here for screen readers);
+   without, it is simply shown under the name. */
+html.js .more {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+html:not(.js) .more {
+  display: block;
+  max-width: 34rem;
+  padding: 8px 18px 0;
+}
+
+/* text sits straight on the drawn sky */
+.block {
+  position: relative;
+}
+.note {
+  font: 400 20px/1.2 var(--hand);
+  color: var(--ink-soft);
+  transform: rotate(-1.6deg);
+  transform-origin: left center;
+  margin: 6px 0 12px 12px;
+  display: block;
+}
+/* two pencilled lines that come from the API: the weather where I am, and what I was last working on */
+.today {
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+.today + .today {
+  margin-top: 4px;
+}
+.today:empty {
+  display: none;
+}
+.live {
+  margin: 4px 0 0;
+}
+.live a {
+  font: 700 23px/1.15 var(--hand);
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 2px;
+}
+
+/* night: the paper goes dark and the pencil turns to chalk */
+#night {
+  --ink: var(--chalk);
+  --ink-soft: var(--chalk-soft);
+  --focus: var(--lamp);
+  color: var(--chalk);
+}
+#about p {
+  font-size: 18px;
+}
+.write p {
+  font-size: 18px;
+}
+.write .big {
+  margin-bottom: 6px;
+}
+.write .big a {
+  font: 700 34px/1 var(--hand);
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.write .gh {
+  margin: 0;
+}
+.write .gh a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+#moon-spot {
+  width: 112px;
+  height: 112px;
+  margin: 0 0 30px 40px;
+}

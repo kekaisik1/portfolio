@@ -1,0 +1,12 @@
+/* Less motion: no fades. Comes after everything it switches off. */
+@media (prefers-reduced-motion: reduce) {
+  .horizon,
+  .place span,
+  .lantern-btn .lb-body,
+  .note-send {
+    transition: none;
+  }
+  #note[open]::backdrop {
+    animation: none;
+  }
+}

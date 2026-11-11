@@ -1,0 +1,47 @@
+/* the places standing in the landscape: each one is a button, and a door */
+.obj {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  z-index: 1;
+  min-width: 44px;
+  min-height: 44px;
+}
+/* its sheets of paper, stacked: what is behind, the place itself, its living part, what is in front */
+.obj-art {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  pointer-events: none;
+}
+.obj-art canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.obj-art canvas[hidden] {
+  display: none;
+}
+.obj:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 0;
+}
+@media (forced-colors: active) {
+  .obj:focus-visible {
+    outline: 2px solid CanvasText;
+  }
+}

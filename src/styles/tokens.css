@@ -1,0 +1,33 @@
+/* Palette and type. The drawing's own colours (which blend along the journey) live in src/world/palette.ts. */
+:root {
+  --paper: #f1f1ec;
+  --ink: #2b2d33;
+  --ink-soft: #3e414a;
+  --focus: #1b5a85;
+  /* fixed colours: paper dialogs are always daylight, the night is always chalk */
+  --day-ink: #2b2d33;
+  --day-ink-soft: #3e414a;
+  --day-focus: #1b5a85;
+  --chalk: #e8e6f0;
+  --chalk-soft: #d6d4e6;
+  --lamp: #f2cf73;
+  --sheet: #f4f3ee;
+  --field: #fbfaf6;
+  --screen: #eae8df;
+  --video-bg: #1f2128;
+  --error: #a3352b;
+  --button-hover: #44474f;
+  --hand: 'Gaegu', 'Segoe Print', 'Bradley Hand', cursive;
+  --serif: 'Spectral', Georgia, 'Times New Roman', serif;
+  --vw: 100vw;
+  --H: 100vh;
+  --top: clamp(48px, 9vh, 104px);
+  --gap: clamp(420px, 48vw, 860px);
+  --bar: 40px;
+  --navmist: rgba(241, 241, 236, 0.82);
+  --nav-ink: var(--day-ink);
+}
+html[data-sky='night'] {
+  --navmist: rgba(26, 29, 66, 0.82);
+  --nav-ink: var(--chalk);
+}

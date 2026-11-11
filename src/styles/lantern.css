@@ -1,0 +1,70 @@
+/* a paper lantern on the sand */
+.lantern-btn {
+  display: block;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  border-radius: 50%;
+}
+.lantern-btn svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.lantern-btn path {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.lantern-btn .lb-body {
+  fill: rgba(232, 230, 240, 0.08);
+  transition: fill 0.3s ease;
+}
+.lantern-btn:hover .lb-body,
+.lantern-btn:focus-visible .lb-body {
+  fill: rgba(242, 190, 110, 0.38);
+}
+.lantern-btn:active .lb-body {
+  fill: rgba(242, 190, 110, 0.7);
+}
+html.wide #night {
+  position: relative;
+}
+html.wide .lantern-btn {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+}
+html:not(.wide) .lantern-btn {
+  margin: -20vh auto 0;
+}
+/* how many lanterns everyone has lit, chalked beside the one on the sand */
+.lantern-n {
+  font: 400 19px/1.2 var(--hand);
+  color: var(--ink-soft);
+  margin: 0;
+  white-space: nowrap;
+}
+html.wide .lantern-n {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  transform: rotate(-1.6deg);
+  transform-origin: left center;
+}
+html:not(.wide) .lantern-n {
+  margin: 4px auto 0;
+  height: 42vh;
+  text-align: center;
+}
