@@ -27,9 +27,11 @@ export const PROJECTS: readonly Project[] = [
     name: 'The Numbers Room',
     line: 'Ask your numbers a question.',
     inside: [
-      "People ask about their numbers in plain words and it answers from their database. The part I'm proud of is boring: I don't let the AI do the math. The sums are ordinary checked code; the AI only explains the result.",
+      'Her name is Abby. People @mention her in the team chat, ask about the budget in plain words, and she answers in the thread from their database, with a chart and the Excel and PDF behind it.',
+      "The part I'm proud of is boring: I don't let the AI do the math. The sums are ordinary checked code; the AI only writes the words around them. Each channel reaches only the data it's allowed to see, a second model reads every answer before it's posted, and on Mondays she sends the reports on her own.",
     ],
-    link: { href: EMAIL, label: "Can't show this one. I can tell you how it's built.", external: false },
+    note: 'the video runs on sample data.',
+    link: { href: EMAIL, label: "The real one is private. I can tell you how it's built.", external: false },
   },
   {
     slug: 'lowl',
