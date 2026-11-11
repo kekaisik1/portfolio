@@ -2,7 +2,8 @@
  * The mist the words sit in (wide layout): the sky itself, brought down in front of the far hills wherever there is text.
  */
 import { stage, track } from './dom';
-import { S, hz, hzc, skyc } from './state';
+import { hz, hzc, skyc } from './sheets';
+import { S } from './state';
 import type { G } from './types';
 
 export function measureHaze(): void {

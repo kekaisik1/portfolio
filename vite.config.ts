@@ -21,7 +21,6 @@ function videoManifest(): Plugin {
     resolveId: (id) => (id === VIRTUAL_VIDEOS ? '\0' + VIRTUAL_VIDEOS : undefined),
     load(id) {
       if (id !== '\0' + VIRTUAL_VIDEOS) return undefined;
-      this.addWatchFile(VIDEOS_DIR);
       return `export default ${JSON.stringify(readVideoManifest(VIDEOS_DIR))};`;
     },
   };

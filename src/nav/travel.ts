@@ -6,12 +6,7 @@ import { requestDraw } from '../world/scheduler';
 import { S } from '../world/state';
 import { duskNow, nearStop, readTarget } from '../world/zones';
 import { applyDom, placeLinks } from './horizon';
-
-/** Which stop an arrow key leads to: the next one, or the one you are between and have not reached. */
-export function arrowStop(dir: 1 | -1, y: number, stops: readonly number[], cur: number): number {
-  if (dir === 1) return y < stops[cur] - 40 ? cur : cur + 1;
-  return y > stops[cur] + 40 ? cur : cur - 1;
-}
+import { arrowStop } from './routing';
 
 /** Go to stop i (0 = the first screen, then the places, then the end), optionally taking keyboard focus along. */
 export function goTo(i: number, focus: boolean): void {

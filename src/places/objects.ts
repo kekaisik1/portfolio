@@ -250,7 +250,7 @@ export function finishObjects(): void {
     const fw = V.fw * sc,
       fh = (F[3] - F[1] + (S.wide ? 0 : PADB)) * sc;
     V.sc = sc;
-    V.pr = S.wide ? S.ps : S.dpr;
+    V.pr = S.ps;
     V.back = !S.wide;
     o.cw = fw;
     o.ch = fh;

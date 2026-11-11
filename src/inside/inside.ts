@@ -18,6 +18,7 @@ import { requestDraw } from '../world/scheduler';
 import { S } from '../world/state';
 import type { PlaceObj, SkOp } from '../world/types';
 import { placeNow } from '../world/zones';
+import { insideSlug } from '../nav/routing';
 import { sheetArt } from './sheets';
 import { pencilFrame, showVideo } from './video';
 
@@ -203,6 +204,15 @@ export function goInside(o: PlaceObj, fromHistory = false): void {
   requestDraw();
 }
 
+/**
+ * Close the dialog. The browser hands focus back to the place's button as it closes; that must not be taken
+ * for someone tabbing to it (which would snap the scroll to wherever the glide has got to).
+ */
+function shut(): void {
+  S.suppress = true;
+  inside.close();
+}
+
 /** Step back outside. `fromHistory` = the browser's Back is already doing it. */
 export function leaveInside(fromHistory = false): void {
   if (!inside.open || S.inClosing) return;
@@ -216,7 +226,7 @@ export function leaveInside(fromHistory = false): void {
   const v = inVid.querySelector('video');
   if (v) v.pause();
   if (S.reduce || !S.inObj) {
-    inside.close();
+    shut();
     return;
   }
   stopAnims();
@@ -241,14 +251,8 @@ export function leaveInside(fromHistory = false): void {
     inSheet.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, fill: 'forwards' }),
     inX.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, fill: 'forwards' }),
   ];
-  out.onfinish = () => inside.close();
+  out.onfinish = shut;
   requestDraw();
-}
-
-/** The slug of the place a history entry was made inside of, if any. */
-export function insideSlug(state: unknown): string | null {
-  if (typeof state !== 'object' || state === null || !('inside' in state)) return null;
-  return typeof state.inside === 'string' ? state.inside : null;
 }
 
 export function initInside(): void {

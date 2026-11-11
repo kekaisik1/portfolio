@@ -2,7 +2,6 @@
  * The one mutable state of the journey. Everything that draws reads from here; layout() and the frame loop write it.
  * Kept as a single plain object on purpose: the drawing is one picture, and its parts all need the same few numbers.
  */
-import { newCanvas, ctx2d } from '../lib/dom';
 import type { Growth, Lantern, Layer, PlaceObj, StrokeOp, WeatherKind } from './types';
 
 /** Width of one cached strip of landscape, in CSS pixels. */
@@ -231,11 +230,3 @@ export const S: WorldState = {
   inSettled: false,
   inClosing: false,
 };
-
-/* spare sheets, made once: the mist the words sit in, the day sky (so the mist can borrow it), the night coming down */
-export const hz = newCanvas();
-export const hzc = ctx2d(hz);
-export const skyc = newCanvas();
-export const skyg = ctx2d(skyc);
-export const nc = newCanvas();
-export const ncx = ctx2d(nc);

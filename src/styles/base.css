@@ -105,16 +105,3 @@ a:hover {
 [tabindex='-1']:focus {
   outline: none;
 }
-
-/* less motion: no fades */
-@media (prefers-reduced-motion: reduce) {
-  .horizon,
-  .place span,
-  .lantern-btn .lb-body,
-  .note-send {
-    transition: none;
-  }
-  #note[open]::backdrop {
-    animation: none;
-  }
-}

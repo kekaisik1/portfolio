@@ -11,7 +11,8 @@ import { measureHaze } from './haze';
 import { placeLantern } from './lanterns';
 import { DEFS, genLayer } from './layers';
 import { genMoving, makeSprites } from './sprites';
-import { S, TILE, hz, nc, skyc } from './state';
+import { hz, nc, skyc } from './sheets';
+import { S, TILE } from './state';
 import { schedulePump } from './tiles';
 import { duskNow, readTarget, sAtY } from './zones';
 
@@ -47,6 +48,7 @@ export function layout(force: boolean): void {
   S.vh = vh;
   if (!wide) journey.style.height = '';
   track.style.transform = '';
+  S.lastTrack = '';
   S.dpr = Math.min(window.devicePixelRatio || 1, 2);
   S.ps = S.dpr >= 1.5 ? 1.5 : 1;
   sizeSpots();

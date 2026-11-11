@@ -8,33 +8,7 @@ import { requestDraw } from '../world/scheduler';
 import { S } from '../world/state';
 import { duskNow, readTarget } from '../world/zones';
 import { applyDom, replaceAddress } from './horizon';
-
-/**
- * Links from before the rebuild still land somewhere sensible: old project slugs and old section ids
- * map to the place that took them over.
- */
-export const OLD_LINKS: Readonly<Record<string, string>> = {
-  kana: 'kana-notebook',
-  voice: 'front-desk',
-  'voice-receptionist': 'front-desk',
-  crm: 'front-desk',
-  data: 'numbers-room',
-  'data-assistant': 'numbers-room',
-  'about-t': 'about',
-};
-
-/** The element id a location hash points at ('' if it cannot be read). */
-export function hashTarget(hash: string): string {
-  let id: string;
-  try {
-    id = decodeURIComponent(hash.replace(/^#/, ''));
-  } catch (err) {
-    /* a malformed %-escape */
-    if (err instanceof URIError) return '';
-    throw err;
-  }
-  return Object.hasOwn(OLD_LINKS, id) ? OLD_LINKS[id] : id;
-}
+import { hashTarget } from './routing';
 
 /** Travel to whatever the address points at. Returns false when it points at nothing on the journey. */
 export function goHash(): boolean {

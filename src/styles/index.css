@@ -1,4 +1,4 @@
-/* Styles, split by concern. Order matters: tokens first, the two layouts after the things they arrange, print last. */
+/* Styles, split by concern. Order matters: tokens first, the two layouts after the things they arrange, then reduced motion, print last. */
 @import './fonts.css';
 @import './tokens.css';
 @import './base.css';
@@ -10,4 +10,5 @@
 @import './horizon.css';
 @import './layout-wide.css';
 @import './layout-narrow.css';
+@import './motion.css';
 @import './print.css';
