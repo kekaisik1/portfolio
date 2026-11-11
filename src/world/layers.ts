@@ -100,6 +100,7 @@ export function genLayer(d: LayerDef, night: boolean): Layer {
     h: (d.bot - d.top) * H,
     ops: [],
     tiles: new Array<HTMLCanvasElement | null>(Math.ceil(W / TILE)).fill(null),
+    tileTop: new Array<number>(Math.ceil(W / TILE)).fill(0),
     yAt: (u) => ys[idx(u)],
     PAt: (u) => Ps[idx(u)],
     CAt: (u) => Cs[idx(u)],

@@ -34,6 +34,9 @@ export function wordsAt(): string {
   }
   return sig;
 }
+/** most device pixels per CSS pixel the animated scene is drawn at */
+const SCENE_MAX_DPR = 1.5;
+
 export function layout(force: boolean): void {
   const vw = document.documentElement.clientWidth,
     vh = window.innerHeight;
@@ -49,7 +52,10 @@ export function layout(force: boolean): void {
   if (!wide) journey.style.height = '';
   track.style.transform = '';
   S.lastTrack = '';
-  S.dpr = Math.min(window.devicePixelRatio || 1, 2);
+  /* the moving scene is drawn at no more than 1.5 device pixels per pixel: its cached strips are no sharper than that,
+     and on a phone or a retina screen the extra pixels cost every frame; still drawings (the rooms) stay sharp */
+  S.sharp = Math.min(window.devicePixelRatio || 1, 2);
+  S.dpr = Math.min(S.sharp, SCENE_MAX_DPR);
   S.ps = S.dpr >= 1.5 ? 1.5 : 1;
   sizeSpots();
   const H = wide ? vh : Math.max(vh, canvas.clientHeight || vh);

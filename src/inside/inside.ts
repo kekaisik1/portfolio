@@ -58,7 +58,7 @@ function drawSheet(): void {
   if (!o) return;
   const w = inPaper.clientWidth,
     h = inPaper.clientHeight,
-    d = S.dpr;
+    d = S.sharp;
   if (!w || !h) return;
   inBg.width = Math.round(w * d);
   inBg.height = Math.round(h * d);
@@ -79,7 +79,7 @@ export function fitInside(): void {
     sc = Math.max(0.2, Math.min(bw / ROOM_W, bh / ROOM_H)),
     w = ROOM_W * sc,
     h = ROOM_H * sc,
-    pr = sc > 1.5 ? Math.min(S.dpr, 1.5) : S.dpr;
+    pr = sc > 1.5 ? Math.min(S.sharp, 1.5) : S.sharp;
   inCv.style.width = w + 'px';
   inCv.style.height = h + 'px';
   inCv.style.left = (bw - w) / 2 + 'px';

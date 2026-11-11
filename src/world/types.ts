@@ -72,6 +72,8 @@ export interface Layer {
   h: number;
   ops: LayerOp[];
   tiles: (HTMLCanvasElement | null)[];
+  /** for each strip, its first row with anything on it (device pixels) */
+  tileTop: number[];
   yAt(u: number): number;
   PAt(u: number): number;
   CAt(u: number): number;

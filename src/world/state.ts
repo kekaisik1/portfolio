@@ -35,7 +35,9 @@ export interface WorldState {
   vh: number;
   /** height of the scene canvas in CSS px */
   H: number;
+  /** device pixels per CSS pixel the scene is drawn at (capped), and what still drawings may use */
   dpr: number;
+  sharp: number;
   /** pixel scale of cached tiles and sprites */
   ps: number;
   /** furthest the scene travels, in track px */
@@ -144,6 +146,7 @@ export const S: WorldState = {
   vh: 0,
   H: 0,
   dpr: 1,
+  sharp: 1,
   ps: 1,
   sMax: 1,
   B: [0, 0, 0, 0],

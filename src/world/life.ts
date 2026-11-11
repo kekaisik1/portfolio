@@ -6,7 +6,8 @@
 import { clamp, hsh } from '../lib/math';
 import { INK, css } from './palette';
 import { S } from './state';
-import type { G, LifeKind } from './types';
+import { PADB } from '../places/view';
+import type { G, LifeKind, LifeSpec, PlaceObj } from './types';
 
 /** one place's emission this frame: where from, how much, how fast, how big */
 interface Emit {
@@ -184,29 +185,49 @@ const LIFEKIND: Record<LifeKind, (c: G, e: Emit) => void> = {
     });
   },
 };
+/* refilled for each place each frame: nothing is allocated while drawing */
+const emit: Emit = { ex: 0, ey: 0, t: 0, ink: '', sd: 0, R: 0, n: 0, sp: 0, boost: 0, z: 0 };
+
+/**
+ * Where a place's life comes from, on screen. The anchor is given as a fraction of the place's box
+ * (wide: the part you can press; narrow: the middle of the scene on its strip of ground) and worked out from
+ * where the place stands, so no layout is read while drawing.
+ */
+function lifeOrigin(o: PlaceObj, L: LifeSpec, out: Emit): void {
+  const d = o.def,
+    h = d.hit,
+    F = d.full;
+  if (S.wide) {
+    out.ex = o.x + (h[0] + L.ax * (h[2] - h[0])) * o.sc - S.s;
+    out.ey = o.base + (h[1] + L.ay * (h[3] - h[1])) * o.sc;
+    return;
+  }
+  const c0 = d.core ? d.core[0] : F[0],
+    cw = d.core ? d.core[1] - d.core[0] : F[2] - F[0];
+  out.ex = o.left + (c0 + (L.nax ?? L.ax) * cw - o.view.fx0) * o.sc;
+  out.ey = o.top - window.scrollY + (L.nay ?? L.ay) * (F[3] - F[1] + PADB) * o.sc;
+}
+
 export function drawLife(c: G): void {
   const t = S.time,
-    ink = css(INK[0]);
+    ink = css(INK[0]),
+    k = clamp(S.vw / 900, 0.62, 1);
   for (const o of S.objs) {
     if (!o.vis || o.drawn < 1 || o === S.inObj) continue;
     const L = o.def.life;
     if (!L) continue;
-    const q = o.btn.getBoundingClientRect();
-    if (!q.width || q.right < -500 || q.left > S.vw + 500 || q.bottom < -500 || q.top > S.H + 500) continue;
-    const V = vigour(o.p.slug),
-      k = clamp(S.vw / 900, 0.62, 1);
-    LIFEKIND[L.kind](c, {
-      ex: q.left + q.width * (!S.wide && L.nax !== undefined ? L.nax : L.ax),
-      ey: q.top + q.height * (!S.wide && L.nay !== undefined ? L.nay : L.ay),
-      t,
-      ink,
-      sd: o.p.slug.length * 7.31,
-      R: (90 + 330 * V.g) * (V.bloom ? 1.8 : 1) * k,
-      n: Math.min(180, Math.round((10 + 62 * V.g) * (V.bloom ? 2.2 : 1) * (L.n || 1))),
-      sp: 0.07 + 0.07 * V.v,
-      boost: (1 + 0.3 * V.v + 0.3 * clamp(o.hot, 0, 1)) * (S.wide ? 1 : 0.7) * (L.b || 1),
-      /* narrow: it drifts behind the words, so quieter */ z: (1.25 + 0.5 * V.g) * (V.bloom ? 1.25 : 1),
-    });
+    const V = vigour(o.p.slug);
+    lifeOrigin(o, L, emit);
+    emit.t = t;
+    emit.ink = ink;
+    emit.sd = o.p.slug.length * 7.31;
+    emit.R = (90 + 330 * V.g) * (V.bloom ? 1.8 : 1) * k;
+    emit.n = Math.min(180, Math.round((10 + 62 * V.g) * (V.bloom ? 2.2 : 1) * (L.n || 1)));
+    emit.sp = 0.07 + 0.07 * V.v;
+    /* narrow: it drifts behind the words, so quieter */
+    emit.boost = (1 + 0.3 * V.v + 0.3 * clamp(o.hot, 0, 1)) * (S.wide ? 1 : 0.7) * (L.b || 1);
+    emit.z = (1.25 + 0.5 * V.g) * (V.bloom ? 1.25 : 1);
+    LIFEKIND[L.kind](c, emit);
   }
   c.globalAlpha = 1;
 }
