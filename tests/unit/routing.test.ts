@@ -1,3 +1,4 @@
+import { readdirSync, statSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { PROJECTS } from '../../src/content/projects';
 import { OLD_LINKS, arrowStop, hashTarget, insideSlug } from '../../src/nav/routing';
@@ -79,6 +80,14 @@ describe('video manifest', () => {
 
     expect(manifest['kana-notebook']).toEqual({ src: 'kana-notebook.mp4' });
     for (const slug of Object.keys(manifest)) expect(slugs).toContain(slug);
+  });
+
+  it('keeps every video in public/videos to 2 MB or less (npm run video -- <file> <slug> makes one that fits)', () => {
+    const maxBytes = 2 * 1024 * 1024;
+    const videos = readdirSync('public/videos').filter((name) => name.endsWith('.mp4'));
+
+    expect(videos.length).toBeGreaterThan(0);
+    for (const name of videos) expect(statSync(`public/videos/${name}`).size, name).toBeLessThanOrEqual(maxBytes);
   });
 
   it('builds video addresses under the base the site is served from', () => {
