@@ -91,7 +91,11 @@ export function showVideo(into: HTMLElement, p: Project, stillHere: () => boolea
   v.setAttribute('playsinline', '');
   v.preload = 'metadata';
   v.setAttribute('aria-label', MESSAGES.videoLabel(p.name));
-  v.addEventListener('loadeddata', () => fr.classList.remove('wait'), { once: true });
+  /* with preload=metadata some browsers stop at loadedmetadata and fetch no frame until play is pressed:
+     the controls must be uncovered by then, or the video looks stuck loading */
+  const ready = (): void => fr.classList.remove('wait');
+  v.addEventListener('loadedmetadata', ready, { once: true });
+  v.addEventListener('loadeddata', ready, { once: true });
   v.addEventListener(
     'error',
     () => {

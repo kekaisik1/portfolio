@@ -311,15 +311,32 @@ export function initInside(): void {
   });
   /* Back from inside a place steps out of it (and Forward goes back in); the address changing must not move you along the track */
   window.addEventListener('popstate', (e) => {
-    const slug = inside.open ? null : insideSlug(e.state);
+    const slug = insideSlug(e.state);
     const o = slug ? S.objs.find((x) => x.p.slug === slug) : undefined;
     if (!inside.open && !o) return;
     S.skipHash = true;
     setTimeout(() => {
       S.skipHash = false;
     }, 150);
-    if (inside.open) leaveInside(true);
-    else if (o) goInside(o, true);
+    if (!inside.open) {
+      if (o) goInside(o, true);
+      return;
+    }
+    if (S.inClosing && o) {
+      /* Forward while the room is still closing: finish the close now and step back in once the dialog has let go,
+         so the room on screen matches the address */
+      inside.addEventListener(
+        'close',
+        () => {
+          if (insideSlug(history.state) === slug) goInside(o, true);
+        },
+        { once: true },
+      );
+      stopAnims();
+      shut();
+      return;
+    }
+    leaveInside(true);
   });
   /* while a dialog is open the page behind it does not scroll (the dialog's own scrolling parts still do) */
   const holdScroll = (e: Event): void => {

@@ -142,6 +142,24 @@ test('the browser Back button leaves a place, and Forward goes back in', async (
   await expect(room.getByRole('heading', { level: 2 })).toHaveText('BookForge');
 });
 
+test('Forward pressed while a place is still closing ends up inside it', async ({ page }) => {
+  await open(page);
+  await page.locator('.horizon a[href="#bookforge"]').click();
+  await page.keyboard.press('Enter');
+  const room = page.getByRole('dialog');
+  await expect(room).toBeVisible();
+
+  /* Back starts the closing animation; Forward lands before it has finished */
+  await page.evaluate(() => history.back());
+  await page.waitForFunction(() => !location.hash.includes('bookforge') || history.state === null);
+  await page.evaluate(() => history.forward());
+
+  await expect(room).toBeVisible();
+  await expect(room.getByRole('heading', { level: 2 })).toHaveText('BookForge');
+  await page.waitForTimeout(800);
+  await expect(room).toBeVisible();
+});
+
 test('a place with no video says so', async ({ page }) => {
   await open(page);
   await page.locator('.horizon a[href="#emberquill"]').click();
