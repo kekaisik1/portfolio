@@ -18,6 +18,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
@@ -33,8 +34,11 @@ jobs:
       - name: Keep the deployable build
         run: mv dist dist-deploy
       # the smoke suite builds its own copy with no API address, so tests can never reach the real API
+      # no --with-deps: that runs apt-get, and a slow Ubuntu mirror once hung the deploy for ten minutes.
+      # The runner image already carries the libraries Chromium needs.
       - name: Install the browser for the smoke suite
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
+        timeout-minutes: 5
       - name: Browser smoke suite
         run: npm run test:e2e
       - name: Check the deployable build is a Pages site
