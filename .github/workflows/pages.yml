@@ -1,37 +1,61 @@
-# Deploys the site to GitHub Pages and rebuilds videos/manifest.json from the files in videos/,
-# so adding a video is just: drop videos/<slug>.mp4 in, commit, push.
+# Checks, builds and deploys the site to GitHub Pages.
+# Pull requests: lint, types, unit tests, build and the browser smoke suite. Pushes to main: the same, then deploy dist/.
 name: Deploy to Pages
 
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # lint + typecheck + unit tests + build. The production API address is only baked into the build that is deployed.
+      - name: Check
+        run: npm run check
+        env:
+          VITE_API_URL: https://api-production-2660.up.railway.app
+      - name: Keep the deployable build
+        run: mv dist dist-deploy
+      # the smoke suite builds its own copy with no API address, so tests can never reach the real API
+      - name: Install the browser for the smoke suite
+        run: npx playwright install --with-deps chromium
+      - name: Browser smoke suite
+        run: npm run test:e2e
+      - name: Check the deployable build is a Pages site
+        run: test -f dist-deploy/.nojekyll && test -f dist-deploy/index.html && test -f dist-deploy/og.jpg
+      - uses: actions/configure-pages@v6
+        if: github.event_name != 'pull_request'
+      - uses: actions/upload-pages-artifact@v5
+        if: github.event_name != 'pull_request'
+        with:
+          path: dist-deploy
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v7
-      - name: Build video manifest
-        run: |
-          cd videos
-          python3 -c "import json,pathlib; print(json.dumps(sorted(p.name for p in pathlib.Path('.').iterdir() if p.suffix.lower() in ('.mp4', '.vtt'))))" > manifest.json
-          cat manifest.json
-      - uses: actions/configure-pages@v6
-      - uses: actions/upload-pages-artifact@v5
-        with:
-          path: .
       - id: deployment
         uses: actions/deploy-pages@v5
