@@ -1,0 +1,120 @@
+/* Page basics: the scene behind everything, type, links, focus. */
+* {
+  box-sizing: border-box;
+}
+html {
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-bottom: calc(var(--bar) + 16px);
+}
+body {
+  margin: 0;
+  font: 17px/1.62 var(--serif);
+  background: var(--paper);
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+/* scene layers */
+#scene {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100lvh;
+  z-index: 0;
+  display: block;
+}
+html.wide #scene {
+  height: 100vh;
+}
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+}
+main {
+  position: relative;
+  z-index: 2;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip {
+  position: absolute;
+  left: 16px;
+  top: -80px;
+  z-index: 10;
+  background: var(--paper);
+  color: var(--ink);
+  font: 700 20px/1 var(--hand);
+  padding: 12px 16px;
+  border: 2px solid var(--ink);
+  border-radius: 10px 16px 12px 18px;
+  text-decoration: none;
+  min-height: 44px;
+}
+.skip:focus {
+  top: 12px;
+}
+
+/* type */
+h1,
+h2,
+h3 {
+  font-family: var(--hand);
+  font-weight: 700;
+  margin: 0;
+}
+p {
+  margin: 0 0 12px;
+}
+a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-style: wavy;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+  text-decoration-skip-ink: none;
+}
+a:hover {
+  text-decoration-thickness: 2px;
+}
+:focus-visible {
+  outline: 2.5px solid var(--focus);
+  outline-offset: 5px;
+  border-radius: 46% 54% 42% 58% / 58% 44% 56% 42%;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+[tabindex='-1']:focus {
+  outline: none;
+}
+
+/* less motion: no fades */
+@media (prefers-reduced-motion: reduce) {
+  .horizon,
+  .place span,
+  .lantern-btn .lb-body,
+  .note-send {
+    transition: none;
+  }
+  #note[open]::backdrop {
+    animation: none;
+  }
+}
