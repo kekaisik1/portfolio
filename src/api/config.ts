@@ -1,6 +1,8 @@
 /** Where the API lives, if anywhere. */
 
-const LOCAL_HOSTS = /^(localhost|127\.0\.0\.1)$/;
+/** this machine or its own network: the dev server opened by name, loopback or LAN address */
+const LOCAL_HOSTS =
+  /^(localhost|.*\.localhost|.*\.local|127(\.\d+){3}|\[::1\]|10(\.\d+){3}|192\.168(\.\d+){2}|172\.(1[6-9]|2\d|3[01])(\.\d+){2})$/;
 
 /**
  * The API base address for this page, or '' when the page should run on its own.

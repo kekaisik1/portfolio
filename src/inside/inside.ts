@@ -154,7 +154,8 @@ export function goInside(o: PlaceObj, fromHistory = false): void {
   inWrap.scrollTop = 0;
   inSheet.scrollTop = 0;
   fitInside();
-  pushed = false;
+  /* arriving by Forward, the step is already in the history: leaving must take it away too */
+  pushed = fromHistory;
   if (!fromHistory) {
     try {
       history.pushState({ inside: o.p.slug }, '', '#' + o.p.slug);

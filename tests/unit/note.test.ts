@@ -97,6 +97,14 @@ describe('note state machine', () => {
     expect(nextNoteState({ kind: 'sent' }, { type: 'open' })).toEqual(NOTE_IDLE);
     expect(nextNoteState({ kind: 'failed', why: 'unreachable' }, { type: 'open' })).toEqual(NOTE_IDLE);
   });
+
+  it('stays sending when the dialog is reopened mid-send, so a second note cannot go out', () => {
+    const sending = { kind: 'sending' } as const;
+
+    const next = nextNoteState(sending, { type: 'open' });
+
+    expect(next).toBe(sending);
+  });
 });
 
 describe('what the note form shows', () => {

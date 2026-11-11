@@ -32,7 +32,8 @@ function failure(result: ApiResult<{ ok: boolean }>): NoteFailure | null {
 export function nextNoteState(state: NoteState, event: NoteEvent): NoteState {
   switch (event.type) {
     case 'open':
-      return NOTE_IDLE;
+      /* reopening mid-send must not free the button: a second note would go out and the first answer would land on it */
+      return state.kind === 'sending' ? state : NOTE_IDLE;
     case 'edit':
       /* typing clears a complaint, but never interrupts a send or un-sends a note */
       return state.kind === 'invalid' || state.kind === 'failed' ? NOTE_IDLE : state;

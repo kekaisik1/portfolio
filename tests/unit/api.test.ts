@@ -27,6 +27,13 @@ describe('resolveApiBase', () => {
     expect(resolveApiBase('https://api.example.test', '127.0.0.1', '9000')).toBe('http://127.0.0.1:9000');
   });
 
+  it('never points a page opened on this machine or its network at the real API', () => {
+    for (const host of ['[::1]', '192.168.1.20', '10.0.0.5', '172.16.4.2', 'laptop.local', 'app.localhost']) {
+      expect(resolveApiBase('https://api.example.test', host), host).toBe(`http://${host}:8787`);
+    }
+    expect(resolveApiBase('https://api.example.test', '172.32.0.1')).toBe('https://api.example.test');
+  });
+
   it('rejects anything that is not http(s)', () => {
     expect(resolveApiBase('javascript:alert(1)', 'example.org')).toBe('');
     expect(resolveApiBase('api.example.test', 'example.org')).toBe('');
