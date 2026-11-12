@@ -45,6 +45,7 @@ export const PROJECTS: readonly Project[] = [
     inside: [
       "A website for an appliance-repair business: lots of service pages so people can find them on Google, in Russian and English. Not glamorous. It's real, it's used.",
     ],
+    link: { href: 'https://www.lowl.net/', label: "It's live — have a look.", external: true },
   },
   {
     slug: 'emberquill',
