@@ -1,10 +1,17 @@
-/* Less motion: no camera drift (journey/frame.ts), no small life, no transitions. Comes after everything it switches off. */
+/* Reduced motion: cuts are instant (src/travel/), nothing types in or rises, the canvas is off. Keep this last. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    transition: none !important;
-    animation: none !important;
-    scroll-behavior: auto !important;
+  .world.in .block,
+  .js .intro .rows li,
+  .js .intro .bfoot,
+  dialog.sheet[open],
+  .lit.rise {
+    animation: none;
+  }
+  .board,
+  .board.open {
+    transition: none;
+  }
+  #fx {
+    display: none;
   }
 }

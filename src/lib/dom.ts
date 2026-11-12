@@ -16,23 +16,12 @@ export function pickAll<T extends Element = HTMLElement>(parent: ParentNode, sel
   return Array.from(parent.querySelectorAll<T>(selector));
 }
 
-/** A 2D context, or a clear error (a browser without canvas cannot show this page at all). */
+/** A 2D context, or a clear error (a browser without canvas cannot draw the living details). */
 export function ctx2d(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
   const g = canvas.getContext('2d');
-  if (!g) throw new Error('This browser gave no 2D canvas context, so the drawing cannot be made.');
+  if (!g) throw new Error('This browser gave no 2D canvas context, so the living details cannot be drawn.');
   return g;
 }
 
-export function newCanvas(width = 1, height = 1): HTMLCanvasElement {
-  const c = document.createElement('canvas');
-  c.width = width;
-  c.height = height;
-  return c;
-}
-
-/** requestIdleCallback where there is one, a short timeout where there is not (Safari). */
-export function whenIdle(fn: () => void, timeout: number, fallbackDelay: number): number {
-  return typeof window.requestIdleCallback === 'function'
-    ? window.requestIdleCallback(fn, { timeout })
-    : window.setTimeout(fn, fallbackDelay);
-}
+export const wait = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+export const nextFrame = (): Promise<void> => new Promise((r) => requestAnimationFrame(() => r()));

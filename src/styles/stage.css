@@ -1,0 +1,130 @@
+/*
+ * The place: the photographs (at most three mounted), the small canvas of the one living detail, the lanterns,
+ * and the slats of the cut. Only transform and opacity ever move here.
+ */
+#stage,
+#cut {
+  position: fixed;
+  inset: 0 0 0 var(--col);
+  overflow: hidden;
+}
+#stage {
+  z-index: 0;
+  background: var(--board);
+}
+/* the photos, the canvas and the lanterns push in together, so a spark stays on its fire */
+.lens {
+  position: absolute;
+  inset: 0;
+  transform-origin: 62% 46%;
+}
+.frame,
+.slat-in {
+  background-image: var(--lq);
+  background-size: cover;
+  background-position: var(--x, 50%) 50%;
+}
+.frame {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.frame.on {
+  z-index: 2;
+}
+.frame img,
+.slat-in img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--x, 50%) 50%;
+  display: block;
+}
+/* a photo is shown only once it is decoded: until then its blurred stand-in is the background */
+.js .frame img {
+  opacity: 0;
+}
+.js .frame.ld img {
+  opacity: 1;
+}
+/* a #link starts somewhere else: the summit written into the page must not flash first */
+.deep:not(.live) #stage .frame {
+  visibility: hidden;
+}
+
+#fx {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* lanterns over the campfire: small warm lights; one rises from the fire when it is lit */
+#lanterns {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+.lit,
+.far-lantern {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff3c4 0, #ffc46b 28%, rgb(255 160 60 / 0.35) 55%, rgb(255 160 60 / 0) 72%);
+  transform: translate(var(--lx), var(--ly)) scale(var(--ls, 1));
+}
+.far-lantern {
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+}
+.lit.rise {
+  animation: lantern-rise 2.6s cubic-bezier(0.25, 0.6, 0.3, 1) both;
+}
+@keyframes lantern-rise {
+  from {
+    transform: translate(var(--fx), var(--fy)) scale(0.6);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  to {
+    transform: translate(var(--lx), var(--ly)) scale(var(--ls, 1));
+    opacity: 1;
+  }
+}
+
+/* the cut: slats of the next photo close over this one, each in three hard steps */
+#cut {
+  z-index: 6;
+  pointer-events: none;
+}
+.slat {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  will-change: transform;
+  background: var(--board);
+}
+.slat.rev {
+  transform-origin: 100% 50%;
+}
+.slat-in {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  will-change: transform;
+}

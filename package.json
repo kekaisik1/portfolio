@@ -3,7 +3,7 @@
   "private": true,
   "version": "2.0.0",
   "type": "module",
-  "description": "Kaisar's portfolio: a code-painted watercolour journey with seven places you can walk into.",
+  "description": "Kaisar's portfolio: a departures board of ten photographed places; seven of them are projects you can walk into.",
   "engines": {
     "node": ">=20"
   },
@@ -17,7 +17,7 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "video": "scripts/compress-video.sh",
-    "paint": "node scripts/bake-paint.ts",
+    "worlds": "node scripts/make-worlds.ts",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {

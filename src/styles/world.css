@@ -1,0 +1,229 @@
+/*
+ * One world's words, standing on its photo. The photo is the hero: the words are a compact block in the corner the
+ * photo leaves calm (data-at, from src/worlds/looks.ts), with only a local shade behind them, never a scrim.
+ */
+main {
+  position: fixed;
+  inset: 0 0 0 var(--col);
+  z-index: 5;
+  pointer-events: none;
+}
+.world {
+  position: absolute;
+  inset: 0;
+}
+/* with scripts one world is on screen; before the script has run that is the first (or none, for a #link) */
+.js .world {
+  display: none;
+}
+.js .world.on,
+.js:not(.live):not(.deep) .world.hello {
+  display: block;
+}
+
+.block {
+  position: absolute;
+  left: var(--pad);
+  width: max-content;
+  max-width: min(var(--w, 30rem), calc(100% - 2 * var(--pad)));
+  pointer-events: auto;
+  isolation: isolate;
+  text-shadow: 0 1px 2px rgb(var(--shade) / 0.55);
+}
+[data-at='tl'] .block {
+  top: var(--pad);
+}
+[data-at='bl'] .block {
+  bottom: var(--pad);
+}
+/*
+ * The local shade: even under the words (as dark as this photo needs for AA contrast, --shade-a from looks.ts),
+ * gone a little past them. Never a scrim: the rest of the photo is untouched.
+ */
+.block::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: calc(-1 * var(--pad)) -20% calc(-1 * var(--pad)) calc(-1 * var(--pad));
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    rgb(var(--shade) / var(--shade-a, 0.7)) 0,
+    rgb(var(--shade) / var(--shade-a, 0.7)) 80%,
+    rgb(var(--shade) / 0) 100%
+  );
+}
+[data-at='tl'] .block::before {
+  bottom: -16%;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 86%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0, #000 86%, transparent 100%);
+}
+[data-at='bl'] .block::before {
+  top: -16%;
+  -webkit-mask-image: linear-gradient(to top, #000 0, #000 86%, transparent 100%);
+  mask-image: linear-gradient(to top, #000 0, #000 86%, transparent 100%);
+}
+
+.kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  font-size: var(--t-label);
+  line-height: 1.5;
+  color: var(--soft);
+  margin-bottom: clamp(8px, 1.6vh, 16px);
+}
+.kicker .n {
+  background: var(--signal);
+  color: var(--board);
+  font-weight: 700;
+  padding: 2px 6px;
+  text-shadow: none;
+}
+.kicker .pl {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* the name: the one huge thing. It scales with the window's height too, so short laptops keep the whole world. */
+.name {
+  font: 800 clamp(2.5rem, min(5.6vw, 10.5vh), 5.25rem) / 0.94 var(--big);
+  font-stretch: 100%;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+  margin: 0 0 0.2em -0.04em;
+}
+.hello .name {
+  font-size: clamp(3rem, min(7.4vw, 14vh), 7.75rem);
+  margin-bottom: 0.16em;
+}
+.line {
+  font-size: clamp(13px, 1.75vh, 15px);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.lede,
+.more p {
+  font: 450 var(--t-body) / 1.52 var(--big);
+  font-stretch: 100%;
+  max-width: 34em;
+}
+.hello .lede {
+  font-size: clamp(17px, 2.5vh, 22px);
+  font-weight: 500;
+}
+.more {
+  margin-top: clamp(10px, 1.8vh, 18px);
+}
+.more p + p {
+  margin-top: 0.7em;
+}
+.more .note {
+  font: 400 12.5px/1.5 var(--mono);
+  font-stretch: 85%;
+  color: var(--soft);
+  padding-left: 12px;
+  border-left: 2px solid var(--building);
+  margin-top: 1em;
+}
+.acts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin-top: clamp(14px, 2.4vh, 24px);
+}
+.acts:empty {
+  display: none;
+}
+/* "Read" only shows when the longer text is folded away: on phones, and on windows too short to hold it */
+.read {
+  display: none;
+}
+.world.compact .read {
+  display: inline-flex;
+}
+.world.compact .more {
+  display: none;
+}
+.watch::before {
+  content: '';
+  border-left: 9px solid currentColor;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+}
+.watch .len {
+  font-weight: 400;
+}
+.ask {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--t-row);
+  line-height: 1.4;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--signal);
+}
+.ask:hover,
+.elsewhere a:hover {
+  color: var(--signal);
+}
+.walk::after {
+  content: '↓';
+  font-weight: 400;
+}
+
+/* contact: "write me" is the mailto, and the one place the signal colour is huge */
+.write {
+  display: inline-block;
+  font: 800 clamp(3rem, min(7vw, 13vh), 6.75rem) / 1 var(--big);
+  font-stretch: 100%;
+  letter-spacing: -0.035em;
+  color: var(--signal);
+  text-decoration: underline;
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.12em;
+  margin: 0 0 0.12em -0.04em;
+}
+.write:hover {
+  color: var(--ink);
+}
+.elsewhere {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 20px;
+  margin-top: clamp(6px, 1.2vh, 12px);
+}
+.elsewhere a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-underline-offset: 4px;
+}
+.lantern-btn .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ffc46b;
+}
+.lantern-n {
+  min-height: 1.5em;
+  margin-top: 8px;
+  font-size: var(--t-label);
+  color: var(--soft);
+}
+
+/* arrival: two steps, no easing; the words are readable the moment the cut lands */
+@keyframes arrive {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.world.in .block {
+  animation: arrive 0.08s steps(2, jump-none) both;
+}

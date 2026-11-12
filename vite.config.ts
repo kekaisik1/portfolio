@@ -10,11 +10,12 @@ const VIRTUAL_VIDEOS = 'virtual:videos';
 function contentHtml(): Plugin {
   return {
     name: 'portfolio:content-html',
-    transformIndexHtml: { order: 'pre', handler: (html) => fillShell(html) },
+    /* 'pre': Vite then puts the site's base in front of every /fonts/… and /worlds/… address written here */
+    transformIndexHtml: { order: 'pre', handler: (html) => fillShell(html, readVideoManifest(VIDEOS_DIR)) },
   };
 }
 
-/** `import videos from 'virtual:videos'`: which projects have a video in public/videos/, found at build time. */
+/** `import videos from 'virtual:videos'`: which projects have a video in public/videos/ and how long it runs, found at build time. */
 function videoManifest(): Plugin {
   return {
     name: 'portfolio:video-manifest',

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_OWN, parseStored, skyPlace, slotOf } from '../../src/night/lantern-math';
+import { MAX_OWN, parseStored, skyPlace } from '../../src/night/lantern-math';
 import { ago, nowLine, weatherLine } from '../../src/night/today-text';
-import { PAINTED_LANTERNS, STRING, sagAt } from '../../src/paint/kinds/night';
 
 describe('the two lines from the API', () => {
   const now = Date.parse('2026-11-11T12:00:00Z');
@@ -47,23 +46,7 @@ describe('lanterns', () => {
     expect(parseStored('{"x":1}')).toEqual([]);
   });
 
-  it('hangs your lanterns in the gaps of the string, all inside the string', () => {
-    const slots = Array.from({ length: MAX_OWN }, (_, i) => slotOf(i, PAINTED_LANTERNS));
-
-    expect(new Set(slots).size).toBe(MAX_OWN);
-    for (const x of slots) {
-      expect(x).toBeGreaterThan(STRING.x0);
-      expect(x).toBeLessThan(STRING.x1);
-      expect(PAINTED_LANTERNS).not.toContain(x);
-    }
-  });
-
-  it('sags the string lowest in the middle', () => {
-    expect(sagAt(STRING.x0)).toBeCloseTo(STRING.y, 6);
-    expect(sagAt((STRING.x0 + STRING.x1) / 2)).toBeCloseTo(STRING.y + STRING.sag, 6);
-  });
-
-  it("floats other people's lanterns high among the stars, small and faint", () => {
+  it('hangs lanterns in the upper half of the sky it is given, small and faint, never stacked on one spot', () => {
     for (let i = 0; i < 40; i++) {
       const p = skyPlace({ x: (i * 0.37) % 1, y: (i * 0.53) % 1, s: 0.5 }, i, 1400, 600);
 
@@ -73,5 +56,8 @@ describe('lanterns', () => {
       expect(p.scale).toBeLessThan(0.5);
       expect(p.alpha).toBeLessThan(0.9);
     }
+    const same = { x: 0.5, y: 0.5, s: 0.5 };
+
+    expect(skyPlace(same, 1, 1, 1)).not.toEqual(skyPlace(same, 2, 1, 1));
   });
 });
