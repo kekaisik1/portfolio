@@ -1,90 +1,100 @@
-/* where you are: one pencil line along the bottom, a mark for each place */
+/*
+ * The horizon bar: the four countries along a line at the bottom, a dot where you are. It stands on its own soft
+ * band of paper (or of night), so it always reads at full strength and the near pieces stop above it.
+ */
 .horizon {
   position: fixed;
+  z-index: 20;
   left: 0;
   right: 0;
   bottom: 0;
-  height: var(--bar);
-  z-index: 5;
-  padding: 0 clamp(16px, 4vw, 56px);
-  background: linear-gradient(to top, var(--navmist) 0, rgba(241, 241, 236, 0) 100%);
-  color: var(--nav-ink);
-  transition: opacity 1.2s ease;
+  height: calc(var(--band) + env(safe-area-inset-bottom));
   pointer-events: none;
 }
-html[data-sky='night'] .horizon {
-  background: linear-gradient(to top, var(--navmist) 0, rgba(26, 29, 66, 0) 100%);
+.horizon .band,
+.horizon .band span {
+  position: absolute;
+  inset: 0;
+}
+.band-day {
+  background: linear-gradient(0deg, rgba(var(--veil), 1) 0%, rgba(var(--veil), 0.96) 42%, rgba(var(--veil), 0) 100%);
+}
+.band-day,
+.band-night {
+  transition: opacity 0.4s;
+}
+html.night .band-day {
+  opacity: 0;
+}
+.band-night {
+  opacity: 0;
+  background: linear-gradient(0deg, var(--night-deep) 0%, rgba(29, 39, 71, 0.95) 42%, rgba(29, 39, 71, 0) 100%);
+}
+html.night .band-night {
+  opacity: 1;
 }
 .horizon .wrap {
-  position: relative;
-  height: 100%;
-  max-width: 900px;
-  margin: 0 auto;
-}
-.horizon svg {
   position: absolute;
-  left: 0;
-  bottom: 5px;
-  width: 100%;
-  height: 20px;
-  overflow: visible;
-}
-.horizon .ln {
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-}
-.horizon .tick {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.horizon .you {
-  fill: currentColor;
-}
-.horizon .you-ring {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.1;
-  opacity: 0.55;
+  left: 50%;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(560px, calc(100% - 32px));
+  pointer-events: auto;
 }
 .horizon ol {
   list-style: none;
   margin: 0;
   padding: 0;
+  display: flex;
+  justify-content: space-between;
+  position: relative;
 }
-.place {
-  position: absolute;
-  bottom: 0;
-  width: 44px;
-  height: 44px;
-  margin-left: -22px;
-  display: block;
-  color: inherit;
+.horizon a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 6px;
+  font: 400 14.5px/1 var(--sans);
   text-decoration: none;
-  pointer-events: auto;
+  color: var(--slate);
+  transition: color 0.3s;
 }
-.place span {
+html.night .horizon a {
+  color: var(--night-soft);
+}
+.horizon a[aria-current='location'] {
+  color: var(--ink);
+}
+html.night .horizon a[aria-current='location'] {
+  color: var(--night-ink);
+}
+.horizon a:hover {
+  color: var(--accent);
+}
+.hline {
   position: absolute;
-  left: 50%;
-  bottom: 40px;
-  transform: translateX(-50%);
-  white-space: nowrap;
-  font: 400 20px/1 var(--hand);
-  padding: 6px 10px;
-  background: var(--navmist);
-  border-radius: 8px 12px 9px 13px;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-  pointer-events: none;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, currentColor 12%, currentColor 88%, transparent);
+  color: var(--slate);
+  opacity: 0.55;
 }
-.place:hover span,
-.place:focus-visible span {
-  opacity: 1;
+html.night .hline {
+  color: var(--night-soft);
 }
-.place:focus-visible {
-  outline-color: currentColor;
-  outline-offset: -9px;
+.hdot {
+  position: absolute;
+  left: 0;
+  top: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  will-change: transform;
+}
+html:not(.js) .hdot {
+  display: none;
 }

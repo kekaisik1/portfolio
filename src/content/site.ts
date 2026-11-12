@@ -1,20 +1,24 @@
 import type { SiteCopy, Zone } from './types';
 
 export const ZONES: readonly Zone[] = [
-  { id: 'mountains', label: 'In the mountains' },
-  { id: 'steppe', label: 'On the steppe' },
-  { id: 'sea', label: 'By the sea' },
-  { id: 'night', label: 'At night: about and contact' },
+  { id: 'mountains', label: 'In the mountains', short: 'mountains' },
+  { id: 'steppe', label: 'On the steppe', short: 'steppe' },
+  { id: 'sea', label: 'By the sea', short: 'sea' },
+  { id: 'night', label: 'At night: about and contact', short: 'night' },
 ];
 
 export const SITE: SiteCopy = {
   title: 'Kaisar — I build things with computers',
+  mark: 'Kaisar Turysbek',
   description: 'Kaisar builds things with computers in Kazakhstan. Seven of them are places you can walk into.',
   url: 'https://kekaisik1.github.io/portfolio/',
+  ogAlt: 'A watercolour of snowy mountains, spruce and a wooden hut on pale paper, with the words:',
   hero: {
     heading: "Hi, I'm Kaisar.",
     line: 'I live in Kazakhstan and I build things with computers.',
+    walk: 'Scroll to walk in',
   },
+  source: { work: 'something I built for work', play: 'something I made for fun' },
   about: {
     heading: 'About',
     paragraphs: [
@@ -23,11 +27,11 @@ export const SITE: SiteCopy = {
     ],
   },
   contact: {
+    heading: 'Write me',
     email: 'kaisar.turysbek@gmail.com',
     writeMe: 'write me',
     leaveNote: 'or leave a note',
     links: [
-      { href: 'mailto:kaisar.turysbek@gmail.com', label: 'kaisar.turysbek@gmail.com', external: false },
       { href: 'https://t.me/kekaisik', label: 'Telegram @kekaisik', external: true },
       { href: 'https://github.com/kekaisik1', label: 'github.com/kekaisik1', external: true },
     ],
@@ -40,11 +44,14 @@ export const SITE: SiteCopy = {
 export const MESSAGES = {
   goInside: (name: string): string => `Go inside ${name}`,
   backOutside: 'Back outside',
+  /** what a screen reader hears when you arrive somewhere: "Steppe. LOWL." */
+  arrived: (country: string, place: string): string => `${country[0].toUpperCase()}${country.slice(1)}. ${place}.`,
   noVideo: 'no video yet',
   videoFailed: "the video didn't load",
   videoLoading: 'loading…',
   videoLabel: (name: string): string => `${name}, a short video`,
-  lanterns: (n: number): string => (n < 1 ? '' : n < 2 ? '1 lantern up there.' : `${Math.floor(n)} lanterns up there.`),
+  lightLantern: 'Light a lantern',
+  lanterns: (n: number): string => (n < 1 ? '' : n < 2 ? '1 lantern lit.' : `${Math.floor(n)} lanterns lit.`),
   note: {
     empty: 'Write something first.',
     tooLong: 'That is too long for the paper: 600 characters for the note, 60 for the name.',

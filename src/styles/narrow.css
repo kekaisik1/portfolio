@@ -1,0 +1,117 @@
+/* Phones: the words on clear paper at the top, the painting under them; inside a place, the painting on top. */
+@media (max-width: 759px), (max-width: 1099px) and (max-aspect-ratio: 5/6) {
+  .js .words,
+  .js .hello .words {
+    left: 16px;
+    right: 16px;
+    width: auto;
+    top: 64px;
+    transform: none;
+  }
+  h1 {
+    font-size: clamp(40px, 12vw, 52px);
+  }
+  .lede,
+  .line {
+    font-size: 20px;
+  }
+  .lede {
+    margin-bottom: 0.6em;
+  }
+  .words h3 {
+    font-size: clamp(30px, 9vw, 38px);
+  }
+  .about p {
+    font-size: 18px;
+    line-height: 1.5;
+  }
+  .words p.big {
+    font-size: 20px;
+  }
+  .label .lname {
+    font-size: 17px;
+  }
+  .veil {
+    background: linear-gradient(
+      180deg,
+      rgba(var(--veil), 0.95) 0,
+      rgba(var(--veil), 0.9) calc(var(--vb, 40vh) - 40px),
+      rgba(var(--veil), 0) calc(var(--vb, 40vh) + 50px)
+    );
+  }
+  #veil-night {
+    background: linear-gradient(
+      180deg,
+      rgba(var(--veil-night), 0.92) 0,
+      rgba(var(--veil-night), 0.85) calc(var(--vb, 40vh) - 40px),
+      rgba(var(--veil-night), 0) calc(var(--vb, 40vh) + 50px)
+    );
+  }
+  #dusk {
+    height: 46vh;
+  }
+  #nightsky .deep {
+    height: calc(200vh - 46vh);
+  }
+  /* inside: the painting stays put above, the paper sheet slides up over it */
+  .in-scroll {
+    padding-top: 50svh;
+  }
+  .in-sheet {
+    width: auto;
+    min-height: 50svh;
+  }
+  .in-sheet .tear {
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: calc(100% - 1px);
+    width: auto;
+    height: 44px;
+    mask: var(--tear-t) 0 0 / 512px 44px repeat-x;
+    -webkit-mask: var(--tear-t) 0 0 / 512px 44px repeat-x;
+  }
+  .in-words {
+    min-height: 0;
+    padding: 14px 16px 72px;
+    justify-content: flex-start;
+  }
+  .in-band {
+    width: auto;
+    height: auto;
+    padding: max(8px, env(safe-area-inset-top)) 0 0 6px;
+    background: none;
+  }
+  .back {
+    background: rgba(var(--veil), 0.9);
+  }
+  .frame.small {
+    max-width: 300px;
+  }
+}
+@media (max-width: 759px) and (max-height: 700px) {
+  .js .words,
+  .js .hello .words {
+    top: 56px;
+  }
+  .about p {
+    font-size: 17px;
+    line-height: 1.45;
+    margin-bottom: 0.6em;
+  }
+  .words p.big {
+    font-size: 18.5px;
+  }
+  .contact .big a {
+    font-size: 30px;
+  }
+}
+@media (max-width: 359px) {
+  .elsewhere {
+    gap: 0 14px;
+    font-size: 14px;
+  }
+  .label .lhint {
+    font-size: 14px;
+  }
+}

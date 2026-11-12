@@ -1,6 +1,24 @@
 import { expect, test, type Page } from '@playwright/test';
 
 const SLUGS = ['front-desk', 'numbers-room', 'lowl', 'emberquill', 'history-lens', 'bookforge', 'kana-notebook'];
+const COUNTRY: Record<string, string> = {
+  'front-desk': 'mountains',
+  'numbers-room': 'mountains',
+  lowl: 'steppe',
+  emberquill: 'steppe',
+  'history-lens': 'sea',
+  bookforge: 'sea',
+  'kana-notebook': 'sea',
+};
+const NAMES: Record<string, string> = {
+  'front-desk': 'The Front Desk',
+  'numbers-room': 'The Numbers Room',
+  lowl: 'LOWL',
+  emberquill: 'Emberquill',
+  'history-lens': 'History Lens',
+  bookforge: 'BookForge',
+  'kana-notebook': 'Kana Notebook',
+};
 const PHONE = { width: 390, height: 844 };
 
 /** Collect console errors and uncaught exceptions, and refuse every request that is not to the local server. */
@@ -20,23 +38,34 @@ async function watch(page: Page): Promise<string[]> {
   return problems;
 }
 
-/** Open the page and wait until the first screen has drawn itself and the horizon line is showing. */
+/** Open the page and wait until the first screen has painted itself and the horizon is laid out. */
 async function open(page: Page, path = './'): Promise<void> {
   await page.goto(path);
   await expect(page.locator('html')).toHaveClass(/ready-nav/, { timeout: 15_000 });
+  await expect(page.locator('html')).toHaveClass(/\bready\b/, { timeout: 20_000 });
   /* the page is laid out once more when the typefaces arrive: wait for that, so positions are final */
   await page.evaluate(() => document.fonts.ready.then(() => new Promise((r) => requestAnimationFrame(() => r(null)))));
 }
 
-/** Is this place's button on screen (at least its middle)? */
+/** Is this place's painted object showing, with its middle on screen? */
 async function onScreen(page: Page, slug: string): Promise<boolean> {
   return page.evaluate((s) => {
-    const r = document.querySelector(`#${s} .obj`)?.getBoundingClientRect();
-    if (!r) return false;
-    const cx = r.left + r.width / 2,
+    const el = document.querySelector<HTMLElement>(`.cut[data-slug="${s}"]`);
+    if (!el || getComputedStyle(el).visibility !== 'visible') return false;
+    const r = el.getBoundingClientRect(),
+      cx = r.left + r.width / 2,
       cy = r.top + r.height / 2;
     return cx > 0 && cx < innerWidth && cy > 0 && cy < innerHeight;
   }, slug);
+}
+
+/** Land on a place by its link and step inside with the keyboard. */
+async function enter(page: Page, slug: string): Promise<void> {
+  await open(page, `./#${slug}`);
+  const label = page.getByRole('button', { name: `Go inside ${NAMES[slug]}` });
+  await label.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('dialog')).toBeVisible();
 }
 
 test('the page loads with no console errors and sends nothing off the machine', async ({ page }) => {
@@ -46,48 +75,49 @@ test('the page loads with no console errors and sends nothing off the machine', 
   await page.waitForTimeout(1500);
 
   await expect(page.getByRole('heading', { level: 1 })).toHaveText("Hi, I'm Kaisar.");
-  await expect(page.locator('.obj')).toHaveCount(7);
+  await expect(page.locator('.label')).toHaveCount(7);
   expect(problems).toEqual([]);
 });
 
-test('the drawing is really drawn: the scene canvas is not blank', async ({ page }) => {
+test('the painting is really painted: the first place has paint on its canvas', async ({ page }) => {
   await open(page);
 
-  const colours = await page.evaluate(() => {
-    const c = document.querySelector<HTMLCanvasElement>('#scene');
-    const g = c?.getContext('2d');
-    if (!c || !g) return 0;
-    const seen = new Set<string>();
-    for (let i = 0; i < 400; i++) {
-      const d = g.getImageData(
-        Math.floor((c.width * (i % 20)) / 20),
-        Math.floor((c.height * Math.floor(i / 20)) / 20),
-        1,
-        1,
-      ).data;
-      seen.add(`${d[0] >> 3},${d[1] >> 3},${d[2] >> 3}`);
-    }
-    return seen.size;
-  });
+  /* it soaks in for a moment after the page says it is ready */
+  const inked = (): Promise<number> =>
+    page.evaluate(() => {
+      const c = document.querySelector<HTMLCanvasElement>('.cut[data-slug="front-desk"] canvas');
+      const g = c?.getContext('2d');
+      if (!c || !g || c.width < 10) return 0;
+      const d = g.getImageData(0, 0, c.width, c.height).data;
+      const seen = new Set<string>();
+      let n = 0;
+      for (let i = 3; i < d.length; i += 400)
+        if (d[i] > 0) {
+          n++;
+          seen.add(`${d[i - 3] >> 4},${d[i - 2] >> 4},${d[i - 1] >> 4}`);
+        }
+      return n > 200 ? seen.size : 0;
+    });
 
-  expect(colours).toBeGreaterThan(8);
+  await expect.poll(inked, { timeout: 8000 }).toBeGreaterThan(8);
 });
 
-test('all seven places can be reached with the arrow keys, in order', async ({ page }) => {
+test('all seven places can be reached with the arrow keys, in order, and each is announced', async ({ page }) => {
   await open(page);
 
   for (const slug of SLUGS) {
     await page.keyboard.press('ArrowRight');
 
-    await expect(page.locator(`.horizon a[href="#${slug}"]`)).toHaveAttribute('aria-current', 'location');
+    await expect(page.locator(`.horizon a[href="#${COUNTRY[slug]}"]`)).toHaveAttribute('aria-current', 'location');
     await expect.poll(() => onScreen(page, slug), { timeout: 8000 }).toBe(true);
+    await expect(page.locator('#where')).toContainText(NAMES[slug]);
   }
 });
 
 test('entering and leaving a place by keyboard restores focus and scroll', async ({ page }) => {
   const problems = await watch(page);
   await open(page);
-  await page.locator('.horizon a[href="#lowl"]').click();
+  await page.locator('.horizon a[href="#steppe"]').click();
   const place = page.getByRole('button', { name: 'Go inside LOWL' });
   await expect(place).toBeFocused();
   await expect.poll(() => onScreen(page, 'lowl')).toBe(true);
@@ -109,12 +139,29 @@ test('entering and leaving a place by keyboard restores focus and scroll', async
   expect(problems).toEqual([]);
 });
 
+test('inside a place the finished painting is painted behind the paper', async ({ page }) => {
+  await enter(page, 'numbers-room');
+
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const c = document.querySelector<HTMLCanvasElement>('#in-paint');
+          const g = c?.getContext('2d');
+          if (!c || !g || c.width < 10 || getComputedStyle(c).opacity !== '1') return 0;
+          const d = g.getImageData(Math.floor(c.width * 0.7), Math.floor(c.height * 0.5), 40, 40).data;
+          const seen = new Set<string>();
+          for (let i = 0; i < d.length; i += 4) seen.add(`${d[i] >> 4},${d[i + 1] >> 4},${d[i + 2] >> 4}`);
+          return seen.size;
+        }),
+      { timeout: 10_000 },
+    )
+    .toBeGreaterThan(4);
+});
+
 test('inside a place Tab stays in the room, and the link and video are there', async ({ page }) => {
-  await open(page);
-  await page.locator('.horizon a[href="#kana-notebook"]').click();
-  await page.keyboard.press('Enter');
+  await enter(page, 'kana-notebook');
   const room = page.getByRole('dialog');
-  await expect(room).toBeVisible();
 
   await expect(room.getByRole('link', { name: "It's live." })).toHaveAttribute(
     'href',
@@ -127,12 +174,23 @@ test('inside a place Tab stays in the room, and the link and video are there', a
   }
 });
 
+test('a video frame says it is loading, then shows the video or says it did not load', async ({ page }) => {
+  await enter(page, 'numbers-room');
+  const frame = page.locator('#inside .frame');
+
+  /* the bundled Chromium may lack H.264: either the controls come up or the frame says so, never stuck loading */
+  await expect
+    .poll(async () => {
+      const state = await frame.getAttribute('data-state');
+      const text = (await frame.textContent()) ?? '';
+      return state === 'ready' || text.includes("the video didn't load");
+    })
+    .toBe(true);
+});
+
 test('the browser Back button leaves a place, and Forward goes back in', async ({ page }) => {
-  await open(page);
-  await page.locator('.horizon a[href="#bookforge"]').click();
-  await page.keyboard.press('Enter');
+  await enter(page, 'bookforge');
   const room = page.getByRole('dialog');
-  await expect(room).toBeVisible();
 
   await page.goBack();
   await expect(room).toBeHidden();
@@ -143,13 +201,10 @@ test('the browser Back button leaves a place, and Forward goes back in', async (
 });
 
 test('Forward pressed while a place is still closing ends up inside it', async ({ page }) => {
-  await open(page);
-  await page.locator('.horizon a[href="#bookforge"]').click();
-  await page.keyboard.press('Enter');
+  await enter(page, 'bookforge');
   const room = page.getByRole('dialog');
-  await expect(room).toBeVisible();
 
-  /* Back starts the closing animation; Forward lands before it has finished */
+  /* Back starts the closing dissolve; Forward lands before it has finished */
   await page.evaluate(() => history.back());
   await page.waitForFunction(() => !location.hash.includes('bookforge') || history.state === null);
   await page.evaluate(() => history.forward());
@@ -161,9 +216,7 @@ test('Forward pressed while a place is still closing ends up inside it', async (
 });
 
 test('a place with no video says so', async ({ page }) => {
-  await open(page);
-  await page.locator('.horizon a[href="#emberquill"]').click();
-  await page.keyboard.press('Enter');
+  await enter(page, 'emberquill');
 
   await expect(page.getByRole('dialog')).toContainText('no video yet');
 });
@@ -172,9 +225,15 @@ test('a #emberquill deep link lands on Emberquill', async ({ page }) => {
   await open(page, './#emberquill');
 
   await expect.poll(() => onScreen(page, 'emberquill'), { timeout: 8000 }).toBe(true);
-  await expect(page.locator('.horizon a[href="#emberquill"]')).toHaveAttribute('aria-current', 'location');
+  await expect(page.locator('.horizon a[href="#steppe"]')).toHaveAttribute('aria-current', 'location');
   await page.waitForTimeout(3500);
   expect(await onScreen(page, 'emberquill')).toBe(true);
+});
+
+test('a #sea link lands on the first place by the sea', async ({ page }) => {
+  await open(page, './#sea');
+
+  await expect.poll(() => onScreen(page, 'history-lens'), { timeout: 8000 }).toBe(true);
 });
 
 test('an old deep link still lands on the place that took it over', async ({ page }) => {
@@ -183,25 +242,50 @@ test('an old deep link still lands on the place that took it over', async ({ pag
   await expect.poll(() => onScreen(page, 'front-desk'), { timeout: 8000 }).toBe(true);
 });
 
+test('the skip link takes keyboard focus to the first place', async ({ page }) => {
+  await open(page);
+
+  await page.keyboard.press('Tab');
+  await expect(page.locator('.skip')).toBeFocused();
+  await page.keyboard.press('Enter');
+
+  await expect(page.getByRole('button', { name: 'Go inside The Front Desk' })).toBeFocused();
+});
+
+test("a label says where you would step on hover, in the page's accent", async ({ page }) => {
+  await open(page, './#lowl');
+  const label = page.getByRole('button', { name: 'Go inside LOWL' });
+  await expect(label).toHaveClass(/\bon\b/);
+
+  await label.hover();
+
+  await expect(label.locator('.lhint .b')).toHaveText('look in the workshop');
+  await expect.poll(() => label.locator('.lhint .b').evaluate((e) => getComputedStyle(e).opacity)).toBe('1');
+  await expect(label.locator('.lname')).toHaveCSS('color', 'rgb(154, 72, 38)');
+});
+
+test('a lantern lit in the night hangs on the string and is kept in this browser', async ({ page }) => {
+  const problems = await watch(page);
+  await open(page, './#contact');
+  const button = page.getByRole('button', { name: 'Light a lantern' });
+  await expect(page.locator('#lantern-tag')).toHaveClass(/\bon\b/, { timeout: 10_000 });
+
+  await button.click();
+
+  await expect(page.locator('.cut[data-kind="lanterns"] .lit')).toHaveCount(1);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kaisar.lanterns.v1') ?? '[]').length)).toBe(1);
+  await page.reload();
+  await expect(page.locator('.cut[data-kind="lanterns"] .lit')).toHaveCount(1, { timeout: 15_000 });
+  expect(problems).toEqual([]);
+});
+
 test.describe('leave a note', () => {
   async function openNote(page: Page): Promise<void> {
     await open(page);
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-    /* the scene glides to the end: wait until the button has arrived and stopped moving before pressing it */
-    const button = page.getByRole('button', { name: 'or leave a note' });
-    let last = -1;
-    await expect
-      .poll(
-        async () => {
-          const x = (await button.boundingBox())?.x ?? -1;
-          const still = x >= 0 && x < 1440 && Math.abs(x - last) < 0.5;
-          last = x;
-          return still;
-        },
-        { timeout: 30_000, intervals: [250] },
-      )
-      .toBe(true);
-    await button.click();
+    /* the contact words soak in at the end of the walk: wait until they can be pressed */
+    await expect(page.locator('#contact .words')).toHaveClass(/\bon\b/, { timeout: 15_000 });
+    await page.getByRole('button', { name: 'or leave a note' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
   }
 
@@ -251,9 +335,14 @@ test.describe('leave a note', () => {
   });
 });
 
-for (const width of [320, 390, 768, 1024]) {
+for (const [width, height] of [
+  [320, 640],
+  [390, 844],
+  [768, 1024],
+  [1024, 768],
+]) {
   test(`no horizontal overflow at ${width}px`, async ({ page }) => {
-    await page.setViewportSize({ width, height: width < 900 ? 844 : 768 });
+    await page.setViewportSize({ width, height });
     await open(page);
 
     for (const at of [0, 0.3, 0.6, 1]) {
@@ -267,27 +356,33 @@ for (const width of [320, 390, 768, 1024]) {
   });
 }
 
-test('on a phone each place stands about half the screen tall and fits the width', async ({ page }) => {
+test('on a phone each place stands in the lower part of the screen, with its label on screen to tap', async ({
+  page,
+}) => {
   await page.setViewportSize(PHONE);
   await open(page);
 
-  const boxes = await page.evaluate(() =>
-    Array.from(document.querySelectorAll<HTMLElement>('.obj')).map((b) => {
-      const r = b.getBoundingClientRect();
-      return { w: r.width, h: r.height, left: r.left };
-    }),
-  );
+  for (const slug of SLUGS) {
+    await page.keyboard.press('ArrowRight');
+    await expect.poll(() => onScreen(page, slug), { timeout: 8000 }).toBe(true);
+    const label = page.getByRole('button', { name: `Go inside ${NAMES[slug]}` });
+    await expect(label).toHaveClass(/\bon\b/);
+    await page.waitForTimeout(1200);
+    const b = await label.boundingBox();
+    const art = await page.locator(`.cut[data-slug="${slug}"]`).boundingBox();
+    expect(b, slug).not.toBeNull();
+    expect(art, slug).not.toBeNull();
+    if (!b || !art) continue;
 
-  expect(boxes).toHaveLength(7);
-  for (const b of boxes) {
-    expect(b.left).toBeGreaterThanOrEqual(0);
-    expect(b.left + b.w).toBeLessThanOrEqual(PHONE.width + 0.5);
-    /* the button is the building plus its strip of ground; the building alone is 36-55% of the screen */
-    expect(b.h / PHONE.height).toBeGreaterThan(0.42);
+    expect(b.x, slug).toBeGreaterThanOrEqual(0);
+    expect(b.x + b.width, slug).toBeLessThanOrEqual(PHONE.width + 0.5);
+    expect(b.height, slug).toBeGreaterThanOrEqual(44);
+    expect(b.y + b.height, slug).toBeLessThanOrEqual(PHONE.height - 60);
+    expect(art.height / PHONE.height, slug).toBeGreaterThan(0.2);
   }
 });
 
-test('on a phone a place can be entered by tap and left with the cross', async ({ page }) => {
+test('on a phone a place can be entered by tap and left with Back outside', async ({ page }) => {
   await page.setViewportSize(PHONE);
   await open(page, './#numbers-room');
   await expect.poll(() => onScreen(page, 'numbers-room')).toBe(true);
@@ -303,14 +398,14 @@ test('on a phone a place can be entered by tap and left with the cross', async (
 test.describe('reduced motion', () => {
   test.use({ reducedMotion: 'reduce' });
 
-  test('the page renders at once, places are drawn, and a place opens without a transition', async ({ page }) => {
+  test('the page renders at once, places are painted, and a place opens without a transition', async ({ page }) => {
     const problems = await watch(page);
     await open(page);
 
-    await page.locator('.horizon a[href="#history-lens"]').click();
+    await page.locator('.horizon a[href="#sea"]').click();
     await expect.poll(() => onScreen(page, 'history-lens')).toBe(true);
     const inked = await page.evaluate(() => {
-      const c = document.querySelector<HTMLCanvasElement>('#history-lens .obj-base');
+      const c = document.querySelector<HTMLCanvasElement>('.cut[data-slug="history-lens"] canvas');
       const g = c?.getContext('2d');
       if (!c || !g || c.width < 10) return 0;
       const d = g.getImageData(0, 0, c.width, c.height).data;
@@ -348,11 +443,11 @@ test('for screen readers every place has its text and link in the page, outside 
 
   const spots = await page.evaluate(() =>
     Array.from(document.querySelectorAll('article.spot')).map((a) => ({
-      name: a.querySelector('h2')?.textContent ?? '',
+      name: a.querySelector('h3')?.textContent ?? '',
       text: a.querySelector('.more')?.textContent ?? '',
       hiddenFromAT: !!a.querySelector('.more')?.closest('[hidden], [aria-hidden="true"]'),
       tabbableLinks: Array.from(a.querySelectorAll<HTMLAnchorElement>('.more a')).filter((l) => l.tabIndex >= 0).length,
-      button: a.querySelector('.obj')?.getAttribute('aria-label') ?? '',
+      button: a.querySelector('.label')?.getAttribute('aria-label') ?? '',
     })),
   );
 

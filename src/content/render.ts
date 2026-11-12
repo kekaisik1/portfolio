@@ -1,9 +1,10 @@
 /**
  * The page's words as HTML. Used at build time to write them into index.html (so they are there without JavaScript,
- * for search engines and for screen readers), from the same content the drawing reads.
+ * for search engines and for screen readers), from the same content the painting reads.
+ * Without JavaScript this is a plain document; with it, each stop's words stand on the paper one at a time.
  */
+import { MESSAGES, SITE, ZONES } from './site';
 import { PROJECTS } from './projects';
-import { SITE, ZONES } from './site';
 import type { Project, ProjectLink, ZoneId } from './types';
 
 const ENTITIES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
@@ -11,70 +12,84 @@ export const esc = (s: string): string => s.replace(/[&<>"]/g, (ch) => ENTITIES[
 
 function linkHtml(l: ProjectLink, attrs = ''): string {
   const target = l.external ? ' target="_blank" rel="noopener"' : '';
-  return `<a${attrs} href="${esc(l.href)}"${target}>${esc(l.label)}</a>`;
+  const tail = l.external ? '<span class="sr-only"> (opens in a new tab)</span>' : '';
+  return `<a${attrs} href="${esc(l.href)}"${target}>${esc(l.label)}${tail}</a>`;
 }
 
-/** One place: its name and one line beside the drawing, and everything written inside it. */
-export function renderSpot(p: Project): string {
+/** The label beside a place's object: its name, its line, and (on hover) where you would be stepping. */
+function labelHtml(p: Project): string {
+  return (
+    `<button class="label" type="button" data-open="${p.slug}" aria-haspopup="dialog" aria-label="${esc(MESSAGES.goInside(p.name))}">` +
+    `<span class="dot" aria-hidden="true"></span><span class="ltext" aria-hidden="true"><span class="lname">${esc(p.name)}</span>` +
+    `<span class="lhint"><span class="a">${esc(p.line)}</span><span class="b">${esc(p.hover)}</span></span></span></button>`
+  );
+}
+
+/** One place: its words on the paper, its label, and everything written inside it. */
+export function renderSpot(p: Project, stop: number): string {
   const inside = p.inside.map((t) => `<p>${esc(t)}</p>`).join('');
   const note = p.note ? `<aside class="note">${esc(p.note)}</aside>` : '';
   const link = p.link ? `<p class="live">${linkHtml(p.link)}</p>` : '';
   return (
-    `<article class="spot" id="${p.slug}" data-kind="${p.group}" aria-labelledby="${p.slug}-t">` +
-    `<div class="cap"><h2 id="${p.slug}-t">${esc(p.name)}</h2><p>${esc(p.line)}</p></div>` +
+    `<article class="stop spot" id="${p.slug}" data-stop="${stop}" style="--i:${stop}" data-kind="${p.group}" aria-labelledby="${p.slug}-t">` +
+    `<div class="words"><h3 id="${p.slug}-t">${esc(p.name)}</h3><p class="line">${esc(p.line)}</p>` +
+    `<p class="src">${esc(SITE.source[p.group])}</p></div>` +
+    labelHtml(p) +
     `<div class="more">${inside}${note}${link}</div>` +
     `</article>`
   );
 }
 
-const HERO =
-  `<header class="hero"><div class="hero-text">` +
-  `<h1>${esc(SITE.hero.heading)}</h1><p class="quiet">${esc(SITE.hero.line)}</p>` +
-  `</div></header>`;
+const hello = (): string =>
+  `<article class="stop hello" id="hello" data-stop="0" style="--i:0" aria-labelledby="hello-t"><div class="words">` +
+  `<h1 id="hello-t">${esc(SITE.hero.heading)}</h1><p class="lede">${esc(SITE.hero.line)}</p>` +
+  `<button class="walk" type="button" data-go="1">${esc(SITE.hero.walk)}</button>` +
+  `</div></article>`;
 
-const LANTERN =
-  `<button class="lantern-btn" id="lantern" type="button" aria-label="Light a lantern"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">` +
-  `<path d="M8.5 40.6 C15 39.8 22 40.9 29 40.2 C33 39.9 37 40.6 40.5 40.1" stroke-width="1.1" opacity=".75"/>` +
-  `<path d="M12 42.8 C17 42.3 21 42.9 25.5 42.6" stroke-width=".8" opacity=".45"/>` +
-  `<path class="lb-body" d="M17.6 21.2 C16.4 25 16.5 31.2 17.9 35.4 L30.3 35.5 C31.7 31 31.6 25.1 30.2 21.1 Z" stroke-width="1.15"/>` +
-  `<path d="M17.2 21.3 L30.7 21.1 M17.6 35.6 L30.4 35.3 M19.6 21 L20.3 18.9 L27.8 18.8 L28.4 21 M21 35.5 L21.4 37.7 L26.7 37.6 L27.1 35.4" stroke-width="1"/>` +
-  `<path d="M20.4 18.9 C20.6 14.2 27.4 14.1 27.6 18.8" stroke-width=".9"/>` +
-  `<path d="M20.1 25.4 C22.6 25.9 25.6 25.8 28 25.2 M19.9 30.5 C22.6 31 25.8 31 28.3 30.3" stroke-width=".7" opacity=".55"/>` +
-  `</svg></button><p class="lantern-n" id="lantern-n" aria-live="polite"></p>`;
-
-function renderNight(): string {
+function night(first: number): string {
   const c = SITE.contact;
   return (
-    LANTERN +
-    `<article class="block" id="about" aria-labelledby="about-t">` +
-    `<h2 class="sr-only" id="about-t">${esc(SITE.about.heading)}</h2>` +
-    SITE.about.paragraphs.map((t) => `<p>${esc(t)}</p>`).join('') +
-    `<aside class="note today" id="wx"></aside><aside class="note today" id="now"></aside>` +
-    `</article>` +
-    `<div class="write" id="write-wrap"><div id="moon-spot" aria-hidden="true"></div><div class="block">` +
-    `<p class="big"><a id="write" href="mailto:${esc(c.email)}">${esc(c.writeMe)}</a>` +
-    `<button class="note-link" id="note-open" type="button" aria-haspopup="dialog">${esc(c.leaveNote)}</button></p>` +
-    c.links.map((l) => `<p class="gh">${linkHtml(l)}</p>`).join('') +
-    `</div></div>`
+    `<article class="stop about" id="about" data-stop="${first}" style="--i:${first}" aria-labelledby="about-t"><div class="words">` +
+    `<h3 class="sr-only" id="about-t">${esc(SITE.about.heading)}</h3>` +
+    SITE.about.paragraphs.map((t, i) => `<p${i ? '' : ' class="big"'}>${esc(t)}</p>`).join('') +
+    `<p class="today" id="wx"></p><p class="today" id="now"></p>` +
+    `</div></article>` +
+    `<article class="stop contact" id="contact" data-stop="${first + 1}" style="--i:${first + 1}" aria-labelledby="contact-t"><div class="words">` +
+    `<h3 class="sr-only" id="contact-t">${esc(c.heading)}</h3>` +
+    `<p class="big"><a id="write" href="mailto:${esc(c.email)}">${esc(c.writeMe)}</a></p>` +
+    `<p class="mail"><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></p>` +
+    `<p><button class="note-link" id="note-open" type="button" aria-haspopup="dialog">${esc(c.leaveNote)}</button></p>` +
+    `<ul class="elsewhere">${c.links.map((l) => `<li>${linkHtml(l)}</li>`).join('')}</ul>` +
+    `</div>` +
+    `<div class="lantern" id="lantern-tag"><button class="lantern-btn" id="lantern" type="button">` +
+    `<span class="dot" aria-hidden="true"></span>${esc(MESSAGES.lightLantern)}</button>` +
+    `<p class="lantern-n" id="lantern-n" aria-live="polite"></p></div>` +
+    `</article>`
   );
 }
 
-/** The whole journey: four stretches, the first with the greeting, the last with about and contact. */
+/** The whole journey: four countries, the first with the greeting, the last with about and contact. */
 export function renderJourney(): string {
+  let stop = 1;
   return ZONES.map((z) => {
-    const spots = PROJECTS.filter((p) => p.zone === z.id)
-      .map(renderSpot)
-      .join('');
-    const body = z.id === 'night' ? renderNight() : (z.id === 'mountains' ? HERO : '') + spots;
-    return `<section class="stretch" id="${z.id}" aria-label="${esc(z.label)}">${body}</section>`;
+    /* the country stands at its first stop, so the browser's own jump to #sea lands there too */
+    const first = z.id === 'mountains' ? 0 : stop;
+    let body: string;
+    if (z.id === 'night') body = night(stop);
+    else {
+      const spots = PROJECTS.filter((p) => p.zone === z.id).map((p) => renderSpot(p, stop++));
+      body = (z.id === 'mountains' ? hello() : '') + spots.join('');
+    }
+    return (
+      `<section class="country" id="${z.id}" style="--c:${first}" aria-labelledby="${z.id}-t">` +
+      `<h2 class="sr-only" id="${z.id}-t">${esc(z.label)}</h2>${body}</section>`
+    );
   }).join('\n');
 }
 
-/** The marks along the horizon line: one per place, and the end. */
+/** The words on the horizon bar: one link per country. */
 export function renderNavItems(): string {
-  const items = PROJECTS.map((p) => ({ href: `#${p.slug}`, label: p.name }));
-  items.push({ href: '#about', label: SITE.about.heading });
-  return items.map((i) => `<li><a class="place" href="${i.href}"><span>${esc(i.label)}</span></a></li>`).join('');
+  return ZONES.map((z) => `<li><a href="#${z.id}" data-country="${z.id}">${esc(z.short)}</a></li>`).join('');
 }
 
 const jsonLd = (): string =>
@@ -99,12 +114,17 @@ export function fillShell(html: string): string {
   };
   const words: Record<string, string> = {
     title: esc(SITE.title),
+    mark: esc(SITE.mark),
     description: esc(SITE.description),
     url: SITE.url,
+    ogAlt: esc(SITE.ogAlt),
     heading: esc(SITE.hero.heading),
     line: esc(SITE.hero.line),
+    email: esc(SITE.contact.email),
+    contactHeading: esc(SITE.contact.heading),
     skip: esc(SITE.skip),
     travelHint: esc(SITE.travelHint),
+    backOutside: esc(MESSAGES.backOutside),
   };
   return html
     .replace(/<!--app:(\w+)-->/g, (m, k: string) => slots[k] ?? m)

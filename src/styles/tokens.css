@@ -1,33 +1,41 @@
-/* Palette and type. The drawing's own colours (which blend along the journey) live in src/world/palette.ts. */
+/*
+ * Palette and type. The paintings mix their own pigments (src/paint/kinds/); these are the page's.
+ * Earth and mineral, sunlit and muted: bare paper, ink, slate, verdigris, ochre, and oxide as the one sharp accent.
+ * The journey is a painting on paper, so it stays light in dark mode (color-scheme: light in index.html).
+ */
 :root {
-  --paper: #f1f1ec;
-  --ink: #2b2d33;
-  --ink-soft: #3e414a;
-  --focus: #1b5a85;
-  /* fixed colours: paper dialogs are always daylight, the night is always chalk */
-  --day-ink: #2b2d33;
-  --day-ink-soft: #3e414a;
-  --day-focus: #1b5a85;
-  --chalk: #e8e6f0;
-  --chalk-soft: #d6d4e6;
-  --lamp: #f2cf73;
-  --sheet: #f4f3ee;
-  --field: #fbfaf6;
-  --screen: #eae8df;
-  --video-bg: #1f2128;
-  --error: #a3352b;
-  --button-hover: #44474f;
-  --hand: 'Gaegu', 'Segoe Print', 'Bradley Hand', cursive;
-  --serif: 'Spectral', Georgia, 'Times New Roman', serif;
-  --vw: 100vw;
-  --H: 100vh;
-  --top: clamp(48px, 9vh, 104px);
-  --gap: clamp(420px, 48vw, 860px);
-  --bar: 40px;
-  --navmist: rgba(241, 241, 236, 0.82);
-  --nav-ink: var(--day-ink);
+  --paper: #ece9e0;
+  --glow: #f8f7f2;
+  --ink: #24302c;
+  --slate: #4f6070;
+  --verdigris: #5f8a78;
+  --ochre: #c39046;
+  --oxide: #9a4826;
+  --night: #1b2440;
+  --night-deep: #1d2747;
+  --night-ink: #eee6d0;
+  --night-soft: #c3cbdd;
+  --night-accent: #f0b48a;
+  --moon: #f1e7c8;
+  --mat: #f8f7f2;
+  --screen: #dad6cb;
+  --video-bg: #2a2f33;
+  /* semantic */
+  --fg: var(--ink);
+  --fg-soft: var(--slate);
+  --accent: var(--oxide);
+  --error: #9a3a22;
+  --success: #3f6e5a;
+  /* rgb of the paper, for the soft paper patches behind words and labels */
+  --veil: 236, 233, 224;
+  --veil-night: 27, 36, 64;
+  --serif: 'Newsreader', 'Iowan Old Style', Georgia, serif;
+  --sans: 'Familjen Grotesk', 'Gill Sans', 'Trebuchet MS', sans-serif;
+  --band: 76px;
+  --ease: cubic-bezier(0.2, 0.7, 0.1, 1);
 }
-html[data-sky='night'] {
-  --navmist: rgba(26, 29, 66, 0.82);
-  --nav-ink: var(--chalk);
+html.night {
+  --fg: var(--night-ink);
+  --fg-soft: var(--night-soft);
+  --accent: var(--night-accent);
 }
