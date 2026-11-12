@@ -1,65 +1,34 @@
 /**
- * Links to a country (#sea) or to one place (#emberquill) open there. The browser's own jump can't be trusted:
- * wide, the track moves sideways under a sticky stage; narrow, the drawings change the page's length after load.
+ * Links to a country (#sea), a place (#emberquill), about or contact land on that stop. Each stop is laid out at
+ * its own scroll position (see journey.css), so even the browser's own jump lands there; this does it for links
+ * followed later, and for the old links routing.ts translates.
  */
-import { clamp } from '../lib/math';
-import { sections, track } from '../world/dom';
-import { requestDraw } from '../world/scheduler';
-import { S } from '../world/state';
-import { duskNow, readTarget } from '../world/zones';
-import { applyDom, replaceAddress } from './horizon';
+import { COUNTRY_START, stopOfId } from '../scene/stops';
+import type { ZoneId } from '../content/types';
+import { S } from '../journey/state';
+import { stopEls } from '../journey/dom';
+import { goTo } from './travel';
 import { hashTarget } from './routing';
+
+/** Which stop an address points at, or -1. */
+export function stopOfHash(hash: string): number {
+  const id = hashTarget(hash);
+  if (!id) return -1;
+  if (Object.hasOwn(COUNTRY_START, id)) return COUNTRY_START[id as ZoneId];
+  const i = stopOfId(id);
+  if (i >= 0) return i;
+  const el = document.getElementById(id);
+  const host = el?.closest('.stop');
+  return host instanceof HTMLElement ? stopEls.indexOf(host) : -1;
+}
 
 /** Travel to whatever the address points at. Returns false when it points at nothing on the journey. */
 export function goHash(): boolean {
-  const id = hashTarget(location.hash);
-  const el = id ? document.getElementById(id) : null;
-  if (!el || !track.contains(el)) return false;
-  const si = sections.indexOf(el),
-    pi = S.objs.findIndex((o) => o.host === el);
-  let y;
-  if (si >= 0) y = S.targets[si];
-  else if (pi >= 0) y = S.stops[pi + 1];
-  else if (S.wide) {
-    const host = el.closest('.block, .hero-text') || el,
-      r = host.getBoundingClientRect(),
-      tr = track.getBoundingClientRect();
-    y = clamp(r.left - tr.left + r.width / 2 - S.vw / 2, 0, S.sMax);
-  } else y = clamp(el.getBoundingClientRect().top + window.scrollY - S.vh * 0.12, 0, S.maxScroll);
-  window.scrollTo(0, y);
-  S.hashY = window.scrollY;
-  S.target = S.s = readTarget();
-  S.lastPlace = -1;
-  duskNow();
-  applyDom();
-  requestDraw();
+  const i = stopOfHash(location.hash);
+  if (i < 0) return false;
+  goTo(i);
+  S.s = S.target = i;
   return true;
-}
-
-/**
- * Around the moment the page finishes loading the browser retries its own jump to the #link, and on the sideways track
- * that walks off towards the end. Hold the spot until it has given up, or until you move.
- */
-export function holdHash(): void {
-  const moves = ['wheel', 'touchstart', 'pointerdown', 'keydown'] as const;
-  const want = location.hash;
-  let holding = true;
-  const hold = (): void => {
-    if (!holding) return;
-    if (Math.abs(window.scrollY - S.hashY) > 4) {
-      /* by now the address may already name the place it was dragged to: put the link back first */
-      if (location.hash !== want) replaceAddress(want);
-      goHash();
-    }
-    requestAnimationFrame(hold);
-  };
-  const letGo = (): void => {
-    holding = false;
-    moves.forEach((m) => window.removeEventListener(m, letGo));
-  };
-  moves.forEach((m) => window.addEventListener(m, letGo, { passive: true }));
-  window.addEventListener('load', () => setTimeout(letGo, 3000), { once: true });
-  requestAnimationFrame(hold);
 }
 
 export function initHash(): void {

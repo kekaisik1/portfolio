@@ -2,9 +2,9 @@
 import { api } from '../api';
 import { MESSAGES, SITE } from '../content/site';
 import { byId, pick } from '../lib/dom';
-import { noteDlg } from '../world/dom';
-import { lightLantern } from '../world/lanterns';
-import { S } from '../world/state';
+import { noteDlg } from '../journey/dom';
+import { S } from '../journey/state';
+import { lightLantern } from '../night/lanterns';
 import { NOTE_IDLE, nextNoteState, noteView, type NoteEvent, type NoteState } from './machine';
 import { readNote, validateNote } from './validate';
 
@@ -17,7 +17,6 @@ export function initNote(): void {
   const open = byId<HTMLButtonElement>('note-open'),
     form = byId<HTMLFormElement>('note-form'),
     done = byId('note-done'),
-    name = byId<HTMLInputElement>('note-name'),
     text = byId<HTMLTextAreaElement>('note-text'),
     msg = byId('note-msg'),
     send = pick<HTMLButtonElement>(form, '.note-send');
@@ -52,9 +51,9 @@ export function initNote(): void {
     dispatch({ type: 'open' });
     show();
     noteDlg.showModal();
-    name.focus();
+    text.focus();
   });
-  pick(noteDlg, '.reel-x').addEventListener('click', () => noteDlg.close());
+  pick(noteDlg, '.note-x').addEventListener('click', () => noteDlg.close());
   noteDlg.addEventListener('click', (e) => {
     if (e.target === noteDlg) noteDlg.close();
   });
@@ -77,11 +76,11 @@ export function initNote(): void {
       form.reset();
       done.focus();
       /* the note goes up as a lantern: step out of the way so it can be seen */
-      if (S.reduce) lightLantern(open, true);
+      if (S.reduce) lightLantern();
       else
         setTimeout(() => {
           if (noteDlg.open) noteDlg.close();
-          lightLantern(open, true);
+          lightLantern();
         }, THANKS_MS);
     })();
   });

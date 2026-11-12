@@ -2,16 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{{title}}</title>
     <meta name="description" content="{{description}}" />
+    <!-- the journey is a painting on paper: it stays light in dark mode too -->
     <meta name="color-scheme" content="light" />
-    <meta name="theme-color" content="#D3D8E0" />
+    <meta name="theme-color" content="#ECE9E0" />
     <link rel="canonical" href="{{url}}" />
     <link
       rel="icon"
       type="image/svg+xml"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%23F1F1EC'/%3E%3Ccircle cx='46' cy='19' r='7' fill='%23E9C46A'/%3E%3Cpath d='M5 49 L20 24 L28 35 L38 17 L59 49 Z' fill='%238EA7C2' fill-opacity='.55'/%3E%3Cpath d='M4 50 L20 23.5 L28 35.5 L38 16.5 L60 50 M3 51 C20 49 44 52 61 50' fill='none' stroke='%232B2D33' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ECE9E0'/%3E%3Ccircle cx='46' cy='18' r='6.5' fill='%23A4502C' fill-opacity='.85'/%3E%3Cpath d='M4 47 C10 40 14 30 21 22 C25 27 27 32 31 31 C35 25 38 19 41 17 C47 26 53 36 60 47 Z' fill='%235D6F7E' fill-opacity='.55'/%3E%3Cpath d='M4 50 C14 46 26 44 38 45 C46 46 54 47 60 46 L60 56 L4 56 Z' fill='%235F8A78' fill-opacity='.6'/%3E%3C/svg%3E"
     />
     <!-- the card people see when the link is pasted somewhere. og.jpg is a picture of the first screen. -->
     <meta property="og:type" content="website" />
@@ -22,17 +23,13 @@
     <meta property="og:image" content="{{url}}og.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta
-      property="og:image:alt"
-      content="A pencil drawing of mountains under a pale morning sky, with the words: {{heading}} {{line}}"
-    />
+    <meta property="og:image:alt" content="{{ogAlt}} {{heading}} {{line}}" />
     <meta name="twitter:card" content="summary_large_image" />
     <script type="application/ld+json">
       <!--app:jsonld-->
     </script>
-    <link rel="preload" href="/fonts/gaegu-700.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/gaegu-400.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/spectral-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/newsreader-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/familjen-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
     <script>
       document.documentElement.classList.add('js');
     </script>
@@ -40,76 +37,73 @@
   </head>
   <body>
     <a class="skip" href="#front-desk">{{skip}}</a>
-    <canvas id="scene" aria-hidden="true"></canvas>
-    <div class="grain" aria-hidden="true"></div>
+    <!-- the painting: paper, the day's cut-outs, the night rising over them, grain, and clear paper behind the words -->
+    <div id="paper" aria-hidden="true"></div>
+    <div id="scene" aria-hidden="true"></div>
+    <div id="nightsky" aria-hidden="true">
+      <canvas id="dusk"></canvas>
+      <div class="deep"></div>
+    </div>
+    <div id="nightscene" aria-hidden="true"></div>
+    <div id="grain" aria-hidden="true"></div>
+    <div id="veil" class="veil" aria-hidden="true"></div>
+    <div id="veil-night" class="veil" aria-hidden="true"></div>
+
+    <header class="top">
+      <a class="mark" href="#mountains">{{mark}}</a>
+      <a class="topmail" href="mailto:{{email}}">{{contactHeading}}</a>
+    </header>
 
     <!-- the words of the journey are written in from src/content/ when the page is built -->
     <main id="journey">
-      <div class="stage" id="stage">
-        <div class="track" id="track">
-          <!--app:journey-->
-        </div>
-      </div>
+      <!--app:journey-->
     </main>
 
-    <nav class="horizon" id="horizon" aria-label="Places" aria-describedby="travel-hint">
+    <nav class="horizon" id="horizon" aria-label="Where you are" aria-describedby="travel-hint">
+      <div class="band" aria-hidden="true"><span class="band-day"></span><span class="band-night"></span></div>
       <p id="travel-hint" class="sr-only">{{travelHint}}</p>
       <div class="wrap">
-        <svg aria-hidden="true" focusable="false">
-          <path class="ln ln1" stroke-width="1.5" />
-          <path class="ln ln2" stroke-width="1" opacity=".5" />
-          <g class="ticks"></g>
-          <g class="you-g">
-            <circle class="you-ring" r="8.5" />
-            <circle class="you" r="4.6" />
-          </g>
-        </svg>
+        <span class="hline" aria-hidden="true"></span>
+        <span class="hdot" aria-hidden="true"></span>
         <ol>
           <!--app:nav-->
         </ol>
       </div>
     </nav>
+    <p class="sr-only" id="where" aria-live="polite"></p>
+    <!-- the walk is as long as this: one STEP of scroll per stop -->
+    <div id="track" aria-hidden="true"></div>
 
     <dialog id="inside" aria-labelledby="in-t">
-      <div class="in-fog"></div>
-      <div class="in-wrap">
-        <button class="in-x reel-x" type="button" aria-label="Back outside">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path
-              d="M5.2 5.6 C9 9.4 14.6 14.8 18.9 18.6 M18.4 5.1 C14.3 9.6 9.7 14 5.3 18.8 M6.1 4.9 C10 8.6 14 12.9 18.1 19.2"
-            />
-          </svg>
-        </button>
-        <div class="in-art"><canvas id="in-cv" aria-hidden="true"></canvas></div>
+      <canvas id="in-paint" aria-hidden="true"></canvas>
+      <div class="in-scroll">
         <div class="in-sheet">
-          <div class="in-paper">
-            <canvas class="in-bg" aria-hidden="true"></canvas>
-            <div class="in-body">
-              <h2 id="in-t"></h2>
-              <div class="in-text"></div>
-              <div class="in-vid"></div>
-              <div class="in-link"></div>
-            </div>
+          <span class="tear" aria-hidden="true"></span>
+          <div class="in-words">
+            <h2 id="in-t" tabindex="-1"></h2>
+            <div class="in-text"></div>
+            <div class="in-vid"></div>
+            <div class="in-link"></div>
           </div>
         </div>
+      </div>
+      <div class="in-band">
+        <button class="back" type="button" id="back">{{backOutside}}</button
+        ><span class="tear" aria-hidden="true"></span>
       </div>
     </dialog>
 
     <dialog id="note" aria-labelledby="note-t">
-      <div class="reel-in">
-        <button class="reel-x" type="button" aria-label="Close">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path
-              d="M5.2 5.6 C9 9.4 14.6 14.8 18.9 18.6 M18.4 5.1 C14.3 9.6 9.7 14 5.3 18.8 M6.1 4.9 C10 8.6 14 12.9 18.1 19.2"
-            />
-          </svg>
+      <div class="note-sheet">
+        <button class="note-x" type="button" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6 L18 18 M18 6 L6 18" /></svg>
         </button>
         <h2 id="note-t">Leave a note</h2>
         <form id="note-form" novalidate>
-          <label for="note-name">Your name <small>(if you like)</small></label>
-          <input id="note-name" name="name" type="text" maxlength="60" autocomplete="name" />
           <label for="note-text">Your note</label>
           <textarea id="note-text" name="text" rows="4" maxlength="600" required aria-describedby="note-msg"></textarea>
+          <label for="note-name">Your name <small>(if you like)</small></label>
+          <input id="note-name" name="name" type="text" maxlength="60" autocomplete="name" />
           <label for="note-contact">Where can I answer? <small>(only if you want an answer)</small></label>
           <input id="note-contact" name="contact" type="text" maxlength="120" autocomplete="off" />
           <div class="note-trap" aria-hidden="true" inert>
@@ -118,7 +112,7 @@
           <p class="note-msg" id="note-msg" role="alert" aria-live="assertive"></p>
           <button class="note-send" type="submit">send it</button>
         </form>
-        <p class="note-done" id="note-done" tabindex="-1" role="status" hidden>Sent. Thank you.</p>
+        <p class="note-done" id="note-done" tabindex="-1" role="status" hidden>Sent. Thank you, I read every note.</p>
       </div>
     </dialog>
 

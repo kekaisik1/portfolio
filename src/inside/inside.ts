@@ -1,214 +1,174 @@
 /**
- * Inside a place: the drawing grows until you are standing in it, and its own kind of paper tells you about it.
- * A modal dialog: Esc, the cross, a click outside the paper and the browser's Back all lead out again,
- * and focus returns to the place you came from.
+ * Inside a place: the pieces you walked past give way to the finished painting of the whole place, full bleed,
+ * with its words, video and link on a sheet of paper. A modal dialog: Esc, "Back outside" and the browser's Back
+ * all lead out again, and focus returns to the label you came from.
  */
-import { ctx2d, pick, pickAll } from '../lib/dom';
-import { clamp } from '../lib/math';
-import { PADB } from '../places/view';
-import { ROOMS } from '../rooms';
-import { roomShell } from '../rooms/shell';
-import { byId } from '../lib/dom';
-import { inside, noteDlg } from '../world/dom';
-import { rubGrain } from '../world/draw/grain';
-import { glow } from '../world/draw/pencil';
-import { Sk, paint, pen } from '../world/draw/sketch';
-import { PAPER, css, stop } from '../world/palette';
-import { requestDraw } from '../world/scheduler';
-import { S } from '../world/state';
-import type { PlaceObj, SkOp } from '../world/types';
-import { placeNow } from '../world/zones';
+import { projectBySlug } from '../content/projects';
+import { byId, pick, pickAll } from '../lib/dom';
+import { clamp, easeOut } from '../lib/math';
+import { inside, labelEls, noteDlg, root } from '../journey/dom';
+import { requestFrame } from '../journey/frame';
+import { S } from '../journey/state';
+import { setTextLevel } from '../journey/text';
+import { LV } from '../journey/timing';
+import { cutOfSlug } from '../journey/world';
+import { addressOf, replaceAddress } from '../nav/address';
 import { insideSlug } from '../nav/routing';
-import { sheetArt } from './sheets';
-import { pencilFrame, showVideo } from './video';
+import { focusQuietly, goTo } from '../nav/travel';
+import { STOPS, stopOfSlug } from '../scene/stops';
+import { BLOOM_STEPS, bloomMasks, drawBloom, finishedPainting } from './painting';
+import { showVideo } from './video';
 
-const inWrap = pick(inside, '.in-wrap'),
-  inFog = pick(inside, '.in-fog'),
-  inArt = pick(inside, '.in-art'),
-  inCv = byId<HTMLCanvasElement>('in-cv'),
-  inSheet = pick(inside, '.in-sheet'),
-  inPaper = pick(inside, '.in-paper'),
-  inBg = pick<HTMLCanvasElement>(inside, '.in-bg'),
-  inT = byId('in-t'),
-  inText = pick(inside, '.in-text'),
-  inVid = pick(inside, '.in-vid'),
-  inLink = pick(inside, '.in-link'),
-  inX = pick(inside, '.in-x');
+const paintCv = byId<HTMLCanvasElement>('in-paint'),
+  sheet = pick(inside, '.in-sheet'),
+  band = pick(inside, '.in-band'),
+  scroller = pick(inside, '.in-scroll'),
+  title = byId('in-t'),
+  text = pick(inside, '.in-text'),
+  vid = pick(inside, '.in-vid'),
+  linkBox = pick(inside, '.in-link'),
+  back = byId<HTMLButtonElement>('back');
 
-/** rooms are drawn on a 600 x 440 sheet with a 10 px margin */
-const ROOM_W = 620,
-  ROOM_H = 460;
+const BLOOM_IN_MS = 780,
+  BLOOM_OUT_MS = 520,
+  SHEET_IN_MS = 700,
+  SHEET_DELAY_MS = 380,
+  SHEET_OUT_MS = 260;
+/** resize settles for this long before the painting is made again */
+const RESIZE_SETTLE_MS = 160;
 
-let anims: Animation[] = [];
 /** going in added a step to the history, so Back is the way out */
 let pushed = false;
-let sheetRaf = 0;
-/** each room's strokes, built the first time you go in */
-const roomParts = new Map<string, SkOp[]>();
+/** each opening gets a number: late work from an earlier one is dropped */
+let token = 0;
+let anim = 0;
 
-function stopAnims(): void {
-  anims.forEach((a) => a.cancel());
-  anims = [];
-}
+const phone = (): boolean => S.view.phone;
+/** how much of the left the paper covers on wide screens (the sheet's own width) */
+const paperWidth = (): number => (phone() ? 0 : sheet.getBoundingClientRect().width);
 
-/** The paper the words are written on, drawn to the size the words have made it. */
-function drawSheet(): void {
-  sheetRaf = 0;
-  const o = S.inObj;
-  if (!o) return;
-  const w = inPaper.clientWidth,
-    h = inPaper.clientHeight,
-    d = S.sharp;
-  if (!w || !h) return;
-  inBg.width = Math.round(w * d);
-  inBg.height = Math.round(h * d);
-  const g = ctx2d(inBg);
-  g.setTransform(d, 0, 0, d, 0, 0);
-  g.lineCap = 'round';
-  g.lineJoin = 'round';
-  sheetArt(ROOMS[o.p.slug].sheet, g, w, h);
-}
-
-/** The room: drawn once when you come in (and again on resize), to fit its side of the screen. */
-export function fitInside(): void {
-  const o = S.inObj;
-  if (!o) return;
-  const room = ROOMS[o.p.slug];
-  const bw = inArt.clientWidth,
-    bh = inArt.clientHeight,
-    sc = Math.max(0.2, Math.min(bw / ROOM_W, bh / ROOM_H)),
-    w = ROOM_W * sc,
-    h = ROOM_H * sc,
-    pr = sc > 1.5 ? Math.min(S.sharp, 1.5) : S.sharp;
-  inCv.style.width = w + 'px';
-  inCv.style.height = h + 'px';
-  inCv.style.left = (bw - w) / 2 + 'px';
-  inCv.style.top = (bh - h) / 2 + 'px';
-  inCv.width = Math.max(1, Math.round(w * pr));
-  inCv.height = Math.max(1, Math.round(h * pr));
-  let parts = roomParts.get(o.p.slug);
-  if (!parts) {
-    /* the seed follows the kind of paper, so each room is the same on every visit */
-    const s = Sk(900 + room.sheet.length * 31);
-    roomShell(s, room);
-    room.draw(s);
-    parts = s.parts.base;
-    roomParts.set(o.p.slug, parts);
-  }
-  const g = ctx2d(inCv),
-    k = sc * pr;
-  g.setTransform(k, 0, 0, k, 10 * k, 450 * k);
-  g.lineCap = 'round';
-  g.lineJoin = 'round';
-  pen.lw = clamp(1.25 / sc, 0.8, 1.8);
-  paint(g, parts, o.pal);
-  for (const [x, y, r, a] of room.glow || []) glow(g, x, y, r, o.pal.warm, a);
-  pen.lw = 1;
-  rubGrain(g, inCv);
-  const fr = inVid.querySelector<HTMLElement>('.frame');
-  if (fr) pencilFrame(fr);
-  drawSheet();
-}
-
-/** Where the door is, as a point on the drawing: going in means walking at it until it fills your eyes. */
-function doorOrigin(o: PlaceObj): string {
-  const F = o.def.full,
-    d = o.def.door || [0, -40],
-    h = F[3] - F[1] + (S.wide ? 0 : PADB);
-  return (
-    (((d[0] - o.view.fx0) / o.view.fw) * 100).toFixed(1) +
-    '% ' +
-    (((d[1] * (o.def.sy || 1) - F[1]) / h) * 100).toFixed(1) +
-    '%'
-  );
-}
-
-/** Copy what is written inside the place (it lives in the page, under the place's name) onto the paper. */
-function fillPaper(o: PlaceObj): void {
-  inT.textContent = o.p.name;
-  inText.textContent = '';
-  inLink.textContent = '';
-  const more = o.host.querySelector('.more');
+/** Copy what is written inside the place (it lives in the page, in the stop) onto the paper. */
+function fillPaper(slug: string): void {
+  const p = projectBySlug(slug);
+  title.textContent = p ? p.name : '';
+  text.textContent = '';
+  linkBox.textContent = '';
+  const more = document.getElementById(slug)?.querySelector('.more');
   if (!more) return;
   for (const n of Array.from(more.children)) {
     const k = n.cloneNode(true) as Element;
     /* on the page these links are kept out of the Tab order (they are not visible there); here they are */
     for (const a of pickAll(k, 'a[tabindex]')) a.removeAttribute('tabindex');
-    (k.classList.contains('live') ? inLink : inText).append(k);
+    (k.classList.contains('live') ? linkBox : text).append(k);
   }
 }
 
+/** Tween the paper (and the Back band) from one dissolve level to another. */
+function sheetTo(from: number, to: number, dur: number, delay: number, done?: () => void): void {
+  cancelAnimationFrame(anim);
+  if (S.reduce) {
+    setTextLevel(sheet, to * LV);
+    setTextLevel(band, to * LV);
+    done?.();
+    return;
+  }
+  const t0 = performance.now() + delay;
+  const step = (now: number): void => {
+    const t = clamp((now - t0) / dur, 0, 1),
+      L = Math.round((from + (to - from) * t) * LV);
+    setTextLevel(sheet, L);
+    setTextLevel(band, L);
+    if (t < 1) anim = requestAnimationFrame(step);
+    else done?.();
+  };
+  anim = requestAnimationFrame(step);
+}
+
+let painting: HTMLCanvasElement | null = null;
+let masks: HTMLCanvasElement[] = [];
+let bloomRaf = 0;
+
+/** Run the bloom forwards (dir 1, opening) or backwards. */
+function bloom(dir: 1 | -1, dur: number, done: () => void): void {
+  cancelAnimationFrame(bloomRaf);
+  const pt = painting;
+  if (!pt || S.reduce || !masks.length) {
+    if (pt && dir > 0) drawBloom(paintCv, pt, masks.length ? masks : [pt], BLOOM_STEPS);
+    paintCv.style.opacity = dir > 0 ? '1' : '0';
+    done();
+    return;
+  }
+  paintCv.style.opacity = '1';
+  const t0 = performance.now();
+  let last = -1;
+  const step = (now: number): void => {
+    const t = clamp((now - t0) / dur, 0, 1),
+      p = dir > 0 ? easeOut(t) : 1 - easeOut(t),
+      L = Math.round(p * BLOOM_STEPS);
+    if (L !== last) {
+      drawBloom(paintCv, pt, masks, L);
+      last = L;
+    }
+    if (t < 1) bloomRaf = requestAnimationFrame(step);
+    else done();
+  };
+  bloomRaf = requestAnimationFrame(step);
+}
+
+/** Make (or remake, after a resize) the painting for the screen as it is now. */
+async function paint(slug: string, my: number): Promise<boolean> {
+  const p = await finishedPainting(slug, window.innerWidth, window.innerHeight, phone(), paperWidth());
+  if (my !== token) return false;
+  painting = p;
+  return true;
+}
+
 /** Go inside a place. `fromHistory` = the browser's Forward brought us here, so the address is already right. */
-export function goInside(o: PlaceObj, fromHistory = false): void {
-  if (inside.open) return;
-  S.inObj = o;
+export async function goInside(slug: string, fromHistory = false): Promise<void> {
+  if (inside.open || !projectBySlug(slug)) return;
+  const my = ++token;
+  S.inSlug = slug;
   S.inClosing = false;
-  S.inSettled = false;
-  o.drawn = 1;
-  o.going = true;
-  fillPaper(o);
-  showVideo(inVid, o.p, () => S.inObj === o);
-  inPaper.className = 'in-paper t-' + ROOMS[o.p.slug].sheet;
-  inFog.style.background = css(stop(PAPER, Math.min(2, placeNow())), 0.975);
+  const i = stopOfSlug(slug);
+  if (Math.round(S.target) !== i) {
+    goTo(i);
+    S.s = i;
+  }
+  fillPaper(slug);
+  const p = projectBySlug(slug);
+  if (p) showVideo(vid, p, () => S.inSlug === slug && my === token);
+  setTextLevel(sheet, 0);
+  setTextLevel(band, 0);
+  paintCv.style.opacity = '0';
+  root.classList.add('is-open');
   inside.showModal();
-  inWrap.scrollTop = 0;
-  inSheet.scrollTop = 0;
-  fitInside();
+  focusQuietly(title);
+  scroller.scrollTop = 0;
   /* arriving by Forward, the step is already in the history: leaving must take it away too */
   pushed = fromHistory;
   if (!fromHistory) {
     try {
-      history.pushState({ inside: o.p.slug }, '', '#' + o.p.slug);
+      history.pushState({ inside: slug }, '', '#' + slug);
       pushed = true;
     } catch (err) {
-      /* file:// or a sandbox refuses: Esc and the cross still work */
+      /* file:// or a sandbox refuses: Esc and Back outside still work */
       if (!(err instanceof DOMException)) throw err;
     }
   }
-  stopAnims();
-  if (S.reduce) {
-    S.inSettled = true;
-    return;
-  }
-  const art = o.view.wrap;
-  art.style.transformOrigin = doorOrigin(o);
-  const walk = art.animate(
-    [
-      { transform: 'scale(1)', opacity: 1 },
-      { transform: 'scale(2.1)', opacity: 1, offset: 0.55 },
-      { transform: 'scale(3.4)', opacity: 0 },
-    ],
-    { duration: 760, easing: 'cubic-bezier(.5,0,.7,.4)', fill: 'forwards' },
-  );
-  walk.onfinish = () => {
-    S.inSettled = true;
-  };
-  anims = [
-    walk,
-    inFog.animate([{ opacity: 0 }, { opacity: 0, offset: 0.35 }, { opacity: 1 }], { duration: 760, easing: 'ease-in' }),
-    inArt.animate(
-      [
-        { opacity: 0, transform: 'scale(.86)' },
-        { opacity: 1, transform: 'none' },
-      ],
-      { duration: 620, delay: 520, easing: 'cubic-bezier(.15,.7,.2,1)', fill: 'backwards' },
-    ),
-    inSheet.animate(
-      [
-        { opacity: 0, transform: 'translateY(22px) rotate(.8deg)' },
-        { opacity: 1, transform: 'none' },
-      ],
-      { duration: 520, delay: 760, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'backwards' },
-    ),
-    inX.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, delay: 900, fill: 'backwards' }),
-  ];
-  requestDraw();
+  S.openTo = 1;
+  requestFrame();
+  /* the bloom starts from the thing you clicked */
+  const c = cutOfSlug(slug),
+    v = S.view;
+  const ox = c?.onScreen ? clamp((c.box.left + c.box.w * 0.5) / v.W, 0, 1) : 0.62,
+    oy = c?.onScreen ? clamp((c.box.top + c.box.h * 0.6) / v.H, 0, 1) : 0.6;
+  masks = S.reduce ? [] : bloomMasks(ox, oy, v.H / v.W);
+  if (!(await paint(slug, my))) return;
+  bloom(1, BLOOM_IN_MS, () => undefined);
+  sheetTo(0, 1, SHEET_IN_MS, SHEET_DELAY_MS);
 }
 
-/**
- * Close the dialog. The browser hands focus back to the place's button as it closes; that must not be taken
- * for someone tabbing to it (which would snap the scroll to wherever the glide has got to).
- */
+/** Close the dialog (the close handler puts everything back). */
 function shut(): void {
   S.suppress = true;
   inside.close();
@@ -219,75 +179,52 @@ export function leaveInside(fromHistory = false): void {
   if (!inside.open || S.inClosing) return;
   /* Back is the same door: if going in added a step to the history, leaving takes it away again */
   const state: unknown = history.state;
-  if (!fromHistory && pushed && typeof state === 'object' && state !== null && 'inside' in state) {
+  if (!fromHistory && pushed && insideSlug(state) !== null) {
     history.back();
     return;
   }
   S.inClosing = true;
-  const v = inVid.querySelector('video');
-  if (v) v.pause();
-  if (S.reduce || !S.inObj) {
+  vid.querySelector('video')?.pause();
+  token++;
+  if (S.reduce) {
     shut();
     return;
   }
-  stopAnims();
-  const out = S.inObj.view.wrap.animate(
-    [
-      { transform: 'scale(3.4)', opacity: 0 },
-      { transform: 'scale(1.6)', opacity: 1, offset: 0.5 },
-      { transform: 'scale(1)', opacity: 1 },
-    ],
-    { duration: 520, easing: 'cubic-bezier(.2,.6,.3,1)' },
-  );
-  anims = [
-    out,
-    inFog.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 380, easing: 'ease-out', fill: 'forwards' }),
-    inArt.animate(
-      [
-        { opacity: 1, transform: 'none' },
-        { opacity: 0, transform: 'scale(.9)' },
-      ],
-      { duration: 200, fill: 'forwards' },
-    ),
-    inSheet.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, fill: 'forwards' }),
-    inX.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, fill: 'forwards' }),
-  ];
-  out.onfinish = shut;
-  requestDraw();
+  sheetTo(1, 0, SHEET_OUT_MS, 0);
+  bloom(-1, BLOOM_OUT_MS, shut);
 }
 
+let resizeTimer = 0;
+
 export function initInside(): void {
-  if ('ResizeObserver' in window) {
-    new ResizeObserver(() => {
-      if (S.inObj && !sheetRaf) sheetRaf = requestAnimationFrame(drawSheet);
-    }).observe(inPaper);
-  }
+  back.addEventListener('click', () => leaveInside());
+  for (const [slug, lb] of labelEls) lb.addEventListener('click', () => void goInside(slug));
   inside.addEventListener('cancel', (e) => {
     e.preventDefault();
     leaveInside();
   });
   inside.addEventListener('close', () => {
-    stopAnims();
-    inVid.textContent = '';
-    const o = S.inObj;
-    S.inObj = null;
+    cancelAnimationFrame(bloomRaf);
+    cancelAnimationFrame(anim);
+    vid.textContent = '';
+    const slug = S.inSlug;
+    S.inSlug = '';
     S.inClosing = false;
-    S.inSettled = false;
-    if (o) {
-      o.dirty = true;
-      /* focus goes back to the place you came from, without the page travelling anywhere */
-      S.suppress = true;
-      o.btn.focus({ preventScroll: true });
-      setTimeout(() => {
-        S.suppress = false;
-      }, 60);
+    S.openTo = 0;
+    painting = null;
+    masks = [];
+    root.classList.remove('is-open');
+    if (!pushed) {
+      const st = STOPS[stopOfSlug(slug)];
+      if (st) replaceAddress(addressOf(st.country));
     }
-    requestDraw();
+    /* focus goes back to the label you came from, without the page travelling anywhere */
+    const lb = labelEls.get(slug);
+    if (lb) focusQuietly(lb);
+    else S.suppress = false;
+    requestFrame();
   });
-  inside.addEventListener('click', (e) => {
-    if (e.target instanceof Element && !e.target.closest('.in-paper')) leaveInside();
-  });
-  /* Tab stays in the room */
+  /* Tab stays inside */
   inside.addEventListener('keydown', (e) => {
     if (e.key !== 'Tab') return;
     const f = pickAll(inside, 'button, a[href], video[controls]').filter((n) => n.getClientRects().length);
@@ -300,39 +237,36 @@ export function initInside(): void {
       f[0].focus();
     }
   });
-  /* the journey stays still behind the room; the room itself can still be read with the keys */
+  /* the journey stays still behind; the paper itself can still be read with the keys */
   inside.addEventListener('keydown', (e) => {
     if (!/^(PageUp|PageDown|ArrowUp|ArrowDown|Home|End)$/.test(e.key)) return;
     if (e.target instanceof HTMLVideoElement) return;
     e.preventDefault();
-    const box = S.wide ? inSheet : inWrap,
-      d = /Down|End/.test(e.key) ? 1 : -1;
-    box.scrollBy(0, d * (/Arrow/.test(e.key) ? 60 : box.clientHeight * 0.8));
+    const d = /Down|End/.test(e.key) ? 1 : -1;
+    scroller.scrollBy(0, d * (/Arrow/.test(e.key) ? 60 : scroller.clientHeight * 0.8));
   });
-  /* Back from inside a place steps out of it (and Forward goes back in); the address changing must not move you along the track */
+  /* Back from inside a place steps out of it, and Forward goes back in */
   window.addEventListener('popstate', (e) => {
     const slug = insideSlug(e.state);
-    const o = slug ? S.objs.find((x) => x.p.slug === slug) : undefined;
-    if (!inside.open && !o) return;
+    if (!inside.open && !slug) return;
     S.skipHash = true;
     setTimeout(() => {
       S.skipHash = false;
     }, 150);
     if (!inside.open) {
-      if (o) goInside(o, true);
+      if (slug) void goInside(slug, true);
       return;
     }
-    if (S.inClosing && o) {
-      /* Forward while the room is still closing: finish the close now and step back in once the dialog has let go,
-         so the room on screen matches the address */
+    if (S.inClosing && slug) {
+      /* Forward while closing: finish the close now, then step back in once the dialog has let go */
       inside.addEventListener(
         'close',
         () => {
-          if (insideSlug(history.state) === slug) goInside(o, true);
+          if (insideSlug(history.state) === slug) void goInside(slug, true);
         },
         { once: true },
       );
-      stopAnims();
+      cancelAnimationFrame(bloomRaf);
       shut();
       return;
     }
@@ -342,10 +276,22 @@ export function initInside(): void {
   const holdScroll = (e: Event): void => {
     if (!inside.open && !noteDlg.open) return;
     for (let n = e.target instanceof Element ? e.target : null; n; n = n.parentElement) {
-      if (n.matches('.reel-in, .in-sheet, .in-wrap') && n.scrollHeight > n.clientHeight + 1) return;
+      if (n.matches('.in-scroll, .note-sheet') && n.scrollHeight > n.clientHeight + 1) return;
     }
     e.preventDefault();
   };
   window.addEventListener('wheel', holdScroll, { passive: false });
   window.addEventListener('touchmove', holdScroll, { passive: false });
+  window.addEventListener('resize', () => {
+    if (!inside.open) return;
+    clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(() => {
+      const slug = S.inSlug,
+        my = token;
+      if (!slug) return;
+      void paint(slug, my).then((ok) => {
+        if (ok && painting) drawBloom(paintCv, painting, [painting], 1);
+      });
+    }, RESIZE_SETTLE_MS);
+  });
 }

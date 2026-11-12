@@ -11,17 +11,19 @@ export interface ProjectLink {
 }
 
 export interface Project {
-  /** The id of its spot on the page, its #link, its video file name and its key in the API's growth numbers. */
+  /** The id of its stop on the page, its #link, its video file name and its key in the API's growth numbers. */
   slug: string;
   group: ProjectGroup;
   /** Which country of the journey it stands in. */
   zone: Exclude<ZoneId, 'night'>;
   name: string;
-  /** One line pencilled beside the place. At most 60 characters. */
+  /** One line beside the place. At most 60 characters. */
   line: string;
+  /** What the label beside the place says while the pointer is on it: where you would be stepping. */
+  hover: string;
   /** What is written on the paper inside the place, one string per paragraph. */
   inside: string[];
-  /** A small handwritten aside under the text. */
+  /** A small aside under the text. */
   note?: string;
   link?: ProjectLink;
 }
@@ -30,15 +32,24 @@ export interface Zone {
   id: ZoneId;
   /** Spoken name of the stretch, for screen readers. */
   label: string;
+  /** The word on the horizon bar. */
+  short: string;
 }
 
 export interface SiteCopy {
   title: string;
+  /** The name in the top corner. */
+  mark: string;
   description: string;
   url: string;
-  hero: { heading: string; line: string };
+  /** What the picture shown when the link is pasted somewhere is of (og:image:alt), before the greeting. */
+  ogAlt: string;
+  hero: { heading: string; line: string; walk: string };
+  /** The small line under each place's words, by kind of project. */
+  source: Record<ProjectGroup, string>;
   about: { heading: string; paragraphs: string[] };
   contact: {
+    heading: string;
     email: string;
     writeMe: string;
     leaveNote: string;

@@ -1,14 +1,13 @@
-/* Styles, split by concern. Order matters: tokens first, the two layouts after the things they arrange, then reduced motion, print last. */
+/* Styles, split by concern. Order matters: tokens first, phones after the things they rearrange, then reduced motion, print last. */
 @import './fonts.css';
 @import './tokens.css';
 @import './base.css';
+@import './scene.css';
 @import './journey.css';
-@import './places.css';
+@import './labels.css';
+@import './horizon.css';
 @import './inside.css';
 @import './note.css';
-@import './lantern.css';
-@import './horizon.css';
-@import './layout-wide.css';
-@import './layout-narrow.css';
+@import './narrow.css';
 @import './motion.css';
 @import './print.css';

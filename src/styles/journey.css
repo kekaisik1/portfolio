@@ -1,43 +1,248 @@
-/* The words on the journey: the greeting, each place's name and line, about and contact. */
-/* hero: the name, written into the morning sky */
-.hero {
-  position: relative;
+/*
+ * The words of the journey. Without JavaScript they are a plain document on paper. With it, each stop stands at
+ * its own scroll position (so a #link lands there), and its words sit in a narrow column on bare paper, one stop at
+ * a time, dissolving in and out through the paper grain (the page swaps their mask level as you walk).
+ */
+.top {
+  position: fixed;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: max(6px, env(safe-area-inset-top)) clamp(16px, 3vw, 40px) 0;
+  pointer-events: none;
 }
-.hero-text {
-  position: relative;
-  max-width: 720px;
+.top a {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: none;
+  color: var(--fg);
 }
-.hero h1 {
-  font-size: clamp(54px, 6.6vw, 108px);
-  line-height: 0.92;
-  letter-spacing: -0.01em;
-}
-.hero .quiet {
-  font-size: clamp(19px, 1.55vw, 24px);
-  max-width: 30ch;
-  margin-top: 20px;
-}
-html.js:not(.ready-nav) .horizon {
-  opacity: 0;
-}
-
-/* a place: its name and one line, pencilled into the sky beside it. Everything else is inside. */
-.spot {
-  position: relative;
-}
-.cap h2 {
-  font-size: clamp(38px, 3.5vw, 54px);
-  line-height: 0.98;
+.mark {
+  font: 400 19px/1 var(--serif);
   letter-spacing: -0.005em;
 }
-.cap p {
-  font: italic 400 clamp(17px, 1.3vw, 20px)/1.35 var(--serif);
-  margin: 6px 0 0 2px;
-  color: var(--ink-soft);
+.topmail {
+  font: 400 15px/1 var(--sans);
+  text-decoration: underline !important;
+  text-underline-offset: 6px;
 }
-/* what is written inside a place. With JavaScript it is read inside the place (and stays here for screen readers);
-   without, it is simply shown under the name. */
-html.js .more {
+.top a:hover {
+  color: var(--accent);
+}
+/* the top line follows the dark only once the dusk band has passed behind it (frame.ts sets night-top) */
+html.night:not(.night-top) .top {
+  --fg: var(--ink);
+  --accent: var(--oxide);
+}
+
+#journey {
+  position: relative;
+  z-index: 10;
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 88px 16px 120px;
+}
+.country {
+  margin: 0 0 56px;
+}
+.stop {
+  margin: 0 0 40px;
+}
+h1 {
+  font-size: clamp(44px, 5.3vw, 78px);
+  line-height: 1;
+  letter-spacing: -0.018em;
+  margin: 0 0 0.42em;
+}
+.lede {
+  font-size: clamp(20px, 1.85vw, 27px);
+  line-height: 1.45;
+  margin: 0 0 1.6em;
+  max-width: 19em;
+}
+.words h3 {
+  font-size: clamp(32px, 3.1vw, 46px);
+  line-height: 1.05;
+  letter-spacing: -0.012em;
+  margin: 0 0 0.45em;
+}
+.line {
+  font-size: clamp(20px, 1.85vw, 27px);
+  line-height: 1.42;
+  margin: 0 0 0.9em;
+}
+.src {
+  font: 400 14.5px/1.4 var(--sans);
+  color: var(--fg-soft);
+  margin: 0;
+}
+.src::before {
+  content: '';
+  display: inline-block;
+  width: 22px;
+  height: 1px;
+  background: currentColor;
+  vertical-align: middle;
+  margin-right: 10px;
+  opacity: 0.7;
+}
+.about p {
+  font-size: clamp(19px, 1.5vw, 22px);
+  line-height: 1.55;
+  margin: 0 0 0.9em;
+}
+.words p.big {
+  font-size: clamp(22px, 2vw, 28px);
+  line-height: 1.4;
+}
+.today {
+  font: 400 14.5px/1.45 var(--sans);
+  color: var(--fg-soft);
+  margin: 0 0 0.3em !important;
+}
+.today:empty {
+  display: none;
+}
+.contact .big a {
+  font-size: clamp(34px, 3.4vw, 50px);
+  line-height: 1.05;
+  text-decoration: none;
+}
+.contact .big a:hover {
+  text-decoration: underline;
+}
+.mail {
+  font-size: clamp(19px, 1.5vw, 22px);
+  word-break: break-word;
+}
+.mail a,
+.more .live a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.note-link {
+  background: none;
+  border: 0;
+  padding: 10px 0;
+  min-height: 44px;
+  cursor: pointer;
+  font-size: clamp(22px, 1.8vw, 26px);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+.note-link:hover {
+  color: var(--accent);
+}
+.elsewhere {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 22px;
+  font: 400 15px/1.3 var(--sans);
+}
+.elsewhere a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.walk {
+  display: none;
+}
+.more {
+  margin: 12px 0 0;
+}
+.more .note {
+  font-style: italic;
+  color: var(--fg-soft);
+}
+.more .live a {
+  font: 400 15.5px/1.4 var(--sans);
+}
+
+/* ---------- with JavaScript: the journey ---------- */
+.js #journey {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+/* each country and each stop stands at its own scroll position (stop i at i x 460px): a #link, even the browser's
+   own jump, lands on it. A country stands at its first stop, and its stops are placed from there. */
+.js .country {
+  position: absolute;
+  left: 0;
+  top: calc(var(--c) * 460px);
+  width: 1px;
+  height: 1px;
+  margin: 0;
+}
+.js .stop {
+  position: absolute;
+  left: 0;
+  top: calc((var(--i) - var(--c)) * 460px);
+  width: 1px;
+  height: 1px;
+  margin: 0;
+}
+.js .words {
+  position: fixed;
+  left: max(16px, 8vw);
+  top: 50%;
+  transform: translateY(-50%);
+  width: min(24rem, 30vw);
+  opacity: 0;
+  pointer-events: none;
+  mask-size: 192px 192px;
+  mask-repeat: repeat;
+  mask-position: var(--mpos, 0 0);
+  -webkit-mask-size: 192px 192px;
+  -webkit-mask-repeat: repeat;
+  -webkit-mask-position: var(--mpos, 0 0);
+}
+.js .words.on {
+  pointer-events: auto;
+}
+.js .hello .words {
+  width: min(30rem, 36vw);
+}
+/* night words are light pigment on the dark */
+.js .about .words,
+.js .contact .words {
+  color: var(--night-ink);
+  --fg-soft: var(--night-soft);
+  --accent: var(--night-accent);
+}
+.js .walk {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: 0;
+  padding: 12px 0;
+  min-height: 44px;
+  cursor: pointer;
+  font: 400 15px/1 var(--sans);
+  text-decoration: underline;
+  text-underline-offset: 6px;
+  text-decoration-thickness: 1px;
+}
+.js .walk:hover {
+  color: var(--accent);
+}
+/* what is inside each place stays in the page for screen readers; you read it inside the place */
+.js .more {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -48,78 +253,12 @@ html.js .more {
   white-space: nowrap;
   border: 0;
 }
-html:not(.js) .more {
-  display: block;
-  max-width: 34rem;
-  padding: 8px 18px 0;
-}
-
-/* text sits straight on the drawn sky */
-.block {
+.js #track {
   position: relative;
+  z-index: -1;
+  width: 1px;
 }
-.note {
-  font: 400 20px/1.2 var(--hand);
-  color: var(--ink-soft);
-  transform: rotate(-1.6deg);
-  transform-origin: left center;
-  margin: 6px 0 12px 12px;
-  display: block;
-}
-/* two pencilled lines that come from the API: the weather where I am, and what I was last working on */
-.today {
-  margin-top: 10px;
-  margin-bottom: 0;
-}
-.today + .today {
-  margin-top: 4px;
-}
-.today:empty {
-  display: none;
-}
-.live {
-  margin: 4px 0 0;
-}
-.live a {
-  font: 700 23px/1.15 var(--hand);
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 2px;
-}
-
-/* night: the paper goes dark and the pencil turns to chalk */
-#night {
-  --ink: var(--chalk);
-  --ink-soft: var(--chalk-soft);
-  --focus: var(--lamp);
-  color: var(--chalk);
-}
-#about p {
-  font-size: 18px;
-}
-.write p {
-  font-size: 18px;
-}
-.write .big {
-  margin-bottom: 6px;
-}
-.write .big a {
-  font: 700 34px/1 var(--hand);
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-}
-.write .gh {
-  margin: 0;
-}
-.write .gh a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-}
-#moon-spot {
-  width: 112px;
-  height: 112px;
-  margin: 0 0 30px 40px;
+html.is-open .top,
+html.is-open .horizon {
+  visibility: hidden;
 }
