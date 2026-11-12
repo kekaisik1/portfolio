@@ -1,14 +1,14 @@
 # Portfolio
 
-A watercolour walk through mountains, steppe, sea and night. You scroll forward into the landscape; each of the seven projects is something standing in it (a hut, a yurt, a lighthouse…), with a small label beside it. Open the label and the finished painting of that place fills the screen, with the project's words, a short video if there is one, and its link on a sheet of paper. Then about, contact, "leave a note" and a string of lanterns.
+"Departures": a departures board where every destination is a place, and seven of the places are projects. On the left a crisp mono index of ten rows (place, project, status); the rest of the screen is a photograph of the place you are in, with that project's words standing in the corner the photo leaves calm. Choosing a row, turning the wheel, pressing an arrow key or swiping cuts to the next place like a board flipping: a few uneven slats close over the old photo in 300 ms and the new words are there. Summit (the greeting), Front desk, Reading room, Workshop, Tavern, Soho 1854, Lighthouse, Kyoto, The road (about) and Campfire (write me, leave a note, light a lantern).
 
-The one design reference is the David Whyte Experience (davidwhyte.com/experience): its structure and pace (separate painted pieces on paper fog, ~460 px of scroll per place, words on bare paper, a paper-grain dissolve, pieces first and the whole painting on a click), not its look.
+Each place has one quiet living detail (spindrift, a phone's glow, dust in lamp-light, embers, fog, a lighthouse beam, rain), and a project with a video plays it in the photo's frame. On phones the photo is the whole screen, the words take the lower or upper third, and the board is a sheet raised from a bar at the bottom.
 
 Live: https://kekaisik1.github.io/portfolio/
 
 ## Run it
 
-Node 20 or newer.
+Node 22 or newer for the scripts (the site itself builds on 20).
 
 ```bash
 npm install
@@ -17,71 +17,80 @@ npm run check      # lint + typecheck + unit tests + build (what CI runs)
 npm run test:e2e   # browser smoke suite against the real build (first time: npx playwright install chromium)
 npm run build      # dist/, to be served from /portfolio/
 npm run preview    # serves dist/ at http://localhost:4173/portfolio/
-npm run paint      # bake the paintings again after changing a painter (see below)
 ```
 
-Other scripts: `lint`, `typecheck`, `test`, `format`.
+Other scripts: `lint`, `typecheck`, `test`, `format`, `worlds` (photographs), `video` (compress a video).
 
 ## How it is put together
 
-Vite + TypeScript (strict), no UI framework: real HTML words over painted cut-outs that are moved with transforms, so plain modules are the right size.
+Vite + TypeScript (strict), no UI framework: real HTML words over photographs, moved only with transforms and opacity, so plain modules are the right size.
 
 ```
-index.html            the page shell: meta, the painting's layers, dialogs, slots the words are written into at build time
+index.html            the page shell: meta, the stage, the board, dialogs, {{slots}} the words are written into at build time
 src/main.ts           start-up: wires the parts together
-src/content/          every word on the page (projects, about, contact, messages) and how it becomes HTML
-src/scene/            what stands where: the stops of the walk (stops.ts), the cut-outs (objects.ts), the finished
-                      paintings of each country (compose.ts); pure data and maths
-src/paint/            the painter: layered SVG washes (painter.ts, motifs.ts), one painter per kind (kinds/<country>.ts),
-                      rasterising (raster.ts), the noise, dissolve masks and paper textures (noise.ts, masks.ts),
-                      and the baked paintings (baked.ts + baked.json, quality.ts, hash.ts)
-src/journey/          walking: camera and depth (camera.ts), the frame loop (frame.ts), when words, labels and pieces
-                      come and go (timing.ts), where labels stand (labels.ts, layout.ts), painting nearest first
-src/inside/           going into a place: the finished painting blooming in (painting.ts), the dialog, focus, Back/Esc
-                      (inside.ts), the video frame (video.ts)
-src/night/            lanterns, and the weather / "last seen working on" lines from the API
-src/nav/              arrow keys, the horizon bar's links, #links and the address
+src/content/          every word on the page: projects.ts, places.ts (the board's rows: place, status, coordinates),
+                      site.ts (greeting, about, contact, messages) and render.ts (how it all becomes HTML)
+src/worlds/           the photographs: looks.ts (where each world's words stand, its crop, its living detail),
+                      photos.ts (at most three mounted, each decoded before it is shown), cut.ts + slats.ts (the cut),
+                      cover.ts (where a photo's pixels land on screen), words.ts (showing a world's words, folding
+                      long text behind "Read"), placeholders.json (tiny blurred stand-ins, made by `npm run worlds`)
+src/travel/           going from world to world: travel.ts (the sequence: board, decode, cut, words, focus),
+                      input.ts (wheel, keys, swipe, #links), gesture.ts (one step per gesture; pure)
+src/board/            the index rows and the phone's bar and sheet (board.ts), the footer with coordinates, a live
+                      clock and the API's lines (footer.ts), the status-word flourish (scramble.ts)
+src/ambient/          the one small canvas of living details; the page's only frame loop, off when nothing shows
+src/video/            the player: the photo area becomes a modal video
+src/sheet/            "Read": the longer text as a sheet over the photo; swipe-down and press-outside closing
+src/note/             the note form by the campfire: validation, a small state machine, the form itself
+src/night/            lanterns over the campfire, and the weather / "last seen working on" lines from the API
+src/nav/              what an address means (#kana-notebook, old links) and keeping the address bar in step
 src/api/              typed client for the optional API; every response is checked with Zod
-src/note/             the note form: validation, a small state machine, the form itself
-src/styles/           CSS by concern; palette and type are custom properties in tokens.css; narrow.css is phones and
-                      upright tablets
-scripts/              build helpers: the video manifest, and `npm run paint` (bake-paint.ts + bake.html)
-public/               fonts, og.jpg, videos, paint/ (the baked paintings and paper textures)
+src/lib/              DOM lookups that fail loudly, the layout media queries
+src/styles/           CSS by concern; palette and type are custom properties in tokens.css; narrow.css is phones
+                      and upright tablets; plain.css is the page without JavaScript and on paper
+scripts/              build helpers: the video manifest (with running times), make-worlds.ts, compress-video.sh
+public/               fonts, og.jpg, videos, worlds/ (the photographs)
 tests/unit  tests/e2e
 ```
 
-The words are written into `index.html` when the page is built (`vite.config.ts` → `src/content/render.ts`), so every project, its text and its link are in the page without JavaScript, for search engines and screen readers. Each stop stands at its own scroll position (stop i at i × 460 px), so a `#link` lands there even before the script runs.
+The words are written into `index.html` when the page is built (`vite.config.ts` → `src/content/render.ts`), so every project, its text and its link are in the page without JavaScript, for search engines and screen readers; without scripts the page reads as a plain stacked document with the board as a list of links. The first photograph is written in too, so the summit and the greeting paint before any script runs.
 
-### The paintings
+### Why it stays smooth
 
-Everything is painted by code: each kind (`peaks`, `shed`, `lighthouse`, …) is a seeded painter that builds overlapping SVG washes with ragged edges, pooled rims, granulation and dry-brush gaps. Rendering those SVG filters takes a real browser and up to a few hundred milliseconds each, so the site ships them **baked**: `npm run paint` paints every kind once in Chromium (through the Vite dev server) and writes `public/paint/<kind>.webp`, the paper grain and torn edges as PNGs, and `src/paint/baked.json` (size, quality, the painter's fingerprint, and where each painting has paint, for placing labels). The page decodes those, nearest stop first; a place's finished painting is fetched when you arrive at it. A kind with no baked file is painted live in the browser, which is what happens in development right after you change a painter.
+Only `transform` and `opacity` are animated. At most three photographs are in the page (the current one and its neighbours), and a photo is only shown once `img.decode()` has finished; a cut waits at most 400 ms for that and otherwise uses the photo's tiny blurred stand-in. The cut is a handful of compositor animations; the only frame loop is the ambient canvas (half resolution, about 30 fps), and it stops on a still world, in a hidden tab, under reduced motion and whenever something covers the photo. Nothing eases a scroll: one gesture is one step.
 
-A unit test fingerprints every painter and fails when `baked.json` no longer matches: after changing anything under `src/paint/` (or `quality.ts`, or a cut-out's height), run `npm run paint` and commit `public/paint/` and `baked.json`. Seeds matter: changing a seed or the order of random calls changes the painting.
+### The photographs
+
+`npm run worlds -- <folder>` takes the ten source pictures (3:2, 1536x1024; the file-to-world table is at the top of `scripts/make-worlds.ts`) and writes, for each world, `public/worlds/<id>.webp`, an upright crop `<id>-m.webp` cut around the subject (`focus` in `src/worlds/looks.ts`) and two tiny blurred stand-ins into `src/worlds/placeholders.json`. It needs ffmpeg with libwebp. Commit what it writes; a unit test caps each file's size.
+
+Where a world's words stand is chosen by looking at its photograph: `looks.ts` says which corner (`at`), how wide, which side of the photo survives a narrower window (`x`), and whether the words sit above or below the subject on a phone (`atTall`). The words must never land on the subject.
 
 ## Add a project
 
-1. Add an entry to `src/content/projects.ts` (slug, group `work`/`play`, zone, name, a line of at most 60 characters, the hover line, inside text, optional note and link).
-2. Stand it in the landscape: one cut-out with its `slug` in `src/scene/objects.ts`, painted by a kind in `src/paint/kinds/<country>.ts` (the stops after it move one along).
-3. Run `npm run paint`.
+1. Add an entry to `src/content/projects.ts` (slug, group `work`/`play`, name, a line of at most 60 characters, the longer text, optional note and link).
+2. Give it a place in `src/content/places.ts` (`PROJECT_PLACES`: the row's place name, status word, footer line, alt text).
+3. Give it a look in `src/worlds/looks.ts` and a source picture in the table in `scripts/make-worlds.ts`, then run `npm run worlds -- <folder>`.
+4. Look at it at 1440x900, 1366x680, 390x844 and 320x568.
 
-The unit tests fail until every project has exactly one cut-out and every painting is baked. Slugs are public: they are `#links`, video file names and the keys of the API's growth numbers.
+The unit tests fail until every project has a place, a look and both photographs. Slugs are public: they are `#links`, photo and video file names and the keys of the API's growth numbers.
 
 ## Add a video
 
-Run `npm run video -- <your file> <slug>` (needs ffmpeg). It writes `public/videos/<slug>.mp4` as H.264 + AAC at 720p and at most 2 MB, which every browser plays and a phone loads quickly; a unit test fails on a bigger file, so don't copy a raw recording in. Optional captions go beside it as `public/videos/<slug>.vtt`. Commit both. The list of videos is made at build time; a project without one shows a small empty frame that says so. Keep it understandable with the sound off, and restart `npm run dev` after adding a file.
+Run `npm run video -- <your file> <slug>` (needs ffmpeg). It writes `public/videos/<slug>.mp4` as H.264 + AAC at 720p and at most 2 MB, which every browser plays and a phone loads quickly; a unit test fails on a bigger file, so don't copy a raw recording in. Optional captions go beside it as `public/videos/<slug>.vtt`. Commit both. The list of videos and their running times is read at build time, so the project's "Watch 0:44" button appears by itself; a project without a video has no button. Keep it understandable with the sound off, and restart `npm run dev` after adding a file.
 
 ## Environment
 
 See `.env.example`.
 
-- `VITE_API_URL` — address of the small API (private `portfolio-api` repo, on Railway) behind lanterns, notes, weather and the "last seen working on" line. Empty = the page runs on its own: nothing is sent anywhere, lanterns stay in the browser, and "leave a note" says it didn't go through and gives the email. Production's value is set in `.github/workflows/pages.yml`.
+- `VITE_API_URL` — address of the small API (private `portfolio-api` repo, on Railway) behind lanterns, notes, and the weather and "last seen working on" lines in the board's footer. Empty = the page runs on its own: nothing is sent anywhere, lanterns stay in the browser, the footer shows only the place's coordinates and clock, and "leave a note" says it didn't go through and gives the email. Production's value is set in `.github/workflows/pages.yml`.
 - `VITE_LOCAL_API_PORT` — on `localhost`, when `VITE_API_URL` is set, the page talks to a local copy of the API on this port (default 8787) instead of the real one.
 
 Tests never use the real API: unit tests mock `fetch`, and the smoke suite builds with no address and fails if any request leaves the machine.
 
 ## Good to know
 
-- Links can point at a country or a place: `…/portfolio/#sea`, `…/portfolio/#emberquill`. The address follows the country you are in, and going inside a place adds a step that Back undoes. Links from the old site (`#voice-receptionist`, `#crm`, `#data-assistant`) land on the place that took them over (`src/nav/routing.ts`).
-- The two typefaces (Newsreader for words, Familjen Grotesk for small labels; Latin part only, SIL Open Font License) are served from `public/fonts/`. To change one, replace the `.woff2` files and `src/styles/fonts.css`.
-- `public/og.jpg` is the picture shown when the link is pasted somewhere: the first screen at 1200×630, without the horizon bar. Retake it if the first screen changes.
+- Links point at a place: `…/portfolio/#kana-notebook`, `#about`, `#contact`. The address follows the place you are in. Links from older versions (`#voice-receptionist`, `#crm`, `#data-assistant`, `#sea`…) land on the place that took them over (`src/nav/routing.ts`).
+- Keys: arrows, Page Up/Down, `j`/`k`, Home and End travel; Esc closes the video, a sheet or the phone's index.
+- The two typefaces (Martian Mono for the board and labels, Schibsted Grotesk for names and running text; Latin part only, SIL Open Font License) are served from `public/fonts/`. To change one, replace the `.woff2` files and `src/styles/fonts.css` (the fallback faces there are scaled to the same widths, so re-measure them).
+- `public/og.jpg` is the picture shown when the link is pasted somewhere: the summit with the greeting in Schibsted Grotesk, 1200×630. Remake it if the greeting or the summit photo changes.
 - Deployed to GitHub Pages by `.github/workflows/pages.yml` on every push to `main`, after the checks pass.
