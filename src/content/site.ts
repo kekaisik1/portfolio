@@ -1,9 +1,10 @@
 import type { SiteCopy } from './types';
 
 export const SITE: SiteCopy = {
-  title: 'Kaisar — I build things with computers',
+  title: 'Kaisar Turysbek: things I build',
   mark: 'Kaisar Turysbek',
-  description: 'Kaisar builds things with computers in Kazakhstan. Seven of them are places you can walk into.',
+  description:
+    'Projects by Kaisar Turysbek, an AI engineer in Kazakhstan: a phone-answering assistant, a finance assistant, a D&D tabletop, a history game and a few more.',
   url: 'https://kekaisik1.github.io/portfolio/',
   ogAlt: 'A painting of a snowy summit above a sea of clouds at sunrise, with the words:',
   hero: {
@@ -17,7 +18,7 @@ export const SITE: SiteCopy = {
     heading: 'About',
     paragraphs: [
       "I'm Kaisar. I'm from Kazakhstan, I work remotely, and I speak Kazakh, Russian and English.",
-      'I like building things that help real people — a business owner who misses calls, a writer who loses track of their characters, friends who want to play D&D online. I break a lot of stuff on the way. Catan beat my AI in one day.',
+      'I like building things someone will actually use: a shop owner who misses calls, a writer who loses track of their characters, friends who want to play D&D online. I break a lot of stuff on the way. Catan beat my AI in one day.',
     ],
   },
   contact: {
@@ -68,7 +69,7 @@ export const MESSAGES = {
     contactHint: '(only if you want an answer)',
     done: 'Sent. Thank you, I read every note.',
     empty: 'Write something first.',
-    tooLong: 'That is too long for the paper: 600 characters for the note, 60 for the name.',
+    tooLong: 'That is too long. A note can be 600 characters and a name 60.',
     rateLimited: "That's a lot of notes. Try again in an hour, or email me instead.",
     failed: "It didn't go through. Write me instead: ",
     send: 'send it',

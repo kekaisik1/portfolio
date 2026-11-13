@@ -137,7 +137,7 @@ describe('content rendered into the page', () => {
     expect(html).toContain('<span class="pl">Mountain pass</span><span class="src">something I built for work</span>');
     expect(html).toContain('<h2 class="name" id="front-desk-t" tabindex="-1">The Front Desk</h2>');
     expect(html).toContain('<p class="line">An AI that picks up the phone.</p>');
-    expect(html).toContain('<p class="note">built for a client, so no name.</p>');
+    expect(html).toContain('<p class="note">I built it for a client, so I can\'t name them.</p>');
     expect(html).toContain('<a class="ask" href="mailto:kaisar.turysbek@gmail.com">');
     expect(html).toContain('aria-label="Read about The Front Desk"');
   });

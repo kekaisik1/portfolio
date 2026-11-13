@@ -696,7 +696,7 @@ test.describe('leave a note', () => {
 
     await page.getByRole('button', { name: 'send it' }).click();
 
-    await expect(page.locator('#note-msg')).toContainText('too long for the paper');
+    await expect(page.locator('#note-msg')).toContainText('too long');
   });
 
   test('with no API the note says it did not go through and gives the email', async ({ page }) => {
@@ -775,8 +775,8 @@ test.describe('on a laptop with a short window', () => {
     const sheet = page.getByRole('dialog');
     await expect(sheet).toBeVisible();
     await expect(sheet.getByRole('heading', { name: 'The Numbers Room' })).toBeFocused();
-    await expect(sheet).toContainText("I don't let the AI do the math.");
-    await expect(sheet).toContainText('the video runs on sample data.');
+    await expect(sheet).toContainText('The AI never does the sums.');
+    await expect(sheet).toContainText('the video uses sample data.');
     await page.keyboard.press('Escape');
     await expect(sheet).toBeHidden();
     await expect(read).toBeFocused();
@@ -878,7 +878,7 @@ test.describe('on a phone', () => {
 
     const sheet = page.getByRole('dialog');
     await expect(sheet).toBeVisible();
-    await expect(sheet).toContainText("You're John Snow hunting cholera in Soho in 1854");
+    await expect(sheet).toContainText('you are John Snow, tracing cholera through Soho in 1854');
     await expect(sheet).toContainText('five stories so far.');
     await sheet.getByRole('button', { name: 'Close' }).tap();
     await expect(sheet).toBeHidden();
@@ -966,8 +966,8 @@ test.describe('without JavaScript', () => {
     await expect(page.getByRole('heading', { level: 1, name: "Hi, I'm Kaisar." })).toBeVisible();
     for (const [, , title] of WORLDS.slice(1, 8))
       await expect(page.getByRole('heading', { name: title })).toBeVisible();
-    await expect(page.getByText('You can throw furniture.')).toBeVisible();
-    await expect(page.getByRole('link', { name: "It's live — go break something." })).toBeVisible();
+    await expect(page.getByText('You can throw the furniture.')).toBeVisible();
+    await expect(page.getByRole('link', { name: "It's live. Go break something." })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Telegram @kekaisik' })).toBeVisible();
     await expect(page.getByText('Catan beat my AI in one day.')).toBeVisible();
     /* the board is a list of links to the places below */
