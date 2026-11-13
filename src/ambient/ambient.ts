@@ -1,6 +1,6 @@
 /**
- * The small things in a world's air, on one shared 2D canvas over the photo: snow carried off the summit ridge,
- * rain, sparks, dust in the light. (What moves inside the photograph itself is src/living/.) The canvas is half
+ * The small things in a world's air, on one shared 2D canvas over the picture: snow carried off the summit, sparks,
+ * blossom petals, dust in the light. (What moves inside the painting itself is src/living/.) The canvas is half
  * the stage's size, draws about thirty times a second from the page's one frame loop (src/lib/ticker.ts), and is
  * off the loop whenever its world has nothing in the air. It says whether it is drawing in data-live (on / off).
  */
@@ -99,7 +99,7 @@ export function createAmbient(canvas: HTMLCanvasElement, opts: { upright: () => 
         const [ax, ay] = px(spec.ridge[k]);
         const [bx, by] = px(spec.ridge[k + 1]);
         p.life = rand(1.6, 3.4);
-        p.vx = rand(0.05, 0.13) * fit.height;
+        p.vx = rand(0.05, 0.13) * fit.height * (spec.wind ?? 1);
         p.vy = rand(-0.022, 0.006) * fit.height;
         p.s = rand(1, 2.2);
         p.a = rand(0.3, 0.8);
@@ -108,14 +108,20 @@ export function createAmbient(canvas: HTMLCanvasElement, opts: { upright: () => 
         p.y = ay + (by - ay) * q + p.vy * p.age + rand(-2, 2);
         break;
       }
-      case 'rain':
-        p.x = rand(0, W + 60);
-        p.y = first ? rand(-H, H) : rand(-80, -10);
-        p.vy = rand(900, 1350);
-        p.vx = -p.vy * 0.07;
-        p.s = rand(14, 28);
-        p.a = rand(0.12, 0.3);
+      case 'petals': {
+        /* born anywhere in the box when the world opens, then always at its top, drifting down and with the wind */
+        const [x0, y0] = px([spec.box[0], spec.box[1]]);
+        const [x1, y1] = px([spec.box[2], spec.box[3]]);
+        p.x = rand(x0, x1);
+        p.y = first ? rand(y0, y1) : y0 + rand(0, 0.15) * (y1 - y0);
+        p.vx = rand(-16, -4);
+        p.vy = rand(10, 26);
+        p.s = rand(2, 3.6);
+        p.a = rand(0.55, 0.9);
+        p.life = rand(5, 11);
+        p.age = first ? rand(0, p.life) : 0;
         break;
+      }
       case 'embers': {
         const [ox, oy] = px(spec.at[Math.floor(rand(0, spec.at.length))]);
         p.life = rand(1.8, 4.6);
@@ -163,19 +169,19 @@ export function createAmbient(canvas: HTMLCanvasElement, opts: { upright: () => 
           ctx.fillRect(p.x, p.y, p.s * 2.2, p.s);
         }
         break;
-      case 'rain':
-        ctx.strokeStyle = '#dce6f2';
-        ctx.lineWidth = 1.6;
+      case 'petals':
+        ctx.fillStyle = `rgb(${spec.rgb})`;
         for (let i = 0; i < live; i++) {
           const p = parts[i];
-          p.x += p.vx * dt;
+          p.age += dt;
+          if (p.age > p.life) born(p, false);
+          /* a petal rocks from side to side as it falls, and turns: wide when flat, a sliver when edge-on */
+          p.x += (p.vx + Math.sin(t * 1.3 + p.ph) * 14) * dt;
           p.y += p.vy * dt;
-          if (p.y > H + 30) born(p, false);
-          ctx.globalAlpha = p.a;
-          ctx.beginPath();
-          ctx.moveTo(p.x, p.y);
-          ctx.lineTo(p.x + (p.vx / p.vy) * p.s, p.y - p.s);
-          ctx.stroke();
+          const q = p.age / p.life;
+          const turn = 0.35 + 0.65 * Math.abs(Math.cos(t * 1.9 + p.ph));
+          ctx.globalAlpha = p.a * Math.max(0, Math.min(1, q / 0.1, (1 - q) / 0.2));
+          ctx.fillRect(p.x, p.y, p.s * 1.6 * turn, p.s);
         }
         break;
       case 'embers':

@@ -163,6 +163,5 @@ export function scenePoints(scene: Scene): Point[] {
   (scene.shimmer?.regions ?? []).forEach(region);
   (scene.stars ?? []).forEach(region);
   for (const l of scene.lights ?? []) out.push(l.at);
-  if (scene.beam) out.push(scene.beam.at, scene.beam.to);
   return out;
 }

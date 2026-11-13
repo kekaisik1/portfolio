@@ -40,9 +40,13 @@ describe('how each world looks', () => {
       expect(spec.count, id).toBeLessThanOrEqual(MAX_PARTICLES);
       if (spec.kind === 'spindrift') expect(spec.ridge.length, id).toBeGreaterThanOrEqual(2);
       if (spec.kind === 'embers') expect(spec.at.length, id).toBeGreaterThanOrEqual(1);
+      if (spec.kind === 'petals' || spec.kind === 'motes') {
+        expect(spec.box[0], id).toBeLessThan(spec.box[2]);
+        expect(spec.box[1], id).toBeLessThan(spec.box[3]);
+      }
     }
     expect(lookOf('hello').ambient?.kind).toBe('spindrift');
-    expect(lookOf('kana-notebook').ambient?.kind).toBe('rain');
+    expect(lookOf('kana-notebook').ambient?.kind).toBe('petals');
     expect(lookOf('contact').ambient?.kind).toBe('embers');
   });
 

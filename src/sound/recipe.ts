@@ -13,7 +13,7 @@ export interface Swell {
   depth: number;
 }
 
-/** Filtered noise: wind, surf, rain, air. `sweep` lets the filter wander by that many cents, at its own slow rate. */
+/** Filtered noise: wind, water, rain, air. `sweep` lets the filter wander by that many cents, at its own slow rate. */
 export interface NoiseLayer {
   kind: 'noise';
   colour: NoiseColour;
@@ -43,7 +43,7 @@ export interface CrackleLayer {
   gain: number;
 }
 
-export type Voice = 'ring' | 'bell' | 'foghorn' | 'drip' | 'bird';
+export type Voice = 'ring' | 'bell' | 'drip' | 'bird';
 
 /** Something that happens now and then: every `every` seconds, give or take `jitter`, the first after `first`. */
 export interface EventLayer {
@@ -132,37 +132,38 @@ export const RECIPES: Readonly<Record<string, Recipe>> = {
     { kind: 'tone', wave: 'sine', freq: 5150, gain: 0.004, trill: 27, swell: { rate: 0.21, depth: 0.8 } },
     { kind: 'event', voice: 'bird', every: 4.6, jitter: 2.4, first: 1.5, gain: 0.045 },
   ],
-  /* surf under the cliff, wind, and the torches crackling */
+  /* the still air of a great cavern, the dragon's fire a low rumble under it, embers ticking, water dripping */
   emberquill: [
     {
       kind: 'noise',
       colour: 'brown',
       filter: 'lowpass',
-      freq: 460,
-      q: 0.5,
-      gain: 0.8,
-      swell: { rate: 0.11, depth: 0.75 },
-    },
-    {
-      kind: 'noise',
-      colour: 'pink',
-      filter: 'bandpass',
-      freq: 1500,
-      q: 0.4,
-      gain: 0.2,
-      swell: { rate: 0.11, depth: 0.85 },
-    },
-    {
-      kind: 'noise',
-      colour: 'pink',
-      filter: 'bandpass',
-      freq: 700,
+      freq: 140,
       q: 0.6,
-      gain: 0.26,
-      swell: { rate: 0.07, depth: 0.5 },
-      sweep: { rate: 0.06, cents: 500 },
+      gain: 0.7,
+      swell: { rate: 0.05, depth: 0.4 },
     },
-    { kind: 'crackle', density: 9, freq: 2600, gain: 0.16 },
+    {
+      kind: 'noise',
+      colour: 'brown',
+      filter: 'lowpass',
+      freq: 75,
+      q: 0.8,
+      gain: 0.45,
+      swell: { rate: 0.17, depth: 0.6 },
+    },
+    {
+      kind: 'noise',
+      colour: 'pink',
+      filter: 'bandpass',
+      freq: 420,
+      q: 0.5,
+      gain: 0.14,
+      swell: { rate: 0.04, depth: 0.5 },
+      sweep: { rate: 0.03, cents: 300 },
+    },
+    { kind: 'crackle', density: 5, freq: 2200, gain: 0.09 },
+    { kind: 'event', voice: 'drip', every: 5.3, jitter: 2.2, first: 2, gain: 0.05 },
   ],
   /* fog that muffles everything, water dripping, a bell far away */
   'history-lens': [
@@ -179,51 +180,54 @@ export const RECIPES: Readonly<Record<string, Recipe>> = {
     { kind: 'event', voice: 'drip', every: 3.1, jitter: 1.7, first: 1, gain: 0.07 },
     { kind: 'event', voice: 'bell', every: 27, jitter: 4, first: 6, gain: 0.07 },
   ],
-  /* waves rolling in, and a foghorn low and far off */
+  /* open wind on the hilltop, the far waterfall, pages stirring, a bird now and then */
   bookforge: [
     {
       kind: 'noise',
-      colour: 'brown',
-      filter: 'lowpass',
-      freq: 500,
-      q: 0.5,
-      gain: 0.8,
-      swell: { rate: 0.09, depth: 0.8 },
-    },
-    {
-      kind: 'noise',
       colour: 'pink',
       filter: 'bandpass',
-      freq: 1300,
-      q: 0.4,
-      gain: 0.2,
-      swell: { rate: 0.09, depth: 0.88 },
-    },
-    {
-      kind: 'noise',
-      colour: 'pink',
-      filter: 'bandpass',
-      freq: 600,
+      freq: 1100,
       q: 0.6,
-      gain: 0.12,
-      swell: { rate: 0.05, depth: 0.5 },
+      gain: 0.42,
+      swell: { rate: 0.1, depth: 0.65 },
+      sweep: { rate: 0.06, cents: 500 },
     },
-    { kind: 'event', voice: 'foghorn', every: 22, jitter: 2, first: 7, gain: 0.07 },
-  ],
-  /* steady rain on stone */
-  'kana-notebook': [
-    { kind: 'noise', colour: 'pink', filter: 'highpass', freq: 900, q: 0.5, gain: 0.3 },
+    { kind: 'noise', colour: 'brown', filter: 'lowpass', freq: 200, q: 0.5, gain: 0.26 },
+    {
+      kind: 'noise',
+      colour: 'pink',
+      filter: 'lowpass',
+      freq: 900,
+      q: 0.5,
+      gain: 0.1,
+      swell: { rate: 0.03, depth: 0.3 },
+    },
     {
       kind: 'noise',
       colour: 'white',
       filter: 'bandpass',
-      freq: 7000,
-      q: 0.5,
-      gain: 0.07,
-      swell: { rate: 0.05, depth: 0.3 },
+      freq: 4200,
+      q: 0.7,
+      gain: 0.03,
+      swell: { rate: 0.23, depth: 0.9 },
     },
-    { kind: 'noise', colour: 'brown', filter: 'lowpass', freq: 300, q: 0.5, gain: 0.22 },
-    { kind: 'crackle', density: 46, freq: 3200, gain: 0.1 },
+    { kind: 'crackle', density: 2.5, freq: 5200, gain: 0.05 },
+    { kind: 'event', voice: 'bird', every: 9, jitter: 4, first: 3, gain: 0.035 },
+  ],
+  /* the rain has just stopped: a soft hush over the street, drops from the eaves, a temple bell far off */
+  'kana-notebook': [
+    {
+      kind: 'noise',
+      colour: 'pink',
+      filter: 'highpass',
+      freq: 1200,
+      q: 0.5,
+      gain: 0.08,
+      swell: { rate: 0.05, depth: 0.5 },
+    },
+    { kind: 'noise', colour: 'brown', filter: 'lowpass', freq: 260, q: 0.5, gain: 0.3 },
+    { kind: 'event', voice: 'drip', every: 1.9, jitter: 1.1, first: 0.6, gain: 0.06 },
+    { kind: 'event', voice: 'bell', every: 31, jitter: 5, first: 8, gain: 0.05 },
   ],
   /* wind through the grass */
   about: [

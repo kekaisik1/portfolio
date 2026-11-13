@@ -1,7 +1,7 @@
 /**
  * Builds one place's ambience from its recipe on any audio context: the page's live one, or an offline one that
  * renders it to numbers for the checks. Everything is synthesised: looping noise through filters, a few
- * oscillators, and small one-off voices (a far phone, a bell, a foghorn, a drip, a bird).
+ * oscillators, and small one-off voices (a far phone, a bell, a drip, a bird).
  */
 import {
   chance,
@@ -216,30 +216,6 @@ export function buildAmbience(ctx: BaseAudioContext, recipe: Recipe, bank: Bank,
           (g) => {
             g.linearRampToValueAtTime(gain, at + 0.012);
             g.exponentialRampToValueAtTime(0.0001, at + decay);
-          },
-          far,
-        );
-    },
-    /* a foghorn: low, slow to speak, slow to stop */
-    foghorn(at, _vary, dest) {
-      const far = ctx.createBiquadFilter();
-      far.type = 'lowpass';
-      far.frequency.value = 300;
-      far.connect(dest);
-      for (const [type, freq, gain] of [
-        ['sawtooth', 87, 0.5],
-        ['sawtooth', 87.7, 0.4],
-        ['sine', 130.5, 0.25],
-      ] as const)
-        note(
-          type,
-          freq,
-          at,
-          3,
-          (g) => {
-            g.linearRampToValueAtTime(gain, at + 0.35);
-            g.setValueAtTime(gain, at + 2.1);
-            g.linearRampToValueAtTime(0, at + 2.9);
           },
           far,
         );

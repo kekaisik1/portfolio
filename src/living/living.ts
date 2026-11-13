@@ -42,8 +42,6 @@ const UNIFORMS = [
   'uLightN',
   'uLightA',
   'uLightB',
-  'uBeamA',
-  'uBeamB',
 ] as const;
 type UniformName = (typeof UNIFORMS)[number];
 
@@ -227,14 +225,6 @@ function run(canvas: HTMLCanvasElement, gl: WebGL2RenderingContext, opts: Living
     gl.uniform1i(at.uLightN, lights.length);
     gl.uniform4fv(at.uLightA, la);
     gl.uniform4fv(at.uLightB, lb);
-    const beam = s.beam;
-    if (beam) {
-      const dx = (beam.to[0] - beam.at[0]) * (WIDE_SIZE.w / WIDE_SIZE.h);
-      const dy = beam.to[1] - beam.at[1];
-      const len = Math.hypot(dx, dy);
-      gl.uniform4f(at.uBeamA, beam.at[0], beam.at[1], dx / len, dy / len);
-      gl.uniform4f(at.uBeamB, len, beam.spread, beam.period, beam.dim);
-    } else gl.uniform4f(at.uBeamB, 0, 0, 1, 0);
   }
 
   /** The photograph of world `i` as a texture: the very picture the <img> on screen shows. */

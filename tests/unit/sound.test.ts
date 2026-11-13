@@ -58,10 +58,10 @@ describe('what each place sounds like', () => {
 
     expect(voices('front-desk')).toEqual(['ring']);
     expect(voices('lowl')).toEqual(['bird']);
-    expect(voices('emberquill')).toEqual(['crackle']);
+    expect(voices('emberquill')).toEqual(['crackle', 'drip']);
     expect(voices('history-lens').sort()).toEqual(['bell', 'drip']);
-    expect(voices('bookforge')).toEqual(['foghorn']);
-    expect(voices('kana-notebook')).toEqual(['crackle']);
+    expect(voices('bookforge')).toEqual(['crackle', 'bird']);
+    expect(voices('kana-notebook').sort()).toEqual(['bell', 'drip']);
     expect(voices('contact')).toEqual(['crackle']);
     expect(recipeOf('numbers-room').some((l) => l.kind === 'tone' && l.freq < 80)).toBe(true);
     const ring = recipeOf('front-desk').find((l) => l.kind === 'event');

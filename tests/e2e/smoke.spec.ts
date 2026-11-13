@@ -445,7 +445,7 @@ test.describe('the opening shot', () => {
 });
 
 test.describe('the places move', () => {
-  test('the photograph is alive in every place; the air has rain in Kyoto and nothing on the road', async ({
+  test('the painting is alive in every place; the air has petals in Kyoto and nothing on the road', async ({
     page,
   }) => {
     await open(page, './#kana-notebook');
@@ -461,14 +461,14 @@ test.describe('the places move', () => {
     await expect(page.locator('#fx')).toHaveAttribute('data-live', 'off');
   });
 
-  test('the living canvas lines up with the photograph: where nothing moves it is transparent', async ({ page }) => {
+  test('the living canvas lines up with the painting: where nothing moves it is transparent', async ({ page }) => {
     await open(page, './#about');
     test.skip(!(await hasGpu(page)), NEEDS_GPU);
     await arrived(page, 'about');
     await expect(page.locator('#live')).toHaveAttribute('data-live', 'on');
     await page.waitForTimeout(400);
 
-    /* the road (bottom right) is still, the grass (bottom left) moves: read the canvas's own pixels */
+    /* the road (bottom left) is still, the grass (bottom right) moves: read the canvas's own pixels */
     const alpha = await page.evaluate(() => {
       const live = document.querySelector<HTMLCanvasElement>('#live');
       const copy = document.createElement('canvas');
@@ -483,7 +483,7 @@ test.describe('the places move', () => {
           g.drawImage(live, 0, 0);
           const at = (x: number, y: number): number =>
             g.getImageData(Math.round(x * copy.width), Math.round(y * copy.height), 1, 1).data[3];
-          resolve({ road: at(0.8, 0.9), grass: at(0.2, 0.85) });
+          resolve({ road: at(0.35, 0.9), grass: at(0.85, 0.85) });
         }),
       );
     });

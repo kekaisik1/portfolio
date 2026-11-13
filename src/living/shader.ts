@@ -36,12 +36,9 @@ uniform vec2 uShimmer;      /* size, speed */
 uniform int uLightN;
 uniform vec4 uLightA[6];    /* u, v, radius, amount */
 uniform vec4 uLightB[6];    /* speed, seed, kind (0 flicker, 1 breathe), - */
-uniform vec4 uBeamA;        /* lamp u, v; unit direction x, y (in photo heights) */
-uniform vec4 uBeamB;        /* length, spread, period, dim (0 = no beam) */
 
 const vec3 LUMA = vec3(0.2126, 0.7152, 0.0722);
 const vec2 ASPECT = vec2(1.5, 1.0);
-const float TAU = 6.2831853;
 
 float flicker(float t) {
   return 0.5 * sin(t) + 0.3 * sin(t * 2.31 + 1.3) + 0.2 * sin(t * 5.17 + 4.1);
@@ -124,31 +121,6 @@ void main() {
     cover += fall;
   }
   col *= 1.0 + gain * uAmp;
-
-  /* the lighthouse beam in the photo: it draws back to the lamp as the lamp turns away, and comes round again.
-     Where it is gone the sky shows: taken from the photo just above and below the beam */
-  if (uBeamB.w > 0.0) {
-    vec2 d = (L - uBeamA.xy) * ASPECT;
-    float along = dot(d, uBeamA.zw);
-    float across = abs(d.x * uBeamA.w - d.y * uBeamA.z);
-    float width = max(along, 0.0) * uBeamB.y + 0.012;
-    float body = (1.0 - smoothstep(0.75, 1.3, across / width)) * smoothstep(0.03, 0.09, along);
-    body *= 1.0 - smoothstep(uBeamB.x, uBeamB.x * 1.3, along);
-    if (body > 0.0) {
-      float turn = 0.5 + 0.5 * cos(uTime * TAU / uBeamB.z);
-      float reach = uBeamB.x * 1.35 * turn;
-      float gone = smoothstep(reach - uBeamB.x * 0.5, reach, along);
-      vec2 axis = uBeamA.xy * ASPECT + uBeamA.zw * along;
-      vec2 side = vec2(-uBeamA.w, uBeamA.z) * width * 1.9;
-      vec2 above = (axis + side) / ASPECT;
-      vec2 below = (axis - side) / ASPECT;
-      vec3 sky = 0.5 * (
-        textureLod(uPhoto, vec2((above.x - uLand.x) / uLand.y, above.y), 3.0).rgb +
-        textureLod(uPhoto, vec2((below.x - uLand.x) / uLand.y, below.y), 3.0).rgb);
-      col = mix(col, sky, body * gone * uBeamB.w * uAmp);
-      cover += body;
-    }
-  }
 
   float alpha = clamp(cover * 6.0, 0.0, 1.0);
   o = vec4(col * alpha, alpha);

@@ -38,8 +38,7 @@ describe('what moves in each world', () => {
         (s.mist?.regions.length ?? 0) +
         (s.shimmer?.regions.length ?? 0) +
         (s.stars?.length ?? 0) +
-        (s.lights?.length ?? 0) +
-        (s.beam ? 1 : 0);
+        (s.lights?.length ?? 0);
 
       expect(moving, id).toBeGreaterThan(0);
       expect(s.cycle, id).toBeGreaterThan(1);

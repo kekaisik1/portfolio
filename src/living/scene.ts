@@ -57,19 +57,6 @@ export interface Light {
   kind: 'flicker' | 'breathe';
 }
 
-/** A lighthouse beam already in the photo: it shortens as the lamp turns away and comes round again. */
-export interface Beam {
-  /** the lamp, and the far end of the beam as photographed */
-  at: Point;
-  to: Point;
-  /** half the beam's width at its far end, as a share of its length */
-  spread: number;
-  /** seconds for one turn of the lamp */
-  period: number;
-  /** how much of the photographed beam is taken away when the lamp points elsewhere, 0..1 */
-  dim: number;
-}
-
 export interface Scene {
   /** seconds a flow takes to carry a pixel along its `dir` */
   cycle: number;
@@ -86,7 +73,6 @@ export interface Scene {
   /** the photo's own stars brighten and dim */
   stars?: readonly Field[];
   lights?: readonly Light[];
-  beam?: Beam;
 }
 
 /** never more lights than the shader has room for */
