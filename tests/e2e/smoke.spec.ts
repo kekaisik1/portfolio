@@ -7,7 +7,7 @@ const WORLDS = [
   ['numbers-room', 'Observatory', 'The Numbers Room'],
   ['lowl', 'Repair shop', 'LOWL'],
   ['emberquill', "Dragon's hall", 'Emberquill'],
-  ['history-lens', 'Soho, 1854', 'History Lens'],
+  ['history-lens', 'Rome, 117 AD', 'History Lens'],
   ['bookforge', 'The open book', 'BookForge'],
   ['kana-notebook', 'Kyoto', 'Kana Notebook'],
   ['about', 'The road', 'About'],

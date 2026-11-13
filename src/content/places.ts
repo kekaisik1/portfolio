@@ -45,13 +45,13 @@ export const PROJECT_PLACES: Readonly<Record<string, PlaceWords>> = {
     alt: 'A painting of four adventurers on a rock ledge facing a huge red dragon on its gold in a ruined hall, light falling through the arches, a red twenty-sided die in front',
   },
   'history-lens': {
-    place: 'Soho, 1854',
+    place: 'Rome, 117 AD',
     status: 'BUILDING',
     tone: 'building',
-    pos: '51.5°N 0.1°W',
-    tz: 'Europe/London',
-    tzLabel: 'Soho',
-    alt: 'A painting of a cast-iron water pump under a lit gas lamp on a wet cobbled London street, fog down the street at dusk',
+    pos: '41.9°N 12.5°E',
+    tz: 'Europe/Rome',
+    tzLabel: 'Rome',
+    alt: 'A painting of ancient Rome on a golden afternoon, seen from a marble terrace over the Forum: a triumphal arch, the Colosseum behind it, a temple hung with red eagle banners, and a bronze brazier burning by the balustrade',
   },
   bookforge: {
     place: 'The open book',

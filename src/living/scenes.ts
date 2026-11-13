@@ -157,37 +157,11 @@ export const SCENES: Readonly<Record<string, Scene>> = {
     ],
   },
 
-  /* fog drifts down the far street and low over the cobbles; the wet stones shimmer; the gas lamps flicker */
+  /* the brazier's flame flickers and throws its light on the marble round it; dust hangs in the light (looks.ts) */
   'history-lens': {
-    shimmer: {
-      regions: [
-        {
-          shape: {
-            kind: 'poly',
-            points: [
-              [-0.1, 0.72],
-              [0.4, 0.7],
-              [0.5, 0.71],
-              [0.445, 0.78],
-              [0.445, 0.85],
-              [0.5, 0.92],
-              [0.58, 1.1],
-              [-0.1, 1.1],
-            ],
-          },
-          feather: 0.03,
-          amount: 0.8,
-        },
-      ],
-      size: 0.0028,
-      speed: 0.06,
-    },
     lights: [
-      { at: [0.655, 0.22], radius: 0.09, amount: 0.12, speed: 4.6, seed: 3, kind: 'flicker' },
-      { at: [0.41, 0.45], radius: 0.04, amount: 0.12, speed: 5.2, seed: 7, kind: 'flicker' },
-      { at: [0.305, 0.54], radius: 0.025, amount: 0.12, speed: 5.8, seed: 11, kind: 'flicker' },
-      { at: [0.4, 0.82], radius: 0.1, amount: 0.06, speed: 5.2, seed: 7, kind: 'flicker' },
-      { at: [0.9, 0.42], radius: 0.1, amount: 0.07, speed: 1, seed: 17, kind: 'breathe' },
+      { at: [0.93, 0.655], radius: 0.045, amount: 0.18, speed: 7, seed: 3, kind: 'flicker' },
+      { at: [0.925, 0.69], radius: 0.16, amount: 0.06, speed: 7, seed: 3, kind: 'flicker' },
     ],
   },
 

@@ -101,7 +101,7 @@ describe('the board', () => {
       'Observatory',
       'Repair shop',
       "Dragon's hall",
-      'Soho, 1854',
+      'Rome, 117 AD',
       'The open book',
       'Kyoto',
       'The road',

@@ -80,8 +80,18 @@ export const LOOKS: Readonly<Record<string, Look>> = {
       rgb: '255,204,120',
     },
   },
-  /* the wet cobbles bottom left; the pump and the gas lamp stand right. Phones: over the roofs, the pump stays whole */
-  'history-lens': { at: 'bl', width: 31, shade: 0.5, x: 86, atTall: 'top', focus: 0.7, ambient: null },
+  /* the narrowest column, over the calm sky and the hill town top left, so it only just reaches the arch's left
+     pier; the Colosseum, the temple and its banners stay clear, the brazier too where the window is wide enough.
+     Phones: over the sky above the temple, which stays whole. Dust hangs in the afternoon light over the Forum */
+  'history-lens': {
+    at: 'tl',
+    width: 20,
+    shade: 0.6,
+    x: 0,
+    atTall: 'top',
+    focus: 0.72,
+    ambient: { kind: 'motes', count: 24, box: [0.3, 0.45, 0.96, 0.95], rgb: '255,232,180' },
+  },
   /* the open sky top left, short of the pages that turn into birds; the book, its world and the pen stay clear.
      Phones: over the sky and the islands, so the book stays a book */
   bookforge: { at: 'tl', width: 20, shade: 0.5, x: 30, atTall: 'top', focus: 0.6, ambient: null },

@@ -165,20 +165,30 @@ export const RECIPES: Readonly<Record<string, Recipe>> = {
     { kind: 'crackle', density: 5, freq: 2200, gain: 0.09 },
     { kind: 'event', voice: 'drip', every: 5.3, jitter: 2.2, first: 2, gain: 0.05 },
   ],
-  /* fog that muffles everything, water dripping, a bell far away */
+  /* a warm open forum in the afternoon: soft air, the crowd murmuring far below, a fountain, the brazier, a bird */
   'history-lens': [
-    { kind: 'noise', colour: 'brown', filter: 'lowpass', freq: 260, q: 0.5, gain: 0.55 },
+    { kind: 'noise', colour: 'brown', filter: 'lowpass', freq: 300, q: 0.5, gain: 0.3 },
     {
       kind: 'noise',
       colour: 'pink',
-      filter: 'lowpass',
-      freq: 700,
-      q: 0.5,
-      gain: 0.09,
-      swell: { rate: 0.06, depth: 0.5 },
+      filter: 'bandpass',
+      freq: 420,
+      q: 1.1,
+      gain: 0.22,
+      swell: { rate: 0.09, depth: 0.45 },
+      sweep: { rate: 0.13, cents: 250 },
     },
-    { kind: 'event', voice: 'drip', every: 3.1, jitter: 1.7, first: 1, gain: 0.07 },
-    { kind: 'event', voice: 'bell', every: 27, jitter: 4, first: 6, gain: 0.07 },
+    {
+      kind: 'noise',
+      colour: 'white',
+      filter: 'bandpass',
+      freq: 2800,
+      q: 0.6,
+      gain: 0.035,
+      swell: { rate: 0.31, depth: 0.25 },
+    },
+    { kind: 'crackle', density: 3, freq: 1900, gain: 0.06 },
+    { kind: 'event', voice: 'bird', every: 7, jitter: 3, first: 2.5, gain: 0.03 },
   ],
   /* open wind on the hilltop, the far waterfall, pages stirring, a bird now and then */
   bookforge: [

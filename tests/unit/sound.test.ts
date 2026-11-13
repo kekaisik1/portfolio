@@ -59,7 +59,7 @@ describe('what each place sounds like', () => {
     expect(voices('front-desk')).toEqual(['ring']);
     expect(voices('lowl')).toEqual(['bird']);
     expect(voices('emberquill')).toEqual(['crackle', 'drip']);
-    expect(voices('history-lens').sort()).toEqual(['bell', 'drip']);
+    expect(voices('history-lens')).toEqual(['crackle', 'bird']);
     expect(voices('bookforge')).toEqual(['crackle', 'bird']);
     expect(voices('kana-notebook').sort()).toEqual(['bell', 'drip']);
     expect(voices('contact')).toEqual(['crackle']);
