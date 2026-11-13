@@ -1,6 +1,6 @@
 /**
- * The living photo: one WebGL canvas over the photographs that makes the place on screen move (cloud, water, mist,
- * light), using that world's scene (scenes.ts). It lines up with the <img> to the pixel (cover.ts), is transparent
+ * The living photo: one WebGL canvas over the photographs that makes the place on screen move (water, stars, light),
+ * using that world's scene (scenes.ts). It lines up with the <img> to the pixel (cover.ts), is transparent
  * wherever nothing moves, and starts each world from the exact still, so a cut never jumps. The GPU does the work:
  * a frame here is a few uniforms and one draw call. Without WebGL 2 the photographs simply stay still.
  */
@@ -10,9 +10,9 @@ import { coverFit, tallCropX, TALL_SIZE, WIDE_SIZE } from '../worlds/cover';
 import { lookOf } from '../worlds/looks';
 import type { Photos } from '../worlds/photos';
 import { NOISE_SIZE, tileNoise } from './noise';
-import { MASK_H, MASK_W, rasterScene, type Masks } from './raster';
+import { MASK_H, MASK_W, rasterScene, type Mask } from './raster';
 import { MAX_LIGHTS, type Scene } from './scene';
-import { sceneOf } from './scenes';
+import { isStill, sceneOf } from './scenes';
 import { FRAGMENT, VERTEX } from './shader';
 
 /** the canvas never has more pixels than this, nor more than MAX_DPR per CSS pixel */
@@ -27,17 +27,13 @@ const TALL_FILE = /-m\.webp(\?|$)/;
 const UNIFORMS = [
   'uCover',
   'uPhoto',
-  'uMaskA',
-  'uMaskB',
+  'uMask',
   'uNoise',
   'uLand',
   'uTime',
   'uAmp',
   'uCycle',
   'uScale',
-  'uSway',
-  'uMist',
-  'uMistRgb',
   'uShimmer',
   'uLightN',
   'uLightA',
@@ -82,8 +78,8 @@ function link(gl: WebGL2RenderingContext): WebGLProgram {
   return program;
 }
 
-/** Texture units: the photograph, the two masks of its scene, the noise tile. */
-const UNIT = { photo: 0, maskA: 1, maskB: 2, noise: 3 } as const;
+/** Texture units: the photograph, the mask of its scene, the noise tile. */
+const UNIT = { photo: 0, mask: 1, noise: 2 } as const;
 
 /** A small texture from bytes, left bound to `unit`. */
 function dataTexture(
@@ -144,13 +140,12 @@ function run(canvas: HTMLCanvasElement, gl: WebGL2RenderingContext, opts: Living
   gl.disable(gl.BLEND);
   gl.clearColor(0, 0, 0, 0);
   gl.uniform1i(at.uPhoto, UNIT.photo);
-  gl.uniform1i(at.uMaskA, UNIT.maskA);
-  gl.uniform1i(at.uMaskB, UNIT.maskB);
+  gl.uniform1i(at.uMask, UNIT.mask);
   gl.uniform1i(at.uNoise, UNIT.noise);
   dataTexture(gl, UNIT.noise, NOISE_SIZE, NOISE_SIZE, tileNoise(), true);
 
   const pictures = new Map<string, Picture>();
-  const masks = new Map<string, { masks: Masks; a: WebGLTexture; b: WebGLTexture }>();
+  const masks = new Map<string, { mask: Mask; tex: WebGLTexture }>();
   let world = -1;
   let scene: Scene | null = null;
   let picture: Picture | null = null;
@@ -198,22 +193,14 @@ function run(canvas: HTMLCanvasElement, gl: WebGL2RenderingContext, opts: Living
     let m = masks.get(id);
     if (!m) {
       const made = rasterScene(s);
-      m = {
-        masks: made,
-        a: dataTexture(gl, UNIT.maskA, MASK_W, MASK_H, made.a, false),
-        b: dataTexture(gl, UNIT.maskB, MASK_W, MASK_H, made.b, false),
-      };
+      m = { mask: made, tex: dataTexture(gl, UNIT.mask, MASK_W, MASK_H, made.data, false) };
       masks.set(id, m);
     }
-    gl.activeTexture(gl.TEXTURE0 + UNIT.maskA);
-    gl.bindTexture(gl.TEXTURE_2D, m.a);
-    gl.activeTexture(gl.TEXTURE0 + UNIT.maskB);
-    gl.bindTexture(gl.TEXTURE_2D, m.b);
-    gl.uniform1f(at.uCycle, s.cycle);
-    gl.uniform2f(at.uScale, m.masks.flowScale, m.masks.swayScale);
-    gl.uniform3f(at.uSway, s.sway?.rate ?? 0, s.sway?.wave[0] ?? 0, s.sway?.wave[1] ?? 0);
-    gl.uniform3f(at.uMist, s.mist?.drift[0] ?? 0, s.mist?.drift[1] ?? 0, s.mist?.scale ?? 1);
-    gl.uniform3f(at.uMistRgb, ...(s.mist?.rgb ?? [0, 0, 0]));
+    gl.activeTexture(gl.TEXTURE0 + UNIT.mask);
+    gl.bindTexture(gl.TEXTURE_2D, m.tex);
+    /* without a flow the cycle is never used, but it must not be zero */
+    gl.uniform1f(at.uCycle, s.flow?.cycle ?? 1);
+    gl.uniform1f(at.uScale, m.mask.flowScale);
     gl.uniform2f(at.uShimmer, s.shimmer?.size ?? 0, s.shimmer?.speed ?? 0);
     const lights = (s.lights ?? []).slice(0, MAX_LIGHTS);
     const la = new Float32Array(MAX_LIGHTS * 4);
@@ -288,6 +275,8 @@ function run(canvas: HTMLCanvasElement, gl: WebGL2RenderingContext, opts: Living
 
   async function begin(i: number): Promise<void> {
     const mine = ++asked;
+    /* a painting where nothing moves (only its air does, looks.ts) costs the GPU nothing: the <img> is the picture */
+    if (isStill(sceneOf(WORLDS[i].id))) return;
     const found = await pictureOf(i);
     if (mine !== asked || lost || !found) return;
     halt();

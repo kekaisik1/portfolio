@@ -1,12 +1,12 @@
 /**
- * Turns a scene's regions into two small textures the shader reads (once per world, on the CPU; pure, so it is
- * unit-tested). Texture A: red/green = flow, blue = mist, alpha = shimmer. Texture B: red/green = sway, blue = stars.
- * Both cover the landscape photo; vectors are stored as bytes around 128 (= exactly no movement).
+ * Turns a scene's regions into a small texture the shader reads (once per world, on the CPU; pure, so it is
+ * unit-tested): red/green = flow, blue = stars, alpha = shimmer. It covers the landscape photo; the flow vector is
+ * stored as bytes around 128 (= exactly no movement).
  */
 import type { Point } from '../ambient/spec';
 import { clamp } from '../lib/math';
 import { WIDE_SIZE } from '../worlds/cover';
-import type { Field, Flow, Region, Scene, Shape, Sway } from './scene';
+import type { Field, Flow, Region, Scene, Shape } from './scene';
 
 export const MASK_W = 192;
 export const MASK_H = 128;
@@ -63,12 +63,10 @@ export function coverage(region: Region, u: number, v: number): number {
   return c;
 }
 
-export interface Masks {
-  a: Uint8Array;
-  b: Uint8Array;
-  /** the vector a full byte stands for, in photo widths / heights: the shader multiplies by these */
+export interface Mask {
+  data: Uint8Array;
+  /** the vector a full byte of flow stands for, in photo widths / heights: the shader multiplies by it */
   flowScale: number;
-  swayScale: number;
 }
 
 const centre = (i: number, n: number): number => (i + 0.5) / n;
@@ -86,7 +84,7 @@ function span(region: Region): { x0: number; x1: number; y0: number; y1: number 
   };
 }
 
-function vectors(regions: readonly (Flow | Sway)[]): { field: Float32Array; scale: number } {
+function vectors(regions: readonly Flow[]): { field: Float32Array; scale: number } {
   const field = new Float32Array(MASK_W * MASK_H * 2);
   for (const r of regions) {
     const { x0, x1, y0, y1 } = span(r);
@@ -124,26 +122,19 @@ const amountByte = (value: number): number => Math.round(clamp(value, 0, 1) * 25
 /** What a stored byte means to the shader: -1..1 for a vector channel. */
 export const byteVec = (byte: number): number => (byte - ZERO) / SPAN;
 
-/** Rasterise a scene's regions into the two mask textures (RGBA, MASK_W x MASK_H, top row first). */
-export function rasterScene(scene: Scene): Masks {
-  const flow = vectors(scene.flow ?? []);
-  const sway = vectors(scene.sway?.regions ?? []);
-  const mist = amounts(scene.mist?.regions ?? []);
-  const shimmer = amounts(scene.shimmer?.regions ?? []);
+/** Rasterise a scene's regions into the mask texture (RGBA, MASK_W x MASK_H, top row first). */
+export function rasterScene(scene: Scene): Mask {
+  const flow = vectors(scene.flow?.regions ?? []);
   const stars = amounts(scene.stars ?? []);
-  const a = new Uint8Array(MASK_W * MASK_H * 4);
-  const b = new Uint8Array(MASK_W * MASK_H * 4);
+  const shimmer = amounts(scene.shimmer?.regions ?? []);
+  const data = new Uint8Array(MASK_W * MASK_H * 4);
   for (let i = 0; i < MASK_W * MASK_H; i++) {
-    a[i * 4] = vecByte(flow.field[i * 2], flow.scale);
-    a[i * 4 + 1] = vecByte(flow.field[i * 2 + 1], flow.scale);
-    a[i * 4 + 2] = amountByte(mist[i]);
-    a[i * 4 + 3] = amountByte(shimmer[i]);
-    b[i * 4] = vecByte(sway.field[i * 2], sway.scale);
-    b[i * 4 + 1] = vecByte(sway.field[i * 2 + 1], sway.scale);
-    b[i * 4 + 2] = amountByte(stars[i]);
-    b[i * 4 + 3] = 255;
+    data[i * 4] = vecByte(flow.field[i * 2], flow.scale);
+    data[i * 4 + 1] = vecByte(flow.field[i * 2 + 1], flow.scale);
+    data[i * 4 + 2] = amountByte(stars[i]);
+    data[i * 4 + 3] = amountByte(shimmer[i]);
   }
-  return { a, b, flowScale: flow.scale, swayScale: sway.scale };
+  return { data, flowScale: flow.scale };
 }
 
 /** Every point a scene names, for checking that none is outside the photo. */
@@ -157,9 +148,7 @@ export function scenePoints(scene: Scene): Point[] {
     shape(r.shape);
     (r.minus ?? []).forEach(shape);
   };
-  (scene.flow ?? []).forEach(region);
-  (scene.sway?.regions ?? []).forEach(region);
-  (scene.mist?.regions ?? []).forEach(region);
+  (scene.flow?.regions ?? []).forEach(region);
   (scene.shimmer?.regions ?? []).forEach(region);
   (scene.stars ?? []).forEach(region);
   for (const l of scene.lights ?? []) out.push(l.at);

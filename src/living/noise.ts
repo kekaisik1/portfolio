@@ -1,6 +1,6 @@
 /**
  * A small tile of soft noise that repeats without a seam, four independent channels (RGBA). The shader slides it
- * across the photo for drifting mist, restless reflections and uneven timing. Made once, on the CPU; pure.
+ * across the photo for restless reflections and uneven timing. Made once, on the CPU; pure.
  */
 import { seeded } from '../lib/random';
 

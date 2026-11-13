@@ -3,8 +3,9 @@ import { WORLDS } from '../../src/content/places';
 import { NOISE_SIZE, tileNoise } from '../../src/living/noise';
 import { MASK_H, MASK_W, byteVec, coverage, rasterScene, scenePoints, signedDistance } from '../../src/living/raster';
 import { MAX_LIGHTS, type Region, type Scene } from '../../src/living/scene';
-import { SCENES, sceneOf } from '../../src/living/scenes';
+import { SCENES, isStill, sceneOf } from '../../src/living/scenes';
 import { FRAGMENT } from '../../src/living/shader';
+import { lookOf } from '../../src/worlds/looks';
 
 const IDS = WORLDS.map((w) => w.id);
 const SQUARE: Region = {
@@ -29,36 +30,34 @@ describe('what moves in each world', () => {
     expect(() => sceneOf('nowhere')).toThrow(/No scene/);
   });
 
-  it('moves something in every place', () => {
-    for (const id of IDS) {
-      const s = sceneOf(id);
-      const moving =
-        (s.flow?.length ?? 0) +
-        (s.sway?.regions.length ?? 0) +
-        (s.mist?.regions.length ?? 0) +
-        (s.shimmer?.regions.length ?? 0) +
-        (s.stars?.length ?? 0) +
-        (s.lights?.length ?? 0);
+  it('moves something in every place: inside the painting, or in its air', () => {
+    for (const id of IDS) expect(!isStill(sceneOf(id)) || lookOf(id).ambient !== null, id).toBe(true);
+    expect(isStill({})).toBe(true);
+    expect(
+      isStill({ lights: [{ at: [0.5, 0.5], radius: 0.1, amount: 0.1, speed: 1, seed: 0, kind: 'breathe' }] }),
+    ).toBe(false);
+  });
 
-      expect(moving, id).toBeGreaterThan(0);
-      expect(s.cycle, id).toBeGreaterThan(1);
-    }
+  it('carries only running water: the waterfall, nothing pushed by wind', () => {
+    const flowing = IDS.filter((id) => sceneOf(id).flow);
+
+    expect(flowing).toEqual(['bookforge']);
+    for (const id of flowing) expect(sceneOf(id).flow?.cycle, id).toBeGreaterThan(1);
   });
 
   it('keeps every move small and slow: quiet beats busy', () => {
     for (const id of IDS) {
       const s = sceneOf(id);
 
-      /* a flow carries a pixel at most 4% of the photo per cycle; a sway rocks it by under 1% */
-      for (const f of s.flow ?? []) expect(Math.hypot(...f.dir), id).toBeLessThanOrEqual(0.04);
-      for (const r of s.sway?.regions ?? []) expect(Math.hypot(...r.dir), id).toBeLessThan(0.01);
+      /* a flow carries a pixel at most 4% of the photo per cycle */
+      for (const f of s.flow?.regions ?? []) expect(Math.hypot(...f.dir), id).toBeLessThanOrEqual(0.04);
       for (const l of s.lights ?? []) {
         expect(l.amount, id).toBeLessThanOrEqual(0.25);
         expect(l.radius, id).toBeGreaterThan(0);
       }
       expect(s.lights?.length ?? 0, id).toBeLessThanOrEqual(MAX_LIGHTS);
-      if (s.shimmer) expect(s.shimmer.size, id).toBeLessThan(0.006);
-      for (const m of s.mist?.regions ?? []) expect(m.amount, id).toBeLessThanOrEqual(0.6);
+      /* shimmer is a ripple, not a drag: under 0.3% of the photo's width */
+      if (s.shimmer) expect(s.shimmer.size, id).toBeLessThanOrEqual(0.003);
     }
     expect(FRAGMENT).toContain(`uLightA[${MAX_LIGHTS}]`);
   });
@@ -112,61 +111,53 @@ describe('a region of a photograph', () => {
   });
 });
 
-describe('the mask textures', () => {
+describe('the mask texture', () => {
   const scene: Scene = {
-    cycle: 10,
-    flow: [{ ...SQUARE, dir: [0.03, -0.015] }],
-    sway: {
-      regions: [{ shape: { kind: 'ellipse', at: [0.85, 0.5], rx: 0.1, ry: 0.1 }, feather: 0.03, dir: [0.004, 0] }],
-      rate: 1,
-      wave: [4, 2],
+    flow: { cycle: 10, regions: [{ ...SQUARE, dir: [0.03, -0.015] }] },
+    shimmer: {
+      regions: [{ shape: { kind: 'ellipse', at: [0.85, 0.5], rx: 0.1, ry: 0.1 }, feather: 0.03, amount: 0.5 }],
+      size: 0.002,
+      speed: 0.05,
     },
-    mist: { regions: [{ ...SQUARE, amount: 0.5 }], rgb: [1, 1, 1], drift: [0.01, 0], scale: 1 },
     stars: [{ ...SQUARE, amount: 1 }],
   };
-  const masks = rasterScene(scene);
+  const mask = rasterScene(scene);
 
-  it('are two RGBA textures of the mask size', () => {
-    expect(masks.a).toHaveLength(MASK_W * MASK_H * 4);
-    expect(masks.b).toHaveLength(MASK_W * MASK_H * 4);
+  it('is one RGBA texture of the mask size', () => {
+    expect(mask.data).toHaveLength(MASK_W * MASK_H * 4);
   });
 
-  it('store exactly no movement wherever nothing moves, so the still photo is untouched there', () => {
-    for (const ch of [0, 1]) {
-      expect(byteVec(at(masks.a, 0.9, 0.1, ch))).toBe(0);
-      expect(byteVec(at(masks.b, 0.1, 0.1, ch))).toBe(0);
-    }
-    expect(at(masks.a, 0.9, 0.1, 2)).toBe(0);
-    expect(at(masks.a, 0.9, 0.1, 3)).toBe(0);
-    expect(at(masks.b, 0.9, 0.9, 2)).toBe(0);
+  it('stores exactly no movement wherever nothing moves, so the still photo is untouched there', () => {
+    for (const ch of [0, 1]) expect(byteVec(at(mask.data, 0.9, 0.1, ch))).toBe(0);
+    expect(at(mask.data, 0.9, 0.1, 2)).toBe(0);
+    expect(at(mask.data, 0.9, 0.1, 3)).toBe(0);
     expect(
-      rasterScene({ cycle: 10 })
-        .a.filter((_, i) => i % 4 < 2)
+      rasterScene({})
+        .data.filter((_, i) => i % 4 < 2)
         .every((b) => byteVec(b) === 0),
     ).toBe(true);
   });
 
-  it('store a flow as a share of the largest one, with its direction', () => {
-    expect(masks.flowScale).toBeCloseTo(0.03, 6);
-    expect(byteVec(at(masks.a, 0.4, 0.5, 0)) * masks.flowScale).toBeCloseTo(0.03, 3);
-    expect(byteVec(at(masks.a, 0.4, 0.5, 1)) * masks.flowScale).toBeCloseTo(-0.015, 3);
-    expect(masks.swayScale).toBeCloseTo(0.004, 6);
-    expect(byteVec(at(masks.b, 0.85, 0.5, 0))).toBe(1);
+  it('stores a flow as a share of the largest one, with its direction', () => {
+    expect(mask.flowScale).toBeCloseTo(0.03, 6);
+    expect(byteVec(at(mask.data, 0.4, 0.5, 0)) * mask.flowScale).toBeCloseTo(0.03, 3);
+    expect(byteVec(at(mask.data, 0.4, 0.5, 1)) * mask.flowScale).toBeCloseTo(-0.015, 3);
   });
 
-  it('store mist, shimmer and stars as amounts', () => {
-    expect(at(masks.a, 0.4, 0.5, 2)).toBe(128);
-    expect(at(masks.a, 0.4, 0.5, 3)).toBe(0);
-    expect(at(masks.b, 0.4, 0.5, 2)).toBe(255);
+  it('stores stars and shimmer as amounts', () => {
+    expect(at(mask.data, 0.4, 0.5, 2)).toBe(255);
+    expect(at(mask.data, 0.4, 0.5, 3)).toBe(0);
+    expect(at(mask.data, 0.85, 0.5, 3)).toBe(128);
+    expect(at(mask.data, 0.85, 0.5, 2)).toBe(0);
   });
 
-  it('rasterise every real scene without a stray value', () => {
+  it('rasterises every real scene without a stray value', () => {
     for (const id of IDS) {
       const m = rasterScene(sceneOf(id));
 
-      expect(Number.isFinite(m.flowScale) && Number.isFinite(m.swayScale), id).toBe(true);
-      /* the top-right corner of the summit's sky is still */
-      if (id === 'hello') expect(byteVec(at(m.a, 0.95, 0.05, 0))).toBe(0);
+      expect(Number.isFinite(m.flowScale), id).toBe(true);
+      /* outside the waterfall the open book's painting is never carried along */
+      if (id === 'bookforge') expect(byteVec(at(m.data, 0.2, 0.2, 0))).toBe(0);
     }
   });
 });

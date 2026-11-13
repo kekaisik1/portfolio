@@ -7,14 +7,13 @@ import type { Point } from '../ambient/spec';
 
 /** a move in the landscape photo's own coordinates: (0.03, 0) = three percent of its width to the right */
 export type Vec = readonly [du: number, dv: number];
-export type Rgb = readonly [r: number, g: number, b: number];
 
 export type Shape =
   | { kind: 'poly'; points: readonly Point[] }
   /** radii in photo heights */
   | { kind: 'ellipse'; at: Point; rx: number; ry: number };
 
-/** A linear change of strength across a region: `a` at `from`, `b` at `to` (clouds near the horizon move less). */
+/** A linear change of strength across a region: `a` at `from`, `b` at `to` (water slows where it spreads out). */
 export interface Ramp {
   from: Point;
   to: Point;
@@ -31,15 +30,14 @@ export interface Region {
   ramp?: Ramp;
 }
 
-/** Pixels carried along `dir` once per cycle (the two-phase flow trick): clouds, water, flame. */
+/**
+ * Pixels carried along `dir` once per cycle (the two-phase flow trick): running water only. Never wind: cloud,
+ * grass or fog carried this way reads as the painting being dragged.
+ */
 export interface Flow extends Region {
   dir: Vec;
 }
-/** Pixels rocked back and forth by up to `dir`, as a wave travelling through the region: grass, fronds, a lantern. */
-export interface Sway extends Region {
-  dir: Vec;
-}
-/** A region with a strength 0..1: where mist may drift, where reflections shimmer, where stars twinkle. */
+/** A region with a strength 0..1: where reflections shimmer, where stars twinkle. */
 export interface Field extends Region {
   amount: number;
 }
@@ -58,17 +56,9 @@ export interface Light {
 }
 
 export interface Scene {
-  /** seconds a flow takes to carry a pixel along its `dir` */
-  cycle: number;
-  flow?: readonly Flow[];
-  sway?: {
-    regions: readonly Sway[];
-    /** radians a second */ rate: number;
-    /** how tightly the wave is packed */ wave: Vec;
-  };
-  /** soft fog added over the photo, drifting: `drift` is in photo widths a second, `scale` its grain */
-  mist?: { regions: readonly Field[]; rgb: Rgb; drift: Vec; scale: number };
-  /** small restless distortion, for wet stone and water: `size` is the largest move, in photo widths */
+  /** running water: `cycle` is the seconds a flow takes to carry a pixel along its `dir` */
+  flow?: { cycle: number; regions: readonly Flow[] };
+  /** small restless distortion, for water and its reflections on wet stone: `size` is the largest move, in photo widths */
   shimmer?: { regions: readonly Field[]; size: number; speed: number };
   /** the photo's own stars brighten and dim */
   stars?: readonly Field[];

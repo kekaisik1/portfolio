@@ -21,17 +21,13 @@ in vec2 vUv;
 out vec4 o;
 
 uniform sampler2D uPhoto;
-uniform sampler2D uMaskA;   /* rg flow, b mist, a shimmer */
-uniform sampler2D uMaskB;   /* rg sway, b stars */
+uniform sampler2D uMask;    /* rg flow, b stars, a shimmer */
 uniform sampler2D uNoise;
 uniform vec2 uLand;         /* landscape u = uLand.x + u * uLand.y (the upright crop is a slice of the landscape) */
 uniform float uTime;
 uniform float uAmp;
 uniform float uCycle;
-uniform vec2 uScale;        /* what a full byte of flow / sway stands for */
-uniform vec3 uSway;         /* rate, wave u, wave v */
-uniform vec3 uMist;         /* drift u, drift v, scale */
-uniform vec3 uMistRgb;
+uniform float uScale;       /* what a full byte of flow stands for */
 uniform vec2 uShimmer;      /* size, speed */
 uniform int uLightN;
 uniform vec4 uLightA[6];    /* u, v, radius, amount */
@@ -51,23 +47,12 @@ float hash(vec2 p) {
 
 void main() {
   vec2 L = vec2(uLand.x + vUv.x * uLand.y, vUv.y);
-  vec4 a = texture(uMaskA, L);
-  vec4 b = texture(uMaskB, L);
+  vec4 a = texture(uMask, L);
   vec2 toImg = vec2(1.0 / uLand.y, 1.0);
   vec2 flow = (a.rg * 255.0 - 128.0) / 127.0;
-  vec2 sway = (b.rg * 255.0 - 128.0) / 127.0;
   vec4 n = texture(uNoise, L * vec2(3.0, 2.0));
   vec2 uv = vUv;
   float cover = 0.0;
-
-  /* sway: a wave travelling through the region, in gusts */
-  float sw = length(sway);
-  if (sw > 0.0) {
-    float wave = sin(uTime * uSway.x - dot(L, uSway.yz) + n.r * 3.0);
-    float gust = 0.55 + 0.45 * sin(uTime * 0.37 + L.x * 5.0 + n.g * 4.0);
-    uv += sway * uScale.y * toImg * (wave * gust * uAmp);
-    cover += sw;
-  }
 
   /* shimmer: two layers of noise sliding against each other */
   if (a.a > 0.0) {
@@ -81,27 +66,16 @@ void main() {
   float ph = uTime / uCycle + n.b * 0.4;
   float p0 = fract(ph);
   float p1 = fract(ph + 0.5);
-  vec2 f = flow * uScale.x * toImg * uAmp;
+  vec2 f = flow * uScale * toImg * uAmp;
   vec3 c0 = texture(uPhoto, uv - f * (p0 - 0.5)).rgb;
   vec3 c1 = texture(uPhoto, uv - f * (p1 - 0.5)).rgb;
   vec3 col = mix(c0, c1, abs(2.0 * p0 - 1.0));
   cover += length(flow);
 
-  /* mist: soft noise drifting over the photo */
-  if (a.b > 0.0) {
-    /* wider than tall: fog lies in layers */
-    vec2 q = vec2(L.x * 0.8, L.y * 2.2) * uMist.z;
-    float f1 = texture(uNoise, q + uTime * uMist.xy).g;
-    float f2 = texture(uNoise, q * 2.7 + uTime * uMist.xy * 1.9 + 0.37).b;
-    float fog = smoothstep(0.32, 0.72, f1 * 0.7 + f2 * 0.3);
-    col = mix(col, uMistRgb, a.b * fog * uAmp);
-    cover += a.b;
-  }
-
   /* stars: a pixel brighter than its surroundings is a star; each twinkles at its own pace */
-  if (b.b > 0.0) {
+  if (a.b > 0.0) {
     float around = dot(textureLod(uPhoto, uv, 3.5).rgb, LUMA);
-    float star = smoothstep(0.035, 0.14, dot(col, LUMA) - around) * b.b;
+    float star = smoothstep(0.035, 0.14, dot(col, LUMA) - around) * a.b;
     float h = hash(floor(L * vec2(256.0, 171.0)));
     float tw = sin(uTime * (1.2 + 2.6 * h) + h * 50.0);
     col *= 1.0 + star * 0.55 * tw * uAmp;

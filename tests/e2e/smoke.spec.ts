@@ -377,8 +377,11 @@ test.describe('the opening shot', () => {
     /* the greeting stands low in the frame */
     const name = await page.locator('#hello-t').boundingBox();
     expect(name?.y).toBeGreaterThan(450);
-    /* the cloud sea is already moving */
-    if (await hasGpu(page)) await expect(page.locator('#live')).toHaveAttribute('data-live', 'on');
+    /* the snow is already blowing off the top; the painting itself stays still, so its canvas draws nothing */
+    if (await hasGpu(page)) {
+      await expect(page.locator('#fx')).toHaveAttribute('data-live', 'on');
+      await expect(page.locator('#live')).toHaveAttribute('data-live', 'off');
+    }
     expect(problems).toEqual([]);
   });
 
@@ -445,7 +448,7 @@ test.describe('the opening shot', () => {
 });
 
 test.describe('the places move', () => {
-  test('the painting is alive in every place; the air has petals in Kyoto and nothing on the road', async ({
+  test('Kyoto has lanterns, wet stones and petals; the road has only seeds in the air; the pass only its light', async ({
     page,
   }) => {
     await open(page, './#kana-notebook');
@@ -456,19 +459,24 @@ test.describe('the places move', () => {
 
     await page.keyboard.press('ArrowDown');
     await arrived(page, 'about');
+    /* nothing moves inside the road's painting, so its canvas is not drawn at all */
+    await expect(page.locator('#live')).toHaveAttribute('data-live', 'off');
+    await expect(page.locator('#fx')).toHaveAttribute('data-live', 'on');
 
+    await page.goto('./#front-desk');
+    await arrived(page, 'front-desk');
     await expect(page.locator('#live')).toHaveAttribute('data-live', 'on');
     await expect(page.locator('#fx')).toHaveAttribute('data-live', 'off');
   });
 
   test('the living canvas lines up with the painting: where nothing moves it is transparent', async ({ page }) => {
-    await open(page, './#about');
+    await open(page, './#kana-notebook');
     test.skip(!(await hasGpu(page)), NEEDS_GPU);
-    await arrived(page, 'about');
+    await arrived(page, 'kana-notebook');
     await expect(page.locator('#live')).toHaveAttribute('data-live', 'on');
     await page.waitForTimeout(400);
 
-    /* the road (bottom left) is still, the grass (bottom right) moves: read the canvas's own pixels */
+    /* the dusk sky (top left) is still, the wet street (bottom middle) shimmers: read the canvas's own pixels */
     const alpha = await page.evaluate(() => {
       const live = document.querySelector<HTMLCanvasElement>('#live');
       const copy = document.createElement('canvas');
@@ -477,19 +485,19 @@ test.describe('the places move', () => {
       copy.height = live.height;
       const g = copy.getContext('2d');
       if (!g) return null;
-      return new Promise<{ road: number; grass: number }>((resolve) =>
+      return new Promise<{ sky: number; street: number }>((resolve) =>
         requestAnimationFrame(() => {
           /* straight after a frame the canvas still holds what it drew */
           g.drawImage(live, 0, 0);
           const at = (x: number, y: number): number =>
             g.getImageData(Math.round(x * copy.width), Math.round(y * copy.height), 1, 1).data[3];
-          resolve({ road: at(0.35, 0.9), grass: at(0.85, 0.85) });
+          resolve({ sky: at(0.1, 0.1), street: at(0.645, 0.95) });
         }),
       );
     });
 
-    expect(alpha?.road).toBe(0);
-    expect(alpha?.grass).toBe(255);
+    expect(alpha?.sky).toBe(0);
+    expect(alpha?.street).toBe(255);
   });
 });
 
@@ -555,6 +563,10 @@ test.describe('the corner switches', () => {
 
     await motion(page).click();
     await expect(motion(page)).toHaveAttribute('aria-pressed', 'true');
+    /* the road's painting is still: switched back on, only its air moves */
+    await expect(page.locator('#fx')).toHaveAttribute('data-live', 'on');
+    await page.keyboard.press('ArrowUp');
+    await arrived(page, 'kana-notebook');
     await expect(page.locator('#live')).toHaveAttribute('data-live', 'on');
     expect(problems).toEqual([]);
   });

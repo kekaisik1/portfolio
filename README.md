@@ -2,7 +2,7 @@
 
 "Departures": a departures board where every destination is a place, and seven of the places are projects. It opens on the summit alone, filling the window: the name, "Hi, I'm Kaisar." low in the frame, one line, a hint, and two small switches in the corner. The first step (wheel, arrow key, swipe, the hint, Tab) brings the board in from the left: a crisp mono index of ten rows (place, project, status); the rest of the screen is a painting of the place you are in, with that project's words standing in the corner the painting leaves calm. Choosing a row, turning the wheel, pressing an arrow key or swiping cuts to the next place like a board flipping: a few uneven slats close over the old picture in 300 ms and the new words are there. Summit (the greeting), Mountain pass, Observatory, Repair shop, Dragon's hall, Soho 1854, The open book, Kyoto, The road (about) and Campfire (write me, leave a note, light a lantern).
 
-The places are paintings, and they move. Each one is alive the way footage is: the cloud sea flows past the summit, mist drifts over the pass, gold glints under the dragon, the waterfall pours off the open book, petals drift down in Kyoto, wind runs through the grass. And each has a sound, synthesised in the browser (wind, a cavern, drips after rain, a far phone, a bell), off until the sound switch is pressed. The other switch stops the motion (stills only). A project with a video plays it in the picture's frame. On phones the painting is the whole screen, the words take the lower or upper third, and the board is a sheet raised from a bar at the bottom.
+The places are paintings, and they move. Quietly: nothing in them is pushed by wind, so the painting never smears. Lights breathe and flicker (the booth on the pass, the dragon's gold, the lanterns of Kyoto, the campfire), stars twinkle, water runs and shimmers (the waterfall off the open book), and the air carries snow off the summit, sparks, petals and dust. And each has a sound, synthesised in the browser (wind, a cavern, drips after rain, a far phone, a bell), off until the sound switch is pressed. The other switch stops the motion (stills only). A project with a video plays it in the picture's frame. On phones the painting is the whole screen, the words take the lower or upper third, and the board is a sheet raised from a bar at the bottom.
 
 Live: https://kekaisik1.github.io/portfolio/
 
@@ -75,13 +75,13 @@ Still forbidden: layered parallax, anything that follows the cursor, animated CS
 
 ### How a painting moves
 
-Five things can happen inside a painting, each inside soft-edged regions drawn over it (`src/living/scenes.ts`):
+Three things can happen inside a painting, each inside soft-edged regions drawn over it (`src/living/scenes.ts`):
 
-- **flow**: pixels are carried along a direction, as two copies of the picture that fade into each other half a cycle apart, so the loop has no seam (cloud, a waterfall, flame);
-- **sway**: pixels rock back and forth as a wave passing through (grass, palm fronds, a lantern, loose pages);
-- **shimmer**: small restless distortion (reflections on wet stone, water);
-- **mist**: soft noise drifting over the picture (fog on the pass and in Soho, the haze of the dragon's cave);
-- **lights and stars**: the painting's own light gets brighter and darker (a gas lamp, a booth, a wizard's staff), and pixels brighter than their surroundings twinkle (stars, the dragon's gold).
+- **flow**: pixels are carried along a direction, as two copies of the picture that fade into each other half a cycle apart, so the loop has no seam. Running water only (the waterfall): cloud, grass or fog carried this way reads as the painting being dragged, so wind moves nothing;
+- **shimmer**: a small restless ripple (water, and its reflections on wet stone);
+- **lights and stars**: the painting's own light gets brighter and darker (a brazier, a booth, a wizard's staff), and pixels brighter than their surroundings twinkle (stars, the dragon's gold).
+
+A painting where none of these happen is fine (the summit, the repair shop, the road): its canvas is not drawn at all, and only its air moves.
 
 On top of that the 2D canvas of `src/ambient/` draws what is in the air: snow blown off the summit, sparks, blossom petals, dust.
 
@@ -90,9 +90,9 @@ A world starts from the exact still and comes alive over a second and a half, so
 ### Make a place move
 
 1. Put a 10x10 grid over the source painting (`ffmpeg -i painting.png -vf "drawgrid=w=iw/10:h=ih/10:c=white@0.35" grid.jpg`) and read coordinates off it: `u` across and `v` down, 0..1, always in the **landscape** picture (the upright crop on phones is mapped for you). Lengths (`feather`, radii) are in picture heights.
-2. In `src/living/scenes.ts` describe the regions: a polygon or an ellipse, a `feather` (the edge fades inwards, so a region never leaks past its shape), optional `minus` shapes for solid things inside it (a rock in the water), an optional `ramp` (far cloud moves less than near cloud). Give a flow or a sway its `dir`, a mist or shimmer or star field its `amount`, a light its place, radius, `amount`, `speed` and `kind`. A polygon that reaches the picture's edge should run past it (-0.1 or 1.1), or its feather will fade at the edge.
+2. In `src/living/scenes.ts` describe the regions: a polygon or an ellipse, a `feather` (the edge fades inwards, so a region never leaks past its shape), optional `minus` shapes for solid things inside it (a rock in the water), an optional `ramp` (water slows where it spreads out). Give a flow its `dir`, a shimmer or star field its `amount`, a light its place, radius, `amount`, `speed` and `kind`. A polygon that reaches the picture's edge should run past it (-0.1 or 1.1), or its feather will fade at the edge.
 3. Stop every region short of anything solid: a moving edge on a still thing (a ridge, a wall, a tree trunk) reads as a wobble. Keep moves small; the unit tests cap them. If a move looks fake, make it smaller or take it out.
-4. Things in the air (snow, sparks, petals, dust) are the world's `ambient` in `src/worlds/looks.ts`.
+4. Things in the air (snow, sparks, petals, dust) are the world's `ambient` in `src/worlds/looks.ts`. Wind belongs there, never in the painting's pixels.
 5. Look at it: two screenshots two seconds apart, and their difference, show what moves and that nothing else does. Emulate reduced motion with `localStorage['kaisar.motion.v1'] = 'on'` for this, so the slow push-in is off and only the scene moves.
 
 ### Sound

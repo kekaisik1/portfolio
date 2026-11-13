@@ -95,8 +95,16 @@ export const LOOKS: Readonly<Record<string, Look>> = {
     focus: 0.72,
     ambient: { kind: 'petals', count: 28, box: [0.4, 0.02, 1, 0.8], rgb: '255,196,214' },
   },
-  /* the open sky; the road, the yurt and the mountains stay whole */
-  about: { at: 'tl', width: 33, shade: 0.56, x: 66, atTall: 'top', focus: 0.64, ambient: null },
+  /* the open sky; the road, the yurt and the mountains stay whole. Seeds hang in the low sun over the grass */
+  about: {
+    at: 'tl',
+    width: 33,
+    shade: 0.56,
+    x: 66,
+    atTall: 'top',
+    focus: 0.64,
+    ambient: { kind: 'motes', count: 22, box: [0.02, 0.62, 0.98, 0.96], rgb: '255,238,196' },
+  },
   /* the dark sky top left; the fire and the chairs are low, the Milky Way right */
   contact: {
     at: 'tl',
