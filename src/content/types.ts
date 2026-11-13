@@ -41,7 +41,7 @@ export interface Place {
   tz?: string;
   /** Whose time the clock shows: "Kyoto". */
   tzLabel?: string;
-  /** What the photograph shows, for people who cannot see it. */
+  /** What the painting shows, for people who cannot see it. */
   alt: string;
 }
 

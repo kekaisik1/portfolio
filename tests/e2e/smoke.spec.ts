@@ -6,9 +6,9 @@ const WORLDS = [
   ['front-desk', 'Mountain pass', 'The Front Desk'],
   ['numbers-room', 'Observatory', 'The Numbers Room'],
   ['lowl', 'Repair shop', 'LOWL'],
-  ['emberquill', 'Castle', 'Emberquill'],
+  ['emberquill', "Dragon's hall", 'Emberquill'],
   ['history-lens', 'Soho, 1854', 'History Lens'],
-  ['bookforge', 'Lighthouse', 'BookForge'],
+  ['bookforge', 'The open book', 'BookForge'],
   ['kana-notebook', 'Kyoto', 'Kana Notebook'],
   ['about', 'The road', 'About'],
   ['contact', 'Campfire', 'Write me'],
@@ -118,7 +118,7 @@ test('the page loads with no console errors and sends nothing off the machine', 
   await page.waitForTimeout(600);
 
   await expect(page.getByRole('heading', { level: 1, name: "Hi, I'm Kaisar." })).toBeVisible();
-  await expect(page.locator('.frame.on img')).toHaveAttribute('alt', /summit ridge/);
+  await expect(page.locator('.frame.on img')).toHaveAttribute('alt', /summit at sunrise/);
   expect(problems).toEqual([]);
 });
 

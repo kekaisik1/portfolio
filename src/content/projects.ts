@@ -4,7 +4,7 @@ const EMAIL = 'mailto:kaisar.turysbek@gmail.com';
 
 /**
  * The seven places, in the order of the board.
- * Adding a project = one entry here, its place in src/content/places.ts and its photograph (see the README).
+ * Adding a project = one entry here, its place in src/content/places.ts and its painting (see the README).
  * Slugs are public: they are #links, video file names and the keys of the API's growth numbers. Don't rename them lightly.
  */
 export const PROJECTS: readonly Project[] = [

@@ -3,7 +3,7 @@
   "private": true,
   "version": "2.0.0",
   "type": "module",
-  "description": "Kaisar's portfolio: a departures board of ten photographed places; seven of them are projects you can walk into.",
+  "description": "Kaisar's portfolio: a departures board of ten painted places; seven of them are projects you can walk into.",
   "engines": {
     "node": ">=20"
   },

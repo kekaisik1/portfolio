@@ -11,7 +11,7 @@ const HELLO: PlaceWords = {
   pos: '43.0°N 76.9°E',
   tz: 'Asia/Almaty',
   tzLabel: 'Tian Shan',
-  alt: 'A snowy Tian Shan summit ridge above a sea of clouds at sunrise, with footprints along the ridge',
+  alt: 'A painting of a snowy Tian Shan summit at sunrise, snow streaming off its top and footprints climbing the ridge above a sea of clouds',
 };
 
 /** Where each project stands, by slug. A project without an entry here fails the unit tests. */
@@ -21,28 +21,28 @@ export const PROJECT_PLACES: Readonly<Record<string, PlaceWords>> = {
     status: 'PRIVATE',
     tone: 'private',
     pos: 'pass road, blue hour',
-    alt: 'A glass phone booth glowing beside a wet mountain pass road at blue hour, mist under snowy peaks',
+    alt: 'A painting of a lit red phone booth beside a wet mountain road at blue hour, snowy pines around it, mist in the valley under the peaks',
   },
   'numbers-room': {
     place: 'Observatory',
     status: 'PRIVATE',
     tone: 'private',
     pos: 'above the clouds, twilight',
-    alt: 'A white observatory dome, open and lit from inside, on a rocky summit above a sea of clouds at twilight',
+    alt: 'A painting of a white observatory on a rocky summit at twilight, its dome open on a lit telescope, a sea of clouds below',
   },
   lowl: {
     place: 'Repair shop',
     status: 'IN USE',
     tone: 'use',
     pos: 'palm street, golden hour',
-    alt: 'An open appliance-repair shop on a palm street under snowy mountains, a washing machine and a fridge out front in low sun',
+    alt: 'A painting of an appliance-repair shop on a palm street at golden hour, its door rolled up, a washing machine and a fridge out front, snowy mountains behind',
   },
   emberquill: {
-    place: 'Castle',
+    place: "Dragon's hall",
     status: 'LIVE',
     tone: 'live',
-    pos: 'sea cliff, storm coming',
-    alt: 'A ruined castle on a sea cliff at stormy dusk, torches burning either side of its gate, waves breaking below',
+    pos: 'ruined hall, the dragon awake',
+    alt: 'A painting of four adventurers on a rock ledge facing a huge red dragon on its gold in a ruined hall, light falling through the arches, a red twenty-sided die in front',
   },
   'history-lens': {
     place: 'Soho, 1854',
@@ -51,14 +51,14 @@ export const PROJECT_PLACES: Readonly<Record<string, PlaceWords>> = {
     pos: '51.5°N 0.1°W',
     tz: 'Europe/London',
     tzLabel: 'Soho',
-    alt: 'A cast-iron water pump on a wet cobbled London street in fog, under a gas lamp',
+    alt: 'A painting of a cast-iron water pump under a lit gas lamp on a wet cobbled London street, fog down the street at dusk',
   },
   bookforge: {
-    place: 'Lighthouse',
+    place: 'The open book',
     status: 'BUILDING',
     tone: 'building',
-    pos: 'lighthouse point, dusk',
-    alt: 'A white lighthouse on a rocky point at dusk, its beam crossing the sea mist, waves rolling in below',
+    pos: 'hilltop, late afternoon',
+    alt: 'A painting of a giant open book on a hilltop with a world growing out of its pages, half ink drawing and half painted city, harbour and waterfall, a fountain pen beside it and loose pages turning into birds',
   },
   'kana-notebook': {
     place: 'Kyoto',
@@ -67,7 +67,7 @@ export const PROJECT_PLACES: Readonly<Record<string, PlaceWords>> = {
     pos: '35.0°N 135.8°E',
     tz: 'Asia/Tokyo',
     tzLabel: 'Kyoto',
-    alt: 'A narrow Kyoto back street after rain, red paper lanterns reflected in the wet stones',
+    alt: 'A painting of a Kyoto street at dusk after spring rain, cherry blossom over a pagoda, paper lanterns lit, petals on the wet stones',
   },
 };
 
@@ -78,7 +78,7 @@ const ABOUT: PlaceWords = {
   pos: '43.2°N 76.9°E',
   tz: 'Asia/Almaty',
   tzLabel: 'Kazakhstan',
-  alt: 'An empty road across the golden steppe towards snow mountains at dawn, a white yurt beside it',
+  alt: 'A painting of an empty dirt road across the golden steppe towards snow mountains at dawn, a white yurt beside it',
 };
 
 const CONTACT: PlaceWords = {
@@ -88,7 +88,7 @@ const CONTACT: PlaceWords = {
   pos: '48.0°N 68.0°E',
   tz: 'Asia/Almaty',
   tzLabel: 'the steppe',
-  alt: 'A campfire with empty camp chairs on the night steppe under the Milky Way',
+  alt: 'A painting of a campfire with four empty camp chairs and a crate with a notebook and dice, on the night steppe under the Milky Way',
 };
 
 function placeOf(slug: string): PlaceWords {

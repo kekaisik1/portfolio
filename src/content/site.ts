@@ -5,7 +5,7 @@ export const SITE: SiteCopy = {
   mark: 'Kaisar Turysbek',
   description: 'Kaisar builds things with computers in Kazakhstan. Seven of them are places you can walk into.',
   url: 'https://kekaisik1.github.io/portfolio/',
-  ogAlt: 'A snowy summit ridge above a sea of clouds at sunrise, with the words:',
+  ogAlt: 'A painting of a snowy summit above a sea of clouds at sunrise, with the words:',
   hero: {
     heading: "Hi, I'm Kaisar.",
     line: 'I live in Kazakhstan and I build things with computers.',
