@@ -1,4 +1,7 @@
-/* Reduced motion: cuts are instant (src/travel/), nothing types in or rises, the canvas is off. Keep this last. */
+/*
+ * Reduced motion: cuts are instant (src/travel/), nothing types in, slides or rises, and the motion switch starts
+ * off (src/switches/), which hides both canvases. Keep this last.
+ */
 @media (prefers-reduced-motion: reduce) {
   .world.in .block,
   .js .intro .rows li,
@@ -8,10 +11,9 @@
     animation: none;
   }
   .board,
-  .board.open {
+  .board.open,
+  .opening.departing .board,
+  .opening.departing .bar {
     transition: none;
-  }
-  #fx {
-    display: none;
   }
 }

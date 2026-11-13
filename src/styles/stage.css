@@ -1,6 +1,7 @@
 /*
- * The place: the photographs (at most three mounted), the small canvas of the one living detail, the lanterns,
- * and the slats of the cut. Only transform and opacity ever move here.
+ * The place: the photographs (at most three mounted), the canvas that moves the one on screen (#live, WebGL), the
+ * small canvas of things in its air (#fx), the lanterns, and the slats of the cut. In CSS only transform and
+ * opacity ever move here.
  */
 #stage,
 #cut {
@@ -54,6 +55,7 @@
   visibility: hidden;
 }
 
+#live,
 #fx {
   position: absolute;
   inset: 0;
@@ -61,6 +63,11 @@
   height: 100%;
   z-index: 3;
   pointer-events: none;
+}
+/* the motion switch is off: stills only */
+[data-motion='off'] #live,
+[data-motion='off'] #fx {
+  display: none;
 }
 
 /* lanterns over the campfire: small warm lights; one rises from the fire when it is lit */

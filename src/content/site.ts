@@ -9,7 +9,7 @@ export const SITE: SiteCopy = {
   hero: {
     heading: "Hi, I'm Kaisar.",
     line: 'I live in Kazakhstan and I build things with computers.',
-    walk: 'Scroll to walk in',
+    walk: 'Scroll to depart',
   },
   groups: { work: 'Work', play: 'Play' },
   source: { work: 'something I built for work', play: 'something I made for fun' },
@@ -34,6 +34,7 @@ export const SITE: SiteCopy = {
   travelHint: 'Arrow keys move between places.',
   travelKeys: '↑ ↓ to travel',
   boardLabel: 'Places',
+  switches: { label: 'Motion and sound', motion: 'Motion', sound: 'Sound' },
 };
 
 /** Everything a visitor can be told by the page itself (as opposed to by the API). */

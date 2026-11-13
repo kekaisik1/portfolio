@@ -3,10 +3,10 @@ import { expect, test, type Page } from '@playwright/test';
 /** The board, top to bottom: world id, the place on its row, what stands there. */
 const WORLDS = [
   ['hello', 'Summit', 'Kaisar Turysbek'],
-  ['front-desk', 'Front desk', 'The Front Desk'],
-  ['numbers-room', 'Reading room', 'The Numbers Room'],
-  ['lowl', 'Workshop', 'LOWL'],
-  ['emberquill', 'Tavern', 'Emberquill'],
+  ['front-desk', 'Mountain pass', 'The Front Desk'],
+  ['numbers-room', 'Observatory', 'The Numbers Room'],
+  ['lowl', 'Repair shop', 'LOWL'],
+  ['emberquill', 'Castle', 'Emberquill'],
   ['history-lens', 'Soho, 1854', 'History Lens'],
   ['bookforge', 'Lighthouse', 'BookForge'],
   ['kana-notebook', 'Kyoto', 'Kana Notebook'],
@@ -17,11 +17,15 @@ const PHONE = { width: 390, height: 844 };
 const SMALL_PHONE = { width: 320, height: 568 };
 const LAPTOP = { width: 1366, height: 680 };
 
-/** Collect console errors and uncaught exceptions, and refuse every request that is not to the local server. */
-async function watch(page: Page): Promise<string[]> {
+/**
+ * Collect console errors (and, when asked, warnings about audio: a browser warns when sound starts without a
+ * gesture) and uncaught exceptions, and refuse every request that is not to the local server.
+ */
+async function watch(page: Page, audioWarnings = false): Promise<string[]> {
   const problems: string[] = [];
   page.on('console', (m) => {
-    if (m.type() === 'error') problems.push(m.text());
+    if (m.type() === 'error' || (audioWarnings && m.type() === 'warning' && /audio/i.test(m.text())))
+      problems.push(m.text());
   });
   page.on('pageerror', (e) => problems.push(`uncaught: ${e.message}`));
   await page.route(
@@ -33,6 +37,22 @@ async function watch(page: Page): Promise<string[]> {
   );
   return problems;
 }
+
+/**
+ * Is a real GPU drawing? The living photo is WebGL; on a software renderer (a CI runner without a GPU) the page
+ * rightly gives the motion up after a few seconds and shows stills, so the tests that watch it move need hardware.
+ */
+const hasGpu = (page: Page): Promise<boolean> =>
+  page.evaluate(() => {
+    const gl = document.createElement('canvas').getContext('webgl2');
+    const info = gl?.getExtension('WEBGL_debug_renderer_info');
+    if (!gl || !info) return false;
+    return !/swiftshader|llvmpipe|software/i.test(String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)));
+  });
+const NEEDS_GPU = 'the living photo needs a GPU: on a software renderer the page shows stills';
+
+/** The summit with the board already there: a #link skips the opening shot. */
+const BOARD = './#hello';
 
 /** Open the page and wait until the first screen is standing: script started, typefaces in. */
 async function open(page: Page, path = './'): Promise<void> {
@@ -103,7 +123,7 @@ test('the page loads with no console errors and sends nothing off the machine', 
 });
 
 test('the board lists all ten places with the project and a status word on every row', async ({ page }) => {
-  await open(page);
+  await open(page, BOARD);
 
   const rows = page.locator('#rows .row');
   await expect(rows).toHaveCount(10);
@@ -230,7 +250,7 @@ test('the skip link takes keyboard focus to the first place', async ({ page }) =
 });
 
 test('the board is one Tab stop: Enter on a row goes there and takes focus to its name', async ({ page }) => {
-  await open(page);
+  await open(page, BOARD);
   const rows = page.locator('#rows .row');
 
   await rows.first().focus();
@@ -250,7 +270,7 @@ test('every interactive thing on screen is at least 44 px tall', async ({ page }
   await arrived(page, 'kana-notebook');
 
   const small = await page.evaluate(() =>
-    Array.from(document.querySelectorAll<HTMLElement>('.row, .world.on a, .world.on button, .mark'))
+    Array.from(document.querySelectorAll<HTMLElement>('.row, .world.on a, .world.on button, .mark, .sw'))
       .filter((el) => el.offsetParent !== null && el.getBoundingClientRect().height < 44)
       .map((el) => el.className),
   );
@@ -292,7 +312,8 @@ test.describe('the video', () => {
     } else await expect(page.locator('#pstate')).toHaveText("the video didn't load");
     await expect(page.locator('#p-title')).toHaveText('Kana Notebook');
     await expect(page.locator('#pclose')).toBeFocused();
-    /* the living detail rests while the photo is covered */
+    /* the place stops moving while the photo is covered */
+    await expect(page.locator('#live')).toHaveAttribute('data-live', 'off');
     await expect(page.locator('#fx')).toHaveAttribute('data-live', 'off');
     expect(problems.filter((p) => !/video|media|ERR_/i.test(p))).toEqual([]);
   });
@@ -338,16 +359,263 @@ test.describe('the video', () => {
   });
 });
 
-test.describe('the living detail', () => {
-  test('runs in a place that has one and rests on the road, which is still', async ({ page }) => {
+test.describe('the opening shot', () => {
+  test('the summit fills the window: no board, only the name, the greeting, a hint and the switches', async ({
+    page,
+  }) => {
+    const problems = await watch(page);
+    await open(page);
+    await arrived(page, 'hello');
+
+    await expect(page.locator('html')).toHaveClass(/\bopening\b/);
+    await expect(page.locator('#board')).not.toBeInViewport();
+    expect(await page.locator('#stage').boundingBox()).toMatchObject({ x: 0, width: 1440, height: 900 });
+    await expect(page.locator('.mark')).toBeInViewport();
+    await expect(page.getByRole('heading', { level: 1, name: "Hi, I'm Kaisar." })).toBeInViewport();
+    await expect(page.getByRole('button', { name: 'Scroll to depart' })).toBeInViewport();
+    await expect(page.getByRole('group', { name: 'Motion and sound' })).toBeInViewport();
+    /* the greeting stands low in the frame */
+    const name = await page.locator('#hello-t').boundingBox();
+    expect(name?.y).toBeGreaterThan(450);
+    /* the cloud sea is already moving */
+    if (await hasGpu(page)) await expect(page.locator('#live')).toHaveAttribute('data-live', 'on');
+    expect(problems).toEqual([]);
+  });
+
+  test('the board arrives with the first step, and stays when you come back to the summit', async ({ page }) => {
+    await open(page);
+
+    await page.keyboard.press('ArrowDown');
+    await arrived(page, 'front-desk');
+
+    await expect(page.locator('html')).not.toHaveClass(/\bopening\b/);
+    await expect(page.locator('#board')).toBeInViewport();
+    expect((await page.locator('#board').boundingBox())?.x).toBe(0);
+    expect((await page.locator('#stage').boundingBox())?.x).toBe(320);
+    await expect(page.locator('#rows .row[aria-current]')).toContainText('Mountain pass');
+
+    await page.keyboard.press('ArrowUp');
+    await arrived(page, 'hello');
+    await expect(page.locator('#board')).toBeInViewport();
+    expect((await page.locator('#stage').boundingBox())?.x).toBe(320);
+    expect((await blockFits(page)).fits).toBe(true);
+  });
+
+  test('the hint is a button: pressing it departs, and focus lands on the first place', async ({ page }) => {
+    await open(page);
+
+    await page.getByRole('button', { name: 'Scroll to depart' }).click();
+
+    await arrived(page, 'front-desk');
+    await expect(page.locator('#board')).toBeInViewport();
+    await expect(page.locator('#front-desk-t')).toBeFocused();
+  });
+
+  test('the wheel departs too', async ({ page }) => {
+    await open(page);
+    await page.mouse.move(700, 400);
+
+    await page.mouse.wheel(0, 120);
+
+    await arrived(page, 'front-desk');
+    await expect(page.locator('#board')).toBeInViewport();
+  });
+
+  test('Tab reaches the board at once: focus entering it brings it in', async ({ page }) => {
+    await open(page);
+
+    /* the skip link, the name, then the board's one Tab stop */
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
+
+    await arrived(page, 'front-desk');
+    await expect(page.locator('#board')).toBeInViewport();
+    await expect(page.locator('#rows .row[data-i="1"]')).toBeFocused();
+  });
+
+  test('a #link skips the opening: the board is there from the start', async ({ page }) => {
     await open(page, './#kana-notebook');
     await arrived(page, 'kana-notebook');
+
+    await expect(page.locator('html')).not.toHaveClass(/\bopening\b/);
+    await expect(page.locator('#board')).toBeInViewport();
+    expect((await page.locator('#stage').boundingBox())?.x).toBe(320);
+  });
+});
+
+test.describe('the places move', () => {
+  test('the photograph is alive in every place; the air has rain in Kyoto and nothing on the road', async ({
+    page,
+  }) => {
+    await open(page, './#kana-notebook');
+    test.skip(!(await hasGpu(page)), NEEDS_GPU);
+    await arrived(page, 'kana-notebook');
+    await expect(page.locator('#live')).toHaveAttribute('data-live', 'on');
     await expect(page.locator('#fx')).toHaveAttribute('data-live', 'on');
 
     await page.keyboard.press('ArrowDown');
     await arrived(page, 'about');
 
+    await expect(page.locator('#live')).toHaveAttribute('data-live', 'on');
     await expect(page.locator('#fx')).toHaveAttribute('data-live', 'off');
+  });
+
+  test('the living canvas lines up with the photograph: where nothing moves it is transparent', async ({ page }) => {
+    await open(page, './#about');
+    test.skip(!(await hasGpu(page)), NEEDS_GPU);
+    await arrived(page, 'about');
+    await expect(page.locator('#live')).toHaveAttribute('data-live', 'on');
+    await page.waitForTimeout(400);
+
+    /* the road (bottom right) is still, the grass (bottom left) moves: read the canvas's own pixels */
+    const alpha = await page.evaluate(() => {
+      const live = document.querySelector<HTMLCanvasElement>('#live');
+      const copy = document.createElement('canvas');
+      if (!live) return null;
+      copy.width = live.width;
+      copy.height = live.height;
+      const g = copy.getContext('2d');
+      if (!g) return null;
+      return new Promise<{ road: number; grass: number }>((resolve) =>
+        requestAnimationFrame(() => {
+          /* straight after a frame the canvas still holds what it drew */
+          g.drawImage(live, 0, 0);
+          const at = (x: number, y: number): number =>
+            g.getImageData(Math.round(x * copy.width), Math.round(y * copy.height), 1, 1).data[3];
+          resolve({ road: at(0.8, 0.9), grass: at(0.2, 0.85) });
+        }),
+      );
+    });
+
+    expect(alpha?.road).toBe(0);
+    expect(alpha?.grass).toBe(255);
+  });
+});
+
+test.describe('the corner switches', () => {
+  /** count the living canvas's draw calls and the audio contexts made, from before the page's own code runs */
+  async function instrument(page: Page): Promise<void> {
+    await page.addInitScript(() => {
+      const w = window as unknown as { drawn: number; contexts: AudioContext[] };
+      w.drawn = 0;
+      w.contexts = [];
+      const draw = WebGL2RenderingContext.prototype.drawArrays;
+      WebGL2RenderingContext.prototype.drawArrays = function (...args) {
+        w.drawn++;
+        return draw.apply(this, args);
+      };
+      const Real = window.AudioContext;
+      window.AudioContext = class extends Real {
+        constructor(options?: AudioContextOptions) {
+          super(options);
+          w.contexts.push(this);
+        }
+      };
+    });
+  }
+  const drawn = (page: Page): Promise<number> => page.evaluate(() => (window as unknown as { drawn: number }).drawn);
+  const contexts = (page: Page): Promise<string[]> =>
+    page.evaluate(() => (window as unknown as { contexts: AudioContext[] }).contexts.map((c) => c.state));
+  const motion = (page: Page) => page.getByRole('button', { name: 'Motion', exact: true });
+  const sound = (page: Page) => page.getByRole('button', { name: 'Sound', exact: true });
+
+  test('motion is on by default; switched off, nothing is drawn, and the choice is remembered', async ({ page }) => {
+    const problems = await watch(page);
+    await instrument(page);
+    await open(page, './#kana-notebook');
+    test.skip(!(await hasGpu(page)), NEEDS_GPU);
+    await arrived(page, 'kana-notebook');
+    await expect(motion(page)).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#live')).toHaveAttribute('data-live', 'on');
+    const before = await drawn(page);
+    await page.waitForTimeout(300);
+    expect(await drawn(page)).toBeGreaterThan(before);
+
+    await motion(page).click();
+
+    await expect(motion(page)).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('#live')).toHaveAttribute('data-live', 'off');
+    await expect(page.locator('#fx')).toHaveAttribute('data-live', 'off');
+    await expect(page.locator('#live')).toBeHidden();
+    await expect(page.locator('#fx')).toBeHidden();
+    const stopped = await drawn(page);
+    await page.waitForTimeout(400);
+    expect(await drawn(page)).toBe(stopped);
+    /* travelling does not start it again */
+    await page.keyboard.press('ArrowDown');
+    await arrived(page, 'about');
+    await page.waitForTimeout(300);
+    expect(await drawn(page)).toBe(stopped);
+
+    await page.reload();
+    await arrived(page, 'about');
+    await expect(motion(page)).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('#live')).toHaveAttribute('data-live', 'off');
+
+    await motion(page).click();
+    await expect(motion(page)).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#live')).toHaveAttribute('data-live', 'on');
+    expect(problems).toEqual([]);
+  });
+
+  test('sound is off by default and no audio context exists until the switch is pressed', async ({ page }) => {
+    const problems = await watch(page, true);
+    await instrument(page);
+    await open(page);
+    await expect(sound(page)).toHaveAttribute('aria-pressed', 'false');
+    await page.keyboard.press('ArrowDown');
+    await arrived(page, 'front-desk');
+    expect(await contexts(page)).toEqual([]);
+
+    await sound(page).click();
+
+    await expect(sound(page)).toHaveAttribute('aria-pressed', 'true');
+    await expect.poll(() => contexts(page)).toEqual(['running']);
+    expect(await page.evaluate(() => localStorage.getItem('kaisar.sound.v1'))).toBe('on');
+    /* another place: the same context, crossfaded */
+    await page.keyboard.press('ArrowDown');
+    await arrived(page, 'numbers-room');
+    expect(await contexts(page)).toEqual(['running']);
+
+    await sound(page).click();
+    await expect(sound(page)).toHaveAttribute('aria-pressed', 'false');
+    await expect.poll(() => contexts(page)).toEqual(['suspended']);
+    expect(problems).toEqual([]);
+  });
+
+  test('sound left on is remembered, but waits for a key or a press before it starts', async ({ page }) => {
+    const problems = await watch(page, true);
+    await instrument(page);
+    await page.addInitScript(() => localStorage.setItem('kaisar.sound.v1', 'on'));
+    await open(page);
+
+    await expect(sound(page)).toHaveAttribute('aria-pressed', 'true');
+    await page.waitForTimeout(300);
+    expect(await contexts(page)).toEqual([]);
+
+    await page.keyboard.press('ArrowDown');
+
+    await expect.poll(() => contexts(page)).toEqual(['running']);
+    await arrived(page, 'front-desk');
+    expect(problems).toEqual([]);
+  });
+
+  test('the switches are real toggle buttons, reachable by keyboard, with a visible focus ring', async ({ page }) => {
+    await open(page, BOARD);
+
+    await motion(page).focus();
+    await page.keyboard.press('Space');
+    await expect(motion(page)).toHaveAttribute('aria-pressed', 'false');
+    await page.keyboard.press('Tab');
+    await expect(sound(page)).toBeFocused();
+    const ring = await sound(page).evaluate((el) => getComputedStyle(el).outlineStyle);
+    expect(ring).toBe('solid');
+    for (const sw of [motion(page), sound(page)]) {
+      const box = await sw.boundingBox();
+      expect(box?.width).toBeGreaterThanOrEqual(44);
+      expect(box?.height).toBeGreaterThanOrEqual(44);
+    }
   });
 });
 
@@ -508,7 +776,6 @@ test.describe('on a phone', () => {
 
   test('the photo is the whole screen and the words take at most 42% of it, in every place', async ({ page }) => {
     await open(page);
-    await expect(page.locator('#bar')).toBeVisible();
     await expect(page.locator('#board')).toBeHidden();
 
     for (const [i, [id]] of WORLDS.entries()) {
@@ -526,8 +793,26 @@ test.describe('on a phone', () => {
     await arrived(page, 'about');
   });
 
-  test('the bar says where you are and raises the index; a row travels and lowers it', async ({ page }) => {
+  test('the opening shot: the photo to the very bottom; the bar rises with the first swipe', async ({ page }) => {
     await open(page);
+    await arrived(page, 'hello');
+    await expect(page.locator('#bar')).not.toBeInViewport();
+    await expect(page.getByRole('button', { name: 'Scroll to depart' })).toBeInViewport();
+    await expect(page.getByRole('group', { name: 'Motion and sound' })).toBeInViewport();
+
+    await swipe(page, 600, 300);
+
+    await arrived(page, 'front-desk');
+    await expect(page.locator('#bar')).toBeInViewport();
+    await expect(page.locator('#bar')).toContainText('Mountain pass');
+    /* the switches keep clear of the name mark and of the words */
+    const sw = await page.locator('#switches').boundingBox();
+    const mark = await page.locator('.mark').boundingBox();
+    expect(sw && mark && sw.x).toBeGreaterThan((mark?.x ?? 0) + (mark?.width ?? 0));
+  });
+
+  test('the bar says where you are and raises the index; a row travels and lowers it', async ({ page }) => {
+    await open(page, BOARD);
     const bar = page.locator('#bar');
     await expect(bar).toContainText('Summit');
 
@@ -548,7 +833,7 @@ test.describe('on a phone', () => {
   });
 
   test('the raised index closes with Esc, a tap outside, or a swipe down', async ({ page }) => {
-    await open(page);
+    await open(page, BOARD);
     const bar = page.locator('#bar');
     const board = page.locator('#board');
 
@@ -627,7 +912,7 @@ test.describe('on a small phone', () => {
 test.describe('reduced motion', () => {
   test.use({ reducedMotion: 'reduce' });
 
-  test('cuts are instant, nothing is drawn on the canvas, and every place is still reachable', async ({ page }) => {
+  test('cuts are instant, nothing is drawn on either canvas, and every place is still reachable', async ({ page }) => {
     const problems = await watch(page);
     await open(page);
     let slats = 0;
@@ -648,7 +933,11 @@ test.describe('reduced motion', () => {
     }
 
     expect(slats).toBe(0);
+    /* motion starts switched off for someone who asks for less of it: stills only */
+    await expect(page.getByRole('button', { name: 'Motion', exact: true })).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('#live')).toBeHidden();
     await expect(page.locator('#fx')).toBeHidden();
+    await expect(page.locator('#live')).not.toHaveAttribute('data-live', 'on');
     await expect(page.locator('#fx')).not.toHaveAttribute('data-live', 'on');
     expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
     expect(problems).toEqual([]);

@@ -5,12 +5,17 @@ import { initBoard } from './board/board';
 import { initFooter } from './board/footer';
 import { WORLDS } from './content/places';
 import { byId, pickAll } from './lib/dom';
-import { narrow, reduce, tall } from './lib/media';
+import { narrow, tall } from './lib/media';
+import { createTicker } from './lib/ticker';
+import { createLiving } from './living/living';
 import { worldOfHash } from './nav/routing';
 import { initLanterns } from './night/lanterns';
 import { loadToday } from './night/today';
 import { initNote } from './note/form';
+import { initOpening } from './opening/opening';
 import { initRead } from './sheet/read';
+import { createSound } from './sound/sound';
+import { initSwitches } from './switches/switches';
 import { initInput } from './travel/input';
 import { createTravel } from './travel/travel';
 import { initPlayer } from './video/player';
@@ -25,51 +30,85 @@ function boot(): void {
   const lens = byId('lens');
   const cutLayer = byId('cut');
   const worlds = pickAll<HTMLElement>(byId('main'), '.world');
+  /** false once the device has shown it cannot keep up: the motion stops and the photo no longer pushes in */
   let smooth = true;
-  /** how many things cover the photo right now (the video, a sheet, the raised index): the canvas rests under them */
+  /** how many things cover the photo right now (the video, a sheet, the raised index): the motion rests under them */
   let covers = 0;
 
   const photos = createPhotos(lens);
-  const ambient = createAmbient(byId<HTMLCanvasElement>('fx'), {
-    upright: () => tall.matches,
-    reduced: () => reduce.matches,
-    /* a device that cannot keep up loses the push-in too */
+  const ticker = createTicker({
     onTooSlow: () => {
       smooth = false;
+      living.enable(false);
     },
   });
+  const upright = (): boolean => tall.matches;
+  const living = createLiving(byId<HTMLCanvasElement>('live'), { photos, ticker, upright });
+  const ambient = createAmbient(byId<HTMLCanvasElement>('fx'), { upright, ticker });
+  const sound = createSound();
   const travel = createTravel({
     photos,
     lens,
     cutLayer,
     worlds,
     where: byId('where'),
-    smooth: () => smooth,
+    smooth: () => smooth && switches.motion(),
   });
+  const relayout = (): void => {
+    fitWords(worlds[travel.current()]);
+    living.resize();
+    ambient.resize();
+    lanterns.layout();
+  };
+  const switches = initSwitches({
+    motion(on) {
+      ticker.hold('switch', !on);
+      living.enable(on);
+      /* the photo's slow push-in holds where it is, and goes on from there */
+      for (const a of lens.getAnimations()) {
+        if (!on) a.pause();
+        else if (a.playState === 'paused') a.play();
+      }
+      /* the canvases were not laid out while they were hidden */
+      if (on) relayout();
+    },
+    sound: (on) => sound.turn(on, WORLDS[travel.current()].id),
+  });
+  ticker.hold('switch', !switches.motion());
+  living.enable(switches.motion());
+  sound.arm(switches.sound(), () => WORLDS[travel.current()].id);
+
   const covered = (on: boolean): void => {
     covers = Math.max(0, covers + (on ? 1 : -1));
-    ambient.pause(covers > 0);
+    ticker.hold('covered', covers > 0);
   };
 
   const board = initBoard(travel, covered);
   const footer = initFooter(travel);
   const lanterns = initLanterns();
   const contact = WORLDS.findIndex((w) => w.kind === 'contact');
+  initOpening(travel);
 
-  /* leaving: the old world's detail stops at once, so nothing of it drifts over the cut */
-  travel.onDepart((_to, from) => {
+  /* leaving: what is in the old world's air stops at once, so nothing of it drifts over the cut (the photo itself
+     keeps moving under the slats until the new one lands) */
+  travel.onDepart((to, from) => {
+    sound.go(WORLDS[to].id);
     if (from === null) return;
     ambient.set(null);
     lanterns.show(false);
   });
   travel.onArrive((i) => {
+    living.show(i);
     ambient.set(lookOf(WORLDS[i].id));
     lanterns.show(i === contact);
   });
 
   initInput(travel, board.endIntro);
   initRead(covered);
-  initPlayer(cutLayer, covered);
+  initPlayer(cutLayer, (open) => {
+    covered(open);
+    sound.duck(open);
+  });
   initNote(lanterns.light, covered);
 
   const start = worldOfHash(location.hash);
@@ -77,17 +116,12 @@ function boot(): void {
   root.classList.add('live');
 
   let settle = 0;
-  const relayout = (): void => {
+  const settled = (): void => {
     window.clearTimeout(settle);
-    settle = window.setTimeout(() => {
-      fitWords(worlds[travel.current()]);
-      ambient.resize();
-      lanterns.layout();
-    }, RESIZE_SETTLE_MS);
+    settle = window.setTimeout(relayout, RESIZE_SETTLE_MS);
   };
-  window.addEventListener('resize', relayout);
-  narrow.addEventListener('change', relayout);
-  reduce.addEventListener('change', () => ambient.resize());
+  window.addEventListener('resize', settled);
+  narrow.addEventListener('change', settled);
   /* the words are measured again once the typefaces are in: a name may wrap differently */
   void document.fonts.ready.then(() => fitWords(worlds[travel.current()]));
 

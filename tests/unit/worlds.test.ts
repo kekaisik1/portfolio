@@ -32,13 +32,18 @@ describe('how each world looks', () => {
     }
   });
 
-  it('gives every world but the road one living detail, never more than sixty moving things', () => {
+  it("never puts more than sixty things in a world's air, and gives each kind what it needs", () => {
     for (const id of IDS) {
       const spec = lookOf(id).ambient;
-      if (id === 'about') expect(spec).toBeNull();
-      else expect(spec, id).not.toBeNull();
-      if (spec && 'count' in spec) expect(spec.count, id).toBeLessThanOrEqual(MAX_PARTICLES);
+      if (!spec) continue;
+      expect(spec.count, id).toBeGreaterThan(0);
+      expect(spec.count, id).toBeLessThanOrEqual(MAX_PARTICLES);
+      if (spec.kind === 'spindrift') expect(spec.ridge.length, id).toBeGreaterThanOrEqual(2);
+      if (spec.kind === 'embers') expect(spec.at.length, id).toBeGreaterThanOrEqual(1);
     }
+    expect(lookOf('hello').ambient?.kind).toBe('spindrift');
+    expect(lookOf('kana-notebook').ambient?.kind).toBe('rain');
+    expect(lookOf('contact').ambient?.kind).toBe('embers');
   });
 
   it('builds photo addresses under the base the site is served from', () => {

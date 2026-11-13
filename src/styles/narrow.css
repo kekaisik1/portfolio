@@ -237,6 +237,53 @@
   .note-pair {
     grid-template-columns: 1fr;
   }
+
+  /* the corner switches sit top right: the bottom belongs to the words, their buttons and the bar */
+  .switches {
+    top: calc(10px + env(safe-area-inset-top));
+    right: 12px;
+    bottom: auto;
+  }
+
+  /* the opening shot: the photo to the very bottom; the bar rises with the first step */
+  .opening main {
+    bottom: 0;
+  }
+  .opening .board,
+  .opening.departing .board {
+    transform: translateY(105%);
+    transition: none;
+  }
+  .opening .bar {
+    transform: translateY(100%);
+  }
+  .opening.departing .bar {
+    transform: none;
+    transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .opening .world.hello .block {
+    left: 0;
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    max-width: none;
+  }
+  .opening .world.hello .block::before {
+    inset: -96px 0 calc(-20px - env(safe-area-inset-bottom));
+    -webkit-mask-image: none;
+    mask-image: none;
+    background: linear-gradient(
+      to top,
+      rgb(var(--shade) / 0.86) 0,
+      rgb(var(--shade) / 0.74) 62%,
+      rgb(var(--shade) / 0.4) 84%,
+      rgb(var(--shade) / 0) 100%
+    );
+  }
+  .opening .hello .name {
+    font-size: clamp(2.6rem, 14vw, 4.75rem);
+  }
+  .opening .hello .lede {
+    font-size: 17px;
+  }
 }
 
 /* the upright crop of each photo, and its tiny stand-in */

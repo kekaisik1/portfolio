@@ -1,23 +1,20 @@
 /**
- * The one small living detail of each world, on a single shared canvas: spindrift on the summit, the phone's glow,
- * motes in lamp-light, embers, fog, rain. The canvas is half the stage's size at most (never more than one pixel
- * per CSS pixel), draws about thirty times a second, and its loop stops whenever there is nothing to draw: a still
- * world, a hidden tab, reduced motion, or something covering the photo. It is the page's only frame loop; the
- * canvas says whether it is running in data-live (on / off), which the smoke suite reads.
+ * The small things in a world's air, on one shared 2D canvas over the photo: snow carried off the summit ridge,
+ * rain, sparks, dust in the light. (What moves inside the photograph itself is src/living/.) The canvas is half
+ * the stage's size, draws about thirty times a second from the page's one frame loop (src/lib/ticker.ts), and is
+ * off the loop whenever its world has nothing in the air. It says whether it is drawing in data-live (on / off).
  */
 import { ctx2d } from '../lib/dom';
+import type { Ticker } from '../lib/ticker';
 import { coverFit, placeX, placeY, tallU, TALL_SIZE, WIDE_SIZE, type Fit } from '../worlds/cover';
 import type { Look } from '../worlds/looks';
 import { MAX_PARTICLES, type AmbientSpec, type Point } from './spec';
 
 /** canvas pixels per CSS pixel */
 const RES = 0.5;
-const FRAME_MS = 30;
+/** seconds between drawings */
+const FRAME = 0.03;
 const TAU = Math.PI * 2;
-/** a device that cannot keep up loses the detail instead of stuttering: this many late frames out of WINDOW */
-const WINDOW = 90;
-const TOO_MANY_LATE = 40;
-const LATE_MS = 34;
 
 interface Particle {
   x: number;
@@ -35,20 +32,16 @@ interface Particle {
 }
 
 export interface Ambient {
-  /** Change the detail to this world's (null look or null spec = a still place). */
+  /** Change to this world's air (null look or null spec = nothing in it). */
   set(look: Look | null): void;
-  /** Stop while something covers the photo (the video, a sheet), and start again after. */
-  pause(on: boolean): void;
   /** The stage changed size or the photo changed crop. */
   resize(): void;
 }
 
 const rand = (a: number, b: number): number => a + Math.random() * (b - a);
 
-export function createAmbient(
-  canvas: HTMLCanvasElement,
-  opts: { upright: () => boolean; reduced: () => boolean; onTooSlow: () => void },
-): Ambient {
+export function createAmbient(canvas: HTMLCanvasElement, opts: { upright: () => boolean; ticker: Ticker }): Ambient {
+  const { ticker } = opts;
   const ctx = ctx2d(canvas);
   const parts: Particle[] = Array.from({ length: MAX_PARTICLES }, () => ({
     x: 0,
@@ -67,16 +60,15 @@ export function createAmbient(
   let look: Look | null = null;
   let spec: AmbientSpec | null = null;
   let live = 0;
-  let raf = 0;
-  let last = 0;
-  let prev = 0;
   let t = 0;
-  let seen = 0;
-  let late = 0;
-  let halted = false;
-  let gaveUp = false;
-  let fogSprite: HTMLCanvasElement | null = null;
+  let due = 0;
+  let stop: (() => void) | null = null;
 
+  const sync = (): void => {
+    canvas.dataset.live = stop !== null && ticker.running() ? 'on' : 'off';
+  };
+  ticker.watch(sync);
+  sync();
   /** A point of the landscape photo, in stage pixels (through the upright crop when that is on screen). */
   const px = (p: Point): [number, number] => {
     const u = look && opts.upright() ? tallU(p[0], look.focus) : p[0];
@@ -94,33 +86,28 @@ export function createAmbient(
     fit = coverFit(W, H, size.w / size.h, upright || !look ? 0.5 : look.x / 100);
   }
 
-  function fog(rgb: string): HTMLCanvasElement {
-    const c = document.createElement('canvas');
-    c.width = c.height = 128;
-    const g = ctx2d(c);
-    const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64);
-    grad.addColorStop(0, `rgba(${rgb},1)`);
-    grad.addColorStop(0.55, `rgba(${rgb},0.45)`);
-    grad.addColorStop(1, `rgba(${rgb},0)`);
-    g.fillStyle = grad;
-    g.fillRect(0, 0, 128, 128);
-    return c;
-  }
-
   /** Give a particle a new start. `first` = the world has just opened: scatter them as if it had been running. */
   function born(p: Particle, first: boolean): void {
     if (!spec) return;
     p.ph = rand(0, TAU);
     p.age = 0;
     switch (spec.kind) {
-      case 'drift':
-        p.x = first ? rand(0, W) : -10;
-        p.y = rand(H * 0.05, H * 0.8);
-        p.vx = rand(70, 170);
-        p.vy = rand(-8, 22);
-        p.s = rand(1, 2.4);
-        p.a = rand(0.25, 0.75);
+      case 'spindrift': {
+        /* somewhere along the crest, between two of its points */
+        const k = Math.min(spec.ridge.length - 2, Math.floor(rand(0, spec.ridge.length - 1)));
+        const q = rand(0, 1);
+        const [ax, ay] = px(spec.ridge[k]);
+        const [bx, by] = px(spec.ridge[k + 1]);
+        p.life = rand(1.6, 3.4);
+        p.vx = rand(0.05, 0.13) * fit.height;
+        p.vy = rand(-0.022, 0.006) * fit.height;
+        p.s = rand(1, 2.2);
+        p.a = rand(0.3, 0.8);
+        p.age = first ? rand(0, p.life) : 0;
+        p.x = ax + (bx - ax) * q + p.vx * p.age;
+        p.y = ay + (by - ay) * q + p.vy * p.age + rand(-2, 2);
         break;
+      }
       case 'rain':
         p.x = rand(0, W + 60);
         p.y = first ? rand(-H, H) : rand(-80, -10);
@@ -130,14 +117,14 @@ export function createAmbient(
         p.a = rand(0.12, 0.3);
         break;
       case 'embers': {
-        const [ox, oy] = px(spec.at);
+        const [ox, oy] = px(spec.at[Math.floor(rand(0, spec.at.length))]);
         p.life = rand(1.8, 4.6);
         p.vx = rand(-10, 10);
         p.vy = rand(-22, -64);
         p.s = rand(1, 2.4);
         p.age = first ? rand(0, p.life) : 0;
-        p.x = ox + rand(-0.03, 0.03) * fit.height;
-        p.y = oy + rand(-8, 10) + p.vy * p.age;
+        p.x = ox + rand(-0.012, 0.012) * fit.height;
+        p.y = oy + rand(-4, 6) + p.vy * p.age;
         break;
       }
       case 'motes': {
@@ -155,15 +142,6 @@ export function createAmbient(
         p.age = first ? rand(0, p.life) : 0;
         break;
       }
-      case 'fog':
-        p.s = rand(0.7, 1.1) * H;
-        p.x = first ? rand(-p.s, W) : -p.s;
-        p.y = rand(0.25, 0.75) * H - p.s / 2;
-        p.vx = rand(5, 12);
-        p.a = rand(0.6, 1);
-        break;
-      case 'glow':
-        break;
     }
   }
 
@@ -171,14 +149,17 @@ export function createAmbient(
     if (!spec) return;
     ctx.clearRect(0, 0, W, H);
     switch (spec.kind) {
-      case 'drift':
+      case 'spindrift':
         ctx.fillStyle = '#fff';
         for (let i = 0; i < live; i++) {
           const p = parts[i];
+          p.age += dt;
+          if (p.age > p.life) born(p, false);
           p.x += p.vx * dt;
-          p.y += (p.vy + Math.sin(t * 1.7 + p.ph) * 14) * dt;
-          if (p.x > W + 10) born(p, false);
-          ctx.globalAlpha = p.a;
+          p.y += (p.vy + Math.sin(t * 1.7 + p.ph) * 9) * dt;
+          /* thin at the crest, thickest just off it, gone downwind */
+          const q = p.age / p.life;
+          ctx.globalAlpha = p.a * Math.max(0, q < 0.12 ? q / 0.12 : 1 - (q - 0.12) / 0.88);
           ctx.fillRect(p.x, p.y, p.s * 2.2, p.s);
         }
         break;
@@ -224,108 +205,39 @@ export function createAmbient(
           ctx.fillRect(p.x, p.y, p.s, p.s);
         }
         break;
-      case 'fog':
-        if (!fogSprite) fogSprite = fog(spec.rgb);
-        for (let i = 0; i < live; i++) {
-          const p = parts[i];
-          p.x += p.vx * dt;
-          if (p.x > W) born(p, false);
-          ctx.globalAlpha = spec.alpha * p.a;
-          ctx.drawImage(fogSprite, p.x, p.y, p.s * 1.6, p.s);
-        }
-        break;
-      case 'glow': {
-        const [x, y] = px(spec.at);
-        const r = spec.radius * fit.height;
-        const alpha = spec.low + (spec.high - spec.low) * (0.5 + 0.5 * Math.sin((t * TAU) / spec.period));
-        const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
-        grad.addColorStop(0, `rgba(${spec.rgb},${alpha.toFixed(3)})`);
-        grad.addColorStop(1, `rgba(${spec.rgb},0)`);
-        ctx.fillStyle = grad;
-        ctx.fillRect(x - r, y - r, r * 2, r * 2);
-        break;
-      }
     }
     ctx.globalAlpha = 1;
   }
 
-  function frame(now: number): void {
-    raf = 0;
-    if (halted || gaveUp || !spec) return;
-    if (prev) {
-      seen++;
-      if (now - prev > LATE_MS) late++;
-      if (seen >= WINDOW) {
-        if (late > TOO_MANY_LATE) {
-          gaveUp = true;
-          canvas.dataset.live = 'off';
-          ctx.clearRect(0, 0, W, H);
-          opts.onTooSlow();
-          return;
-        }
-        seen = late = 0;
-      }
-    }
-    prev = now;
-    if (now - last >= FRAME_MS) {
-      const dt = Math.min(0.06, (now - last) / 1000);
-      last = now;
-      t += dt;
-      draw(dt);
-    }
-    raf = requestAnimationFrame(frame);
+  /** from the page's frame loop: draw only every FRAME seconds or so */
+  function tick(dt: number): void {
+    due += dt;
+    if (due < FRAME) return;
+    const step = Math.min(0.06, due);
+    due = 0;
+    t += step;
+    draw(step);
   }
 
-  function start(): void {
-    if (raf || halted || gaveUp || !spec || opts.reduced() || document.hidden) return;
-    last = performance.now();
-    prev = 0;
-    raf = requestAnimationFrame(frame);
-    canvas.dataset.live = 'on';
-  }
-  function stop(): void {
-    if (raf) cancelAnimationFrame(raf);
-    raf = 0;
-    canvas.dataset.live = 'off';
-  }
-  function populate(): void {
-    live = 0;
-    if (!spec) return;
-    live = spec.kind === 'glow' ? 0 : Math.min(MAX_PARTICLES, spec.count);
+  function restart(): void {
+    stop?.();
+    stop = null;
+    measure();
+    ctx.clearRect(0, 0, W, H);
+    live = spec && W > 0 ? Math.min(MAX_PARTICLES, spec.count) : 0;
     for (let i = 0; i < live; i++) born(parts[i], true);
+    if (live > 0) stop = ticker.add(tick);
+    sync();
   }
 
-  document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
   measure();
 
   return {
     set(next) {
-      stop();
       look = next;
       spec = next ? next.ambient : null;
-      fogSprite = null;
-      measure();
-      ctx.clearRect(0, 0, W, H);
-      if (!spec || opts.reduced()) return;
-      populate();
-      start();
+      restart();
     },
-    pause(on) {
-      halted = on;
-      if (on) {
-        stop();
-        ctx.clearRect(0, 0, W, H);
-      } else start();
-    },
-    resize() {
-      measure();
-      ctx.clearRect(0, 0, W, H);
-      if (!spec || opts.reduced()) {
-        stop();
-        return;
-      }
-      populate();
-      start();
-    },
+    resize: restart,
   };
 }

@@ -62,6 +62,7 @@ export interface SiteCopy {
   url: string;
   /** What the picture shown when the link is pasted somewhere is of (og:image:alt), before the greeting. */
   ogAlt: string;
+  /** The first screen: the greeting, the one line under it, and the hint that starts the journey. */
   hero: { heading: string; line: string; walk: string };
   /** The board's group headings. */
   groups: Record<ProjectGroup, string>;
@@ -81,4 +82,6 @@ export interface SiteCopy {
   travelKeys: string;
   /** The name of the board for screen readers. */
   boardLabel: string;
+  /** The two corner switches: the name of the pair, and of each (their state is said by aria-pressed). */
+  switches: { label: string; motion: string; sound: string };
 }

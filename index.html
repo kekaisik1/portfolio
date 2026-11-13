@@ -45,19 +45,23 @@
       fetchpriority="high"
     />
     <script>
-      /* with scripts the page is a board and one world at a time; a #link starts somewhere other than the summit */
+      /* with scripts the page is a board and one world at a time. It opens on the summit alone (the board arrives
+         with the first step); a #link starts at its place (which may not be the summit), with the board there */
       document.documentElement.classList.add('js');
-      if (location.hash.length > 1 && location.hash !== '#hello') document.documentElement.classList.add('deep');
+      if (location.hash.length < 2) document.documentElement.classList.add('opening');
+      else if (location.hash !== '#hello') document.documentElement.classList.add('deep');
     </script>
     <link rel="stylesheet" href="/src/styles/index.css" />
   </head>
   <body>
     <a class="skip" href="#{{skipTo}}">{{skip}}</a>
 
-    <!-- the place: at most three photographs, the one small living detail, and the lanterns over the campfire -->
+    <!-- the place: at most three photographs, the canvas that makes the one on screen move, the small things in
+         its air, and the lanterns over the campfire -->
     <div id="stage">
       <div class="lens" id="lens">
         <!--app:frame-->
+        <canvas id="live" aria-hidden="true"></canvas>
         <canvas id="fx" aria-hidden="true"></canvas>
         <div id="lanterns" aria-hidden="true" hidden></div>
       </div>
@@ -99,6 +103,36 @@
     </button>
     <p class="sr-only" id="where" aria-live="polite"></p>
 
+    <!-- the corner switches: the places move (or stay still), and each has a sound (off until asked for) -->
+    <div class="switches" id="switches" role="group" aria-label="{{switchesLabel}}">
+      <button
+        class="sw"
+        id="sw-motion"
+        type="button"
+        aria-pressed="true"
+        aria-label="{{motionLabel}}"
+        title="{{motionLabel}}"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path d="M3 8h9.5a2.5 2.5 0 1 0-2.4-3.2M3 12h15a2.5 2.5 0 1 1-2.4 3.2M3 16h7.5a2 2 0 1 1-1.9 2.6" />
+          <path class="off" d="M4 20 20 4" />
+        </svg>
+      </button>
+      <button
+        class="sw"
+        id="sw-sound"
+        type="button"
+        aria-pressed="false"
+        aria-label="{{soundLabel}}"
+        title="{{soundLabel}}"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4zM15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11" />
+          <path class="off" d="M4 20 20 4" />
+        </svg>
+      </button>
+    </div>
+
     <!-- the longer text of a world, when the screen is too small to show it beside the photo -->
     <dialog class="sheet" id="read" aria-labelledby="read-t">
       <div class="sheet-top">
@@ -121,6 +155,8 @@
       <div class="pwrap" id="pwrap" data-state="loading">
         <p class="pstate" id="pstate" role="status"></p>
       </div>
+      <!-- Tab past the video's last control lands here and is sent round to Close: focus never leaves the player -->
+      <span id="pend" tabindex="0"></span>
     </dialog>
 
     <dialog class="sheet" id="note" aria-labelledby="note-t">

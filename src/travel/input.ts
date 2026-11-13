@@ -1,4 +1,4 @@
-/** The ways to travel: the wheel, the keys, a swipe on a phone, #links, the skip link and "Scroll to walk in". */
+/** The ways to travel: the wheel, the keys, a swipe on a phone, #links, the skip link and the hint under the greeting. */
 import { LAST } from '../content/places';
 import { pick, pickAll } from '../lib/dom';
 import { worldOfHash } from '../nav/routing';

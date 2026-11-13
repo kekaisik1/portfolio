@@ -36,6 +36,8 @@ export interface Travel {
   step(dir: 1 | -1): void;
   /** the board should change now: travel to `to` has begun (from = null on the first screen) */
   onDepart(fn: (to: number, from: number | null) => void): void;
+  /** world `to` is about to be put on screen (the cut has closed): the last moment to change the stage's shape */
+  onLanding(fn: (to: number, from: number | null) => void): void;
   /** world `i` is on screen */
   onArrive(fn: (i: number) => void): void;
   /** Stand in a world without travelling there: the first screen. */
@@ -52,13 +54,14 @@ export interface TravelParts {
   worlds: readonly HTMLElement[];
   /** the aria-live line that says where you have arrived */
   where: HTMLElement;
-  /** false once the device has shown it cannot keep up: no push-in */
+  /** false when the photo must not push in: motion is switched off, or the device cannot keep up */
   smooth: () => boolean;
 }
 
 export function createTravel(parts: TravelParts): Travel {
   const { photos, lens, cutLayer, worlds, where } = parts;
   const departFns: ((to: number, from: number | null) => void)[] = [];
+  const landingFns: ((to: number, from: number | null) => void)[] = [];
   const arriveFns: ((i: number) => void)[] = [];
   let cur = 0;
   let busy = false;
@@ -84,7 +87,8 @@ export function createTravel(parts: TravelParts): Travel {
     name?.focus({ preventScroll: true });
   }
 
-  function land(to: number, focus: boolean): void {
+  function land(to: number, from: number | null, focus: boolean): void {
+    for (const fn of landingFns) fn(to, from);
     photos.show(to);
     showWords(worlds, to, !reduce.matches);
     pushIn();
@@ -113,7 +117,7 @@ export function createTravel(parts: TravelParts): Travel {
       activeCut = runCut(cutLayer, target, narrow.matches && dir < 0);
       await activeCut.done;
     }
-    land(to, focus);
+    land(to, from, focus);
     if (activeCut) {
       const cut = activeCut;
       activeCut = null;
@@ -164,6 +168,9 @@ export function createTravel(parts: TravelParts): Travel {
     onDepart(fn) {
       departFns.push(fn);
     },
+    onLanding(fn) {
+      landingFns.push(fn);
+    },
     onArrive(fn) {
       arriveFns.push(fn);
     },
@@ -174,7 +181,7 @@ export function createTravel(parts: TravelParts): Travel {
       photos.mount(cur);
       for (const fn of departFns) fn(cur, null);
       if (cur > 0) where.textContent = MESSAGES.arrived(w.place, w.title);
-      land(cur, false);
+      land(cur, null, false);
       neighbours(cur).forEach((n) => photos.mount(n));
     },
   };

@@ -1,6 +1,7 @@
 /**
  * How each world is shown: where its words stand so they never cover the photo's subject (chosen by looking at each
- * photograph), which part of the photo stays in view, and its one living detail. No text here: that is src/content/.
+ * photograph), which part of the photo stays in view, and the small things in its air (snow, rain, sparks, dust).
+ * What moves inside the photograph itself is src/living/scenes.ts. No text here: that is src/content/.
  */
 import type { AmbientSpec } from '../ambient/spec';
 
@@ -17,7 +18,7 @@ export interface Look {
   atTall: 'top' | 'bottom';
   /** where the subject is across the landscape photo, 0..1: the upright crop is cut around it */
   focus: number;
-  /** null = a still place */
+  /** the particles in the air over the photo; null = none */
   ambient: AmbientSpec | null;
 }
 
@@ -30,76 +31,54 @@ export const LOOKS: Readonly<Record<string, Look>> = {
     x: 62,
     atTall: 'bottom',
     focus: 0.62,
-    ambient: { kind: 'drift', count: 48 },
+    ambient: {
+      kind: 'spindrift',
+      count: 40,
+      ridge: [
+        [0.58, 0.275],
+        [0.66, 0.262],
+        [0.7, 0.245],
+        [0.79, 0.178],
+        [0.87, 0.24],
+      ],
+    },
   },
-  /* the bare wall left of the window; the phone, the notebook and the plant stay clear */
-  'front-desk': {
-    at: 'tl',
-    width: 29,
-    shade: 0.66,
-    x: 40,
-    atTall: 'bottom',
-    focus: 0.68,
-    ambient: { kind: 'glow', at: [0.705, 0.475], rgb: '170,215,255', radius: 0.11, low: 0.05, high: 0.26, period: 4.2 },
-  },
-  /* the dark stacks top left; the lamp and the ledger are right */
-  'numbers-room': {
-    at: 'tl',
-    width: 35,
-    shade: 0.44,
-    x: 14,
-    atTall: 'bottom',
-    focus: 0.68,
-    ambient: { kind: 'motes', count: 18, box: [0.45, 0.28, 0.95, 0.72], rgb: '255,214,150' },
-  },
-  /* the concrete floor bottom left; the open machine is right, the sunlit door behind */
+  /* the dusk sky top left; the lit booth, the road and the peak behind it stay clear */
+  'front-desk': { at: 'tl', width: 29, shade: 0.5, x: 70, atTall: 'top', focus: 0.66, ambient: null },
+  /* the starry sky left of the dome; the dome and the cloud sea stay clear */
+  'numbers-room': { at: 'tl', width: 30, shade: 0.42, x: 22, atTall: 'top', focus: 0.66, ambient: null },
+  /* the shaded road bottom left; the open shop, its machines and the mountains stay clear */
   lowl: {
     at: 'bl',
     width: 27,
-    shade: 0.76,
-    x: 84,
-    atTall: 'bottom',
-    focus: 0.73,
-    ambient: { kind: 'motes', count: 34, box: [0.2, 0.15, 0.62, 0.9], rgb: '255,244,214' },
+    shade: 0.62,
+    x: 80,
+    atTall: 'top',
+    focus: 0.68,
+    ambient: { kind: 'motes', count: 26, box: [0.36, 0.44, 0.9, 0.86], rgb: '255,236,190' },
   },
-  /* the dark beams top left; fire, miniatures and map fill the rest */
+  /* the storm sky top left; the castle, its torches and the path fill the rest */
   emberquill: {
     at: 'tl',
     width: 27,
-    shade: 0.44,
+    shade: 0.4,
     x: 74,
     atTall: 'bottom',
     focus: 0.68,
-    ambient: { kind: 'embers', count: 26, at: [0.71, 0.27], rgb: '255,176,96' },
-  },
-  /* the wet cobbles bottom left; the pump and the gas lamp stand right */
-  'history-lens': {
-    at: 'bl',
-    width: 31,
-    shade: 0.46,
-    x: 86,
-    atTall: 'bottom',
-    focus: 0.74,
-    ambient: { kind: 'fog', count: 3, rgb: '206,210,214', alpha: 0.11 },
-  },
-  /* the bare stone wall left of the window */
-  bookforge: {
-    at: 'tl',
-    width: 24,
-    shade: 0.46,
-    x: 12,
-    atTall: 'top',
-    focus: 0.64,
     ambient: {
-      kind: 'glow',
-      at: [0.672, 0.435],
-      rgb: '255,244,210',
-      radius: 0.2,
-      low: 0.02,
-      high: 0.34,
-      period: 7,
+      kind: 'embers',
+      count: 22,
+      at: [
+        [0.657, 0.425],
+        [0.772, 0.425],
+      ],
+      rgb: '255,176,96',
     },
   },
+  /* the wet cobbles bottom left; the pump and the gas lamp stand right */
+  'history-lens': { at: 'bl', width: 31, shade: 0.46, x: 86, atTall: 'bottom', focus: 0.74, ambient: null },
+  /* the dusk sky top left, clear of the beam; the lighthouse and the surf stay untouched */
+  bookforge: { at: 'tl', width: 24, shade: 0.42, x: 10, atTall: 'bottom', focus: 0.62, ambient: null },
   /* the dark fence bottom left; lanterns, noren and the wet street are right */
   'kana-notebook': {
     at: 'bl',
@@ -110,7 +89,7 @@ export const LOOKS: Readonly<Record<string, Look>> = {
     focus: 0.8,
     ambient: { kind: 'rain', count: 56 },
   },
-  /* the open sky; the road, the yurt and the mountains stay whole. A still place. */
+  /* the open sky; the road, the yurt and the mountains stay whole */
   about: { at: 'tl', width: 33, shade: 0.56, x: 66, atTall: 'top', focus: 0.7, ambient: null },
   /* the dark sky top left; the fire and the chairs are low, the Milky Way right */
   contact: {
@@ -120,7 +99,7 @@ export const LOOKS: Readonly<Record<string, Look>> = {
     x: 76,
     atTall: 'top',
     focus: 0.63,
-    ambient: { kind: 'embers', count: 34, at: [0.63, 0.6], rgb: '255,190,110' },
+    ambient: { kind: 'embers', count: 34, at: [[0.63, 0.6]], rgb: '255,190,110' },
   },
 };
 

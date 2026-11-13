@@ -121,7 +121,9 @@ export function initPlayer(cutLayer: HTMLElement, onToggle: (open: boolean) => v
     },
     true,
   );
-  /* Tab stays in the room: from the last thing in the player it goes round to Close, and back */
+  /* Tab stays in the room: from the last thing in the player (the video's own last control, whichever that is in
+     this browser) it goes round to Close, and back */
+  byId('pend').addEventListener('focus', () => closeBtn.focus({ preventScroll: true }));
   dlg.addEventListener('keydown', (e) => {
     if (e.key !== 'Tab' || !video) return;
     const active = document.activeElement;

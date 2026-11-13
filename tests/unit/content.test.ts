@@ -94,6 +94,21 @@ describe('the board', () => {
     ]);
   });
 
+  it('names the ten places', () => {
+    expect(WORLDS.map((w) => w.place)).toEqual([
+      'Summit',
+      'Mountain pass',
+      'Observatory',
+      'Repair shop',
+      'Castle',
+      'Soho, 1854',
+      'Lighthouse',
+      'Kyoto',
+      'The road',
+      'Campfire',
+    ]);
+  });
+
   it('finds a row by its id and numbers rows with two digits', () => {
     expect(indexOfWorld('kana-notebook')).toBe(7);
     expect(indexOfWorld('nowhere')).toBe(-1);
@@ -117,9 +132,9 @@ describe('content rendered into the page', () => {
   it('renders a project with its place, name, line, the longer text, note and link', () => {
     const html = renderProject(WORLDS[1], 1);
 
-    expect(html).toContain('<section class="world" id="front-desk" data-i="1" data-at="tl" data-at-m="bottom"');
+    expect(html).toContain('<section class="world" id="front-desk" data-i="1" data-at="tl" data-at-m="top"');
     expect(html).toContain('data-kind="work" aria-labelledby="front-desk-t"');
-    expect(html).toContain('<span class="pl">Front desk</span><span class="src">something I built for work</span>');
+    expect(html).toContain('<span class="pl">Mountain pass</span><span class="src">something I built for work</span>');
     expect(html).toContain('<h2 class="name" id="front-desk-t" tabindex="-1">The Front Desk</h2>');
     expect(html).toContain('<p class="line">An AI that picks up the phone.</p>');
     expect(html).toContain('<p class="note">built for a client, so no name.</p>');
@@ -151,7 +166,7 @@ describe('content rendered into the page', () => {
     expect(html.match(/<section class="world/g)).toHaveLength(10);
     expect(html.match(/data-i="(\d)"/g)?.map((m) => m.replace(/\D/g, ''))).toEqual([...'0123456789']);
     expect(html).toContain('<h1 class="name" id="hello-t" tabindex="-1">Hi, I\'m Kaisar.</h1>');
-    expect(html).toContain('Scroll to walk in');
+    expect(html).toContain(`data-go="1">${SITE.hero.walk}</button>`);
     expect(html).toContain('A 3D tabletop for D&amp;D fights.');
     expect(html).toContain(`<a class="write" id="write" href="mailto:${SITE.contact.email}">write me</a>`);
     expect(html).toContain('id="note-open"');
@@ -191,6 +206,15 @@ describe('content rendered into the page', () => {
     expect(out).toContain('id="kana-notebook"');
     expect(out).toContain('<!--app:other-->{{nope}}');
     expect(out).not.toContain('<!--app:worlds-->');
+  });
+
+  it('names the corner switches and gives the first screen a hint that is about departing, not walking in', () => {
+    const out = fillShell(readFileSync('index.html', 'utf8'), videos);
+
+    expect(out).toContain(`aria-label="${SITE.switches.motion}"`);
+    expect(out).toContain(`aria-label="${SITE.switches.sound}"`);
+    expect(out).toContain(`role="group" aria-label="${SITE.switches.label}"`);
+    expect(SITE.hero.walk).toMatch(/depart/i);
   });
 
   it('leaves no slot of the real index.html unfilled', () => {

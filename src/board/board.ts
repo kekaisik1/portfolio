@@ -30,6 +30,7 @@ export function initBoard(travel: Travel, onSheet: (open: boolean) => void): Boa
   const barPj = byId('bar-pj');
   const barSt = byId('bar-st');
   const main = byId('main');
+  const switches = byId('switches');
   let open = false;
   let intro = true;
 
@@ -40,7 +41,7 @@ export function initBoard(travel: Travel, onSheet: (open: boolean) => void): Boa
   }
   window.setTimeout(endIntro, INTRO_MS);
 
-  /** On phones the lowered board must not be reachable; raised, the world behind it must not be. */
+  /** On phones the lowered board must not be reachable; raised, the world and the switches behind it must not be. */
   function sync(): void {
     if (!narrow.matches && open) {
       open = false;
@@ -51,6 +52,7 @@ export function initBoard(travel: Travel, onSheet: (open: boolean) => void): Boa
     }
     board.inert = narrow.matches && !open;
     main.inert = open;
+    switches.inert = open;
   }
   function openSheet(): void {
     endIntro();
