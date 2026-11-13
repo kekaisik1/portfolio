@@ -1,8 +1,8 @@
 # Portfolio
 
-"Departures": a departures board where every destination is a place, and seven of the places are projects. On the left a crisp mono index of ten rows (place, project, status); the rest of the screen is a photograph of the place you are in, with that project's words standing in the corner the photo leaves calm. Choosing a row, turning the wheel, pressing an arrow key or swiping cuts to the next place like a board flipping: a few uneven slats close over the old photo in 300 ms and the new words are there. Summit (the greeting), Front desk, Reading room, Workshop, Tavern, Soho 1854, Lighthouse, Kyoto, The road (about) and Campfire (write me, leave a note, light a lantern).
+"Departures": a departures board where every destination is a place, and seven of the places are projects. It opens on the summit alone, filling the window: the name, "Hi, I'm Kaisar." low in the frame, one line, a hint, and two small switches in the corner. The first step (wheel, arrow key, swipe, the hint, Tab) brings the board in from the left: a crisp mono index of ten rows (place, project, status); the rest of the screen is a photograph of the place you are in, with that project's words standing in the corner the photo leaves calm. Choosing a row, turning the wheel, pressing an arrow key or swiping cuts to the next place like a board flipping: a few uneven slats close over the old photo in 300 ms and the new words are there. Summit (the greeting), Mountain pass, Observatory, Repair shop, Castle, Soho 1854, Lighthouse, Kyoto, The road (about) and Campfire (write me, leave a note, light a lantern).
 
-Each place has one quiet living detail (spindrift, a phone's glow, dust in lamp-light, embers, fog, a lighthouse beam, rain), and a project with a video plays it in the photo's frame. On phones the photo is the whole screen, the words take the lower or upper third, and the board is a sheet raised from a bar at the bottom.
+The places move. Each photograph is alive the way footage is: the cloud sea flows past the summit, mist drifts over the pass, the lighthouse beam comes round, torches flicker, rain falls in Kyoto, wind runs through the grass. And each has a sound, synthesised in the browser (wind, surf, rain, a far phone, a foghorn), off until the sound switch is pressed. The other switch stops the motion (stills only). A project with a video plays it in the photo's frame. On phones the photo is the whole screen, the words take the lower or upper third, and the board is a sheet raised from a bar at the bottom.
 
 Live: https://kekaisik1.github.io/portfolio/
 
@@ -14,7 +14,7 @@ Node 22 or newer for the scripts (the site itself builds on 20).
 npm install
 npm run dev        # http://localhost:5173, no API: the page runs on its own
 npm run check      # lint + typecheck + unit tests + build (what CI runs)
-npm run test:e2e   # browser smoke suite against the real build (first time: npx playwright install chromium)
+npm run test:e2e   # browser smoke suite against the real build, and the sound check (first time: npx playwright install chromium)
 npm run build      # dist/, to be served from /portfolio/
 npm run preview    # serves dist/ at http://localhost:4173/portfolio/
 ```
@@ -30,38 +30,80 @@ index.html            the page shell: meta, the stage, the board, dialogs, {{slo
 src/main.ts           start-up: wires the parts together
 src/content/          every word on the page: projects.ts, places.ts (the board's rows: place, status, coordinates),
                       site.ts (greeting, about, contact, messages) and render.ts (how it all becomes HTML)
-src/worlds/           the photographs: looks.ts (where each world's words stand, its crop, its living detail),
+src/worlds/           the photographs: looks.ts (where each world's words stand, its crop, what is in its air),
                       photos.ts (at most three mounted, each decoded before it is shown), cut.ts + slats.ts (the cut),
                       cover.ts (where a photo's pixels land on screen), words.ts (showing a world's words, folding
                       long text behind "Read"), placeholders.json (tiny blurred stand-ins, made by `npm run worlds`)
+src/living/           the living photo: scenes.ts (what moves in each photograph: the data you author), scene.ts (its
+                      shape), raster.ts (regions -> two small mask textures; pure), noise.ts (a seamless noise tile;
+                      pure), shader.ts (the GLSL), living.ts (the WebGL canvas: textures, uniforms, one draw call a frame)
+src/ambient/          the small things in a world's air, on a 2D canvas: snow off the ridge, rain, sparks, dust
+src/sound/            each place's ambience, synthesised: recipe.ts (the recipes and their timing maths; pure),
+                      samples.ts (noise and crackle loops, measuring; pure), engine.ts (builds a recipe on any audio
+                      context), sound.ts (the page's sound: gesture, crossfade, duck, suspend), render.ts (offline
+                      rendering, for the checks)
+src/switches/         the two corner switches (motion, sound) and what they remember (prefs.ts; pure)
+src/opening/          the opening shot: the summit alone until the first step
 src/travel/           going from world to world: travel.ts (the sequence: board, decode, cut, words, focus),
                       input.ts (wheel, keys, swipe, #links), gesture.ts (one step per gesture; pure)
 src/board/            the index rows and the phone's bar and sheet (board.ts), the footer with coordinates, a live
                       clock and the API's lines (footer.ts), the status-word flourish (scramble.ts)
-src/ambient/          the one small canvas of living details; the page's only frame loop, off when nothing shows
 src/video/            the player: the photo area becomes a modal video
 src/sheet/            "Read": the longer text as a sheet over the photo; swipe-down and press-outside closing
 src/note/             the note form by the campfire: validation, a small state machine, the form itself
 src/night/            lanterns over the campfire, and the weather / "last seen working on" lines from the API
 src/nav/              what an address means (#kana-notebook, old links) and keeping the address bar in step
 src/api/              typed client for the optional API; every response is checked with Zod
-src/lib/              DOM lookups that fail loudly, the layout media queries
+src/lib/              DOM lookups that fail loudly, the layout media queries, the page's one frame loop (ticker.ts),
+                      a seeded random source
 src/styles/           CSS by concern; palette and type are custom properties in tokens.css; narrow.css is phones
                       and upright tablets; plain.css is the page without JavaScript and on paper
 scripts/              build helpers: the video manifest (with running times), make-worlds.ts, compress-video.sh
 public/               fonts, og.jpg, videos, worlds/ (the photographs)
-tests/unit  tests/e2e
+tests/unit  tests/e2e  tests/pages (a page only the dev server serves: the sound check)
 ```
 
 The words are written into `index.html` when the page is built (`vite.config.ts` → `src/content/render.ts`), so every project, its text and its link are in the page without JavaScript, for search engines and screen readers; without scripts the page reads as a plain stacked document with the board as a list of links. The first photograph is written in too, so the summit and the greeting paint before any script runs.
 
 ### Why it stays smooth
 
-Only `transform` and `opacity` are animated. At most three photographs are in the page (the current one and its neighbours), and a photo is only shown once `img.decode()` has finished; a cut waits at most 400 ms for that and otherwise uses the photo's tiny blurred stand-in. The cut is a handful of compositor animations; the only frame loop is the ambient canvas (half resolution, about 30 fps), and it stops on a still world, in a hidden tab, under reduced motion and whenever something covers the photo. Nothing eases a scroll: one gesture is one step.
+In CSS only `transform` and `opacity` are animated. At most three photographs are in the page (the current one and its neighbours), and a photo is only shown once `img.decode()` has finished; a cut waits at most 400 ms for that and otherwise uses the photo's tiny blurred stand-in. The cut is a handful of compositor animations. Nothing eases a scroll: one gesture is one step.
+
+The motion is the GPU's work. The living photo is one WebGL 2 canvas over the photographs: a single triangle whose shader samples the photo and moves its pixels, so a frame costs the main thread a few uniforms and one draw call (measured on a laptop with a discrete GPU: about 0.4 ms of main thread a frame, and every frame on time at 1440x900 and at 390x844). The canvas has at most 1.3 million pixels and 1.5 per CSS pixel, and is transparent wherever nothing moves, so the sharp `<img>` shows through and the two can never disagree. There is one frame loop for the whole page (`src/lib/ticker.ts`); it stops in a hidden tab, while the video, a sheet or the phone's index covers the photo, and when the motion switch is off, and a device that keeps dropping frames loses the motion instead of stuttering. Without WebGL 2 the photographs simply stay still.
+
+Still forbidden: layered parallax, anything that follows the cursor, animated CSS filters or blend modes, scroll smoothing.
+
+### How a photograph moves
+
+Five things can happen inside a photograph, each inside soft-edged regions drawn over it (`src/living/scenes.ts`):
+
+- **flow**: pixels are carried along a direction, as two copies of the photo that fade into each other half a cycle apart, so the loop has no seam (cloud, sea, flame);
+- **sway**: pixels rock back and forth as a wave passing through (grass, palm fronds, a lantern);
+- **shimmer**: small restless distortion (reflections on wet stone, water);
+- **mist**: soft noise drifting over the photo (fog on the pass, in Soho, over the sea);
+- **lights and stars**: the photo's own light gets brighter and darker (a torch, a gas lamp, a booth), and pixels brighter than their surroundings in the sky twinkle. The lighthouse has a **beam**: the photographed beam draws back to the lamp and comes round again.
+
+On top of that the 2D canvas of `src/ambient/` draws what is in the air: snow blown off the summit ridge, rain, sparks, dust.
+
+A world starts from the exact still and comes alive over a second and a half, so a cut never jumps: the slats carry the still photo, and the old world keeps moving under them until the new one lands.
+
+### Make a place move
+
+1. Put a 10x10 grid over the source photo (`ffmpeg -i photo.png -vf "drawgrid=w=iw/10:h=ih/10:c=white@0.35" grid.jpg`) and read coordinates off it: `u` across and `v` down, 0..1, always in the **landscape** photo (the upright crop on phones is mapped for you). Lengths (`feather`, radii) are in photo heights.
+2. In `src/living/scenes.ts` describe the regions: a polygon or an ellipse, a `feather` (the edge fades inwards, so a region never leaks past its shape), optional `minus` shapes for solid things inside it (a rock in the surf), an optional `ramp` (far cloud moves less than near cloud). Give a flow or a sway its `dir`, a mist or shimmer or star field its `amount`, a light its place, radius, `amount`, `speed` and `kind`. A polygon that reaches the photo's edge should run past it (-0.1 or 1.1), or its feather will fade at the edge.
+3. Stop every region short of anything solid: a moving edge on a still thing (a ridge, a wall, a tree trunk) reads as a wobble. Keep moves small; the unit tests cap them. If a move looks fake, make it smaller or take it out.
+4. Things in the air (snow, rain, sparks, dust) are the world's `ambient` in `src/worlds/looks.ts`.
+5. Look at it: two screenshots two seconds apart, and their difference, show what moves and that nothing else does. Emulate reduced motion with `localStorage['kaisar.motion.v1'] = 'on'` for this, so the slow push-in is off and only the scene moves.
+
+### Sound
+
+Off by default; the sound switch turns it on, and the choice is kept in this browser, though an audio context is only ever created inside a press or a key. Nothing is downloaded: every ambience is built from looping noise through filters, a few oscillators and small one-off voices (`src/sound/recipe.ts` says what, `engine.ts` builds it). Moving to another place crossfades in 0.4 s, a video ducks it to silence, a hidden tab suspends it, and the master gain is low: it is ambience.
+
+Nobody can listen from a test, so `tests/e2e/sound.spec.ts` renders each place's ambience with an offline audio context (through a page only the dev server serves, `tests/pages/sound-check.html`) and checks it is there, quiet, unclipped and centred on zero. That says nothing about whether it sounds good: tune the recipes by ear.
 
 ### The photographs
 
-`npm run worlds -- <folder>` takes the ten source pictures (3:2, 1536x1024; the file-to-world table is at the top of `scripts/make-worlds.ts`) and writes, for each world, `public/worlds/<id>.webp`, an upright crop `<id>-m.webp` cut around the subject (`focus` in `src/worlds/looks.ts`) and two tiny blurred stand-ins into `src/worlds/placeholders.json`. It needs ffmpeg with libwebp. Commit what it writes; a unit test caps each file's size.
+`npm run worlds -- <folder>` takes the ten source pictures (3:2, 1536x1024; the file-to-world table is at the top of `scripts/make-worlds.ts`: copy each source into the folder under the name that table expects) and writes, for each world, `public/worlds/<id>.webp`, an upright crop `<id>-m.webp` cut around the subject (`focus` in `src/worlds/looks.ts`) and two tiny blurred stand-ins into `src/worlds/placeholders.json`. It needs ffmpeg with libwebp. Commit what it writes; a unit test caps each file's size.
 
 Where a world's words stand is chosen by looking at its photograph: `looks.ts` says which corner (`at`), how wide, which side of the photo survives a narrower window (`x`), and whether the words sit above or below the subject on a phone (`atTall`). The words must never land on the subject.
 
@@ -70,9 +112,10 @@ Where a world's words stand is chosen by looking at its photograph: `looks.ts` s
 1. Add an entry to `src/content/projects.ts` (slug, group `work`/`play`, name, a line of at most 60 characters, the longer text, optional note and link).
 2. Give it a place in `src/content/places.ts` (`PROJECT_PLACES`: the row's place name, status word, footer line, alt text).
 3. Give it a look in `src/worlds/looks.ts` and a source picture in the table in `scripts/make-worlds.ts`, then run `npm run worlds -- <folder>`.
-4. Look at it at 1440x900, 1366x680, 390x844 and 320x568.
+4. Say what moves in its photograph (`src/living/scenes.ts`, see "Make a place move") and what it sounds like (`src/sound/recipe.ts`).
+5. Look at it at 1440x900, 1366x680, 390x844 and 320x568.
 
-The unit tests fail until every project has a place, a look and both photographs. Slugs are public: they are `#links`, photo and video file names and the keys of the API's growth numbers.
+The unit tests fail until every project has a place, a look, a scene, a sound and both photographs. Slugs are public: they are `#links`, photo and video file names and the keys of the API's growth numbers.
 
 ## Add a video
 
@@ -91,6 +134,8 @@ Tests never use the real API: unit tests mock `fetch`, and the smoke suite build
 
 - Links point at a place: `…/portfolio/#kana-notebook`, `#about`, `#contact`. The address follows the place you are in. Links from older versions (`#voice-receptionist`, `#crm`, `#data-assistant`, `#sea`…) land on the place that took them over (`src/nav/routing.ts`).
 - Keys: arrows, Page Up/Down, `j`/`k`, Home and End travel; Esc closes the video, a sheet or the phone's index.
+- The opening shot is only the first impression: any `#link` (also `#hello`) starts with the board already there, and coming back to the summit keeps it.
+- The corner switches keep their state in `localStorage` (`kaisar.motion.v1`, `kaisar.sound.v1`: `on` / `off`). Motion starts off for visitors who ask for reduced motion; they can still turn it on.
 - The two typefaces (Martian Mono for the board and labels, Schibsted Grotesk for names and running text; Latin part only, SIL Open Font License) are served from `public/fonts/`. To change one, replace the `.woff2` files and `src/styles/fonts.css` (the fallback faces there are scaled to the same widths, so re-measure them).
 - `public/og.jpg` is the picture shown when the link is pasted somewhere: the summit with the greeting in Schibsted Grotesk, 1200×630. Remake it if the greeting or the summit photo changes.
 - Deployed to GitHub Pages by `.github/workflows/pages.yml` on every push to `main`, after the checks pass.
