@@ -16,7 +16,7 @@ export interface Project {
   name: string;
   /** One line under the name. At most 60 characters. */
   line: string;
-  /** The longer text, one string per paragraph. */
+  /** The longer text, one string per paragraph. Empty (with no note) = just the name and line: no Read button. */
   inside: string[];
   /** A small aside under the text. */
   note?: string;

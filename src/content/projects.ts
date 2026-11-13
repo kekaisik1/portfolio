@@ -1,7 +1,5 @@
 import type { Project } from './types';
 
-const EMAIL = 'mailto:kaisar.turysbek@gmail.com';
-
 /**
  * The seven places, in the order of the board.
  * Adding a project = one entry here, its place in src/content/places.ts and its painting (see the README).
@@ -13,23 +11,14 @@ export const PROJECTS: readonly Project[] = [
     group: 'work',
     name: 'The Front Desk',
     line: 'An AI that picks up the phone.',
-    inside: [
-      "It answers the phone for a small business and books appointments. It looks at the real calendar, remembers people who have called before, and passes the call to a human when it can't help. Most of my time went into the scheduling rules: staff hours, gaps between jobs, daylight saving, and two callers who want the same slot.",
-    ],
-    note: "I built it for a client, so I can't name them.",
-    link: { href: EMAIL, label: "It's private. Write me and I'll show you how it works.", external: false },
+    inside: [],
   },
   {
     slug: 'numbers-room',
     group: 'work',
-    name: 'The Numbers Room',
-    line: 'A finance assistant in the team chat.',
-    inside: [
-      'Her name is Abby. People mention her in the team chat and ask about their budget in plain words. She answers in the thread from the company database, with a chart and the Excel and PDF files to back it up.',
-      'The AI never does the sums. Ordinary tested code calculates every number, and the AI writes the sentences around them. Each channel can only reach the data it is allowed to see, a second model reads every answer before it is posted, and on Mondays she sends the weekly reports herself.',
-    ],
-    note: 'the video uses sample data.',
-    link: { href: EMAIL, label: "The real one is private. Write me and I'll explain how it's built.", external: false },
+    name: 'AI Finance Bot Assistant',
+    line: 'It answers budget questions in the team chat.',
+    inside: [],
   },
   {
     slug: 'lowl',

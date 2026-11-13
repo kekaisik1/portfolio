@@ -32,11 +32,11 @@ describe('project content', () => {
     expect(count('play')).toBe(4);
   });
 
-  it('gives every project a name, a one-liner and inside text', () => {
+  it('gives every project a name and a one-liner, and no empty paragraphs', () => {
     for (const p of PROJECTS) {
       expect(p.name.trim(), p.slug).not.toBe('');
       expect(p.line.trim(), p.slug).not.toBe('');
-      expect(p.inside.length, p.slug).toBeGreaterThan(0);
+      /* the longer text may be left out (Kaisar cut it for the private projects): then there is no Read button */
       for (const paragraph of p.inside) expect(paragraph.trim(), p.slug).not.toBe('');
     }
   });
@@ -129,26 +129,64 @@ describe('content rendered into the page', () => {
     expect(clock(600)).toBe('10:00');
   });
 
-  it('renders a project with its place, name, line, the longer text, note and link', () => {
+  it('renders a project with its place, name, line, the longer text, note and Read button', () => {
+    const html = renderProject(WORLDS[5], 5);
+
+    expect(html).toContain('<section class="world" id="history-lens" data-i="5"');
+    expect(html).toContain('data-kind="play" aria-labelledby="history-lens-t"');
+    expect(html).toContain('<span class="pl">Rome, 117 AD</span>');
+    expect(html).toContain('<h2 class="name" id="history-lens-t" tabindex="-1">History Lens</h2>');
+    expect(html).toContain('<p class="line">Play a real person from history.</p>');
+    expect(html).toContain('you are John Snow, tracing cholera through Soho in 1854');
+    expect(html).toContain('<p class="note">five stories so far.</p>');
+    expect(html).toContain('aria-label="Read about History Lens"');
+  });
+
+  it('renders a project with no longer text as just its name and line: no empty .more and no Read button', () => {
     const html = renderProject(WORLDS[1], 1);
 
     expect(html).toContain('<section class="world" id="front-desk" data-i="1" data-at="tl" data-at-m="top"');
-    expect(html).toContain('data-kind="work" aria-labelledby="front-desk-t"');
     expect(html).toContain('<span class="pl">Mountain pass</span><span class="src">something I built for work</span>');
     expect(html).toContain('<h2 class="name" id="front-desk-t" tabindex="-1">The Front Desk</h2>');
     expect(html).toContain('<p class="line">An AI that picks up the phone.</p>');
-    expect(html).toContain('<p class="note">I built it for a client, so I can\'t name them.</p>');
-    expect(html).toContain('<a class="ask" href="mailto:kaisar.turysbek@gmail.com">');
-    expect(html).toContain('aria-label="Read about The Front Desk"');
+    expect(html).not.toContain('class="more"');
+    expect(html).not.toContain('data-read');
+    expect(html).toContain('<div class="acts"></div>');
+  });
+
+  it('keeps the Watch button and the link of a project with no longer text', () => {
+    const world = WORLDS[2];
+    if (!world.project) throw new Error('row 2 should be a project');
+    const linked = {
+      ...world,
+      project: { ...world.project, link: { href: 'https://example.com', label: 'Try it.', external: true } },
+    };
+
+    const html = renderProject(linked, 2, { 'numbers-room': { src: 'numbers-room.mp4', seconds: 68 } });
+
+    expect(html).toContain('<h2 class="name" id="numbers-room-t" tabindex="-1">AI Finance Bot Assistant</h2>');
+    expect(html).not.toContain('class="more"');
+    expect(html).not.toContain('data-read');
+    expect(html).toContain('data-video="numbers-room"');
+    expect(html).toContain('<span class="len">1:08</span>');
+    expect(html).toContain('<a class="btn go" href="https://example.com" target="_blank" rel="noopener">Try it.');
   });
 
   it('opens external links in a new tab without an opener, and says so; mailto links open in place', () => {
     const live = renderProject(WORLDS[4], 4);
-    const mail = renderProject(WORLDS[1], 1);
+    const world = WORLDS[1];
+    if (!world.project) throw new Error('row 1 should be a project');
+    /* no project links to a mailto any more; one is made here so the rule stays tested */
+    const mailWorld = {
+      ...world,
+      project: { ...world.project, link: { href: 'mailto:a@example.com', label: 'Write me.', external: false } },
+    };
+    const mail = renderProject(mailWorld, 1);
 
     expect(live).toContain('target="_blank" rel="noopener"');
     expect(live).toContain('(opens in a new tab)');
     expect(mail).not.toContain('target="_blank"');
+    expect(mail).toContain('<a class="ask" href="mailto:a@example.com">Write me.</a>');
   });
 
   it('shows "Watch" with the real length only for a project that has a video', () => {

@@ -4,7 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 const WORLDS = [
   ['hello', 'Summit', 'Kaisar Turysbek'],
   ['front-desk', 'Mountain pass', 'The Front Desk'],
-  ['numbers-room', 'Observatory', 'The Numbers Room'],
+  ['numbers-room', 'Observatory', 'AI Finance Bot Assistant'],
   ['lowl', 'Repair shop', 'LOWL'],
   ['emberquill', "Dragon's hall", 'Emberquill'],
   ['history-lens', 'Rome, 117 AD', 'History Lens'],
@@ -764,19 +764,20 @@ test.describe('on a laptop with a short window', () => {
   test('in a window too short for it, the longest text folds behind Read: a sheet, and Esc gives focus back', async ({
     page,
   }) => {
-    await page.setViewportSize({ width: 1280, height: 500 });
-    await open(page, './#numbers-room');
-    await arrived(page, 'numbers-room');
-    const read = page.getByRole('button', { name: 'Read about The Numbers Room' });
+    /* History Lens holds its text down to about 400 px tall: well under that it has to fold */
+    await page.setViewportSize({ width: 1280, height: 360 });
+    await open(page, './#history-lens');
+    await arrived(page, 'history-lens');
+    const read = page.getByRole('button', { name: 'Read about History Lens' });
     await expect(read).toBeVisible();
 
     await read.click();
 
     const sheet = page.getByRole('dialog');
     await expect(sheet).toBeVisible();
-    await expect(sheet.getByRole('heading', { name: 'The Numbers Room' })).toBeFocused();
-    await expect(sheet).toContainText('The AI never does the sums.');
-    await expect(sheet).toContainText('the video uses sample data.');
+    await expect(sheet.getByRole('heading', { name: 'History Lens' })).toBeFocused();
+    await expect(sheet).toContainText('you are John Snow, tracing cholera through Soho in 1854');
+    await expect(sheet).toContainText('five stories so far.');
     await page.keyboard.press('Escape');
     await expect(sheet).toBeHidden();
     await expect(read).toBeFocused();
@@ -884,6 +885,17 @@ test.describe('on a phone', () => {
     await expect(sheet).toBeHidden();
   });
 
+  test('a place with no longer text offers no Read (it would open an empty sheet), but keeps its video', async ({
+    page,
+  }) => {
+    await open(page, './#numbers-room');
+    await arrived(page, 'numbers-room');
+
+    await expect(page.locator('#numbers-room [data-read]')).toHaveCount(0);
+    await expect(page.locator('#front-desk [data-read]')).toHaveCount(0);
+    await expect(page.locator('#numbers-room .watch')).toBeVisible();
+  });
+
   test('the video fills the screen and Close returns', async ({ page }) => {
     await open(page, './#kana-notebook');
     await arrived(page, 'kana-notebook');
@@ -912,9 +924,9 @@ test.describe('on a small phone', () => {
       expect(fit.fits, id).toBe(true);
     }
 
-    await page.goto('./#numbers-room');
-    await arrived(page, 'numbers-room');
-    await page.getByRole('button', { name: 'Read about The Numbers Room' }).tap();
+    await page.goto('./#history-lens');
+    await arrived(page, 'history-lens');
+    await page.getByRole('button', { name: 'Read about History Lens' }).tap();
     await expect(page.getByRole('dialog')).toBeVisible();
     const body = page.locator('#read .sheet-body');
     expect(await body.evaluate((el) => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(1);

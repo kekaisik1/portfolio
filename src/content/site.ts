@@ -1,7 +1,7 @@
 import type { SiteCopy } from './types';
 
 export const SITE: SiteCopy = {
-  title: 'Kaisar Turysbek: things I build',
+  title: 'Kaisar Turysbek: apps I build',
   mark: 'Kaisar Turysbek',
   description:
     'Projects by Kaisar Turysbek, an AI engineer in Kazakhstan: a phone-answering assistant, a finance assistant, a D&D tabletop, a history game and a few more.',
@@ -9,7 +9,7 @@ export const SITE: SiteCopy = {
   ogAlt: 'A painting of a snowy summit above a sea of clouds at sunrise, with the words:',
   hero: {
     heading: "Hi, I'm Kaisar.",
-    line: 'I live in Kazakhstan and I build things with computers.',
+    line: "I'm from Kazakhstan. I like building apps.",
     walk: 'Scroll to depart',
   },
   groups: { work: 'Work', play: 'Play' },
