@@ -1,0 +1,65 @@
+/* The video: the photo area becomes the player. A real modal: the board stays in view but cannot be reached. */
+#player {
+  position: fixed;
+  inset: 0 0 0 var(--col);
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--board);
+  color: var(--ink);
+  flex-direction: column;
+}
+#player[open] {
+  display: flex;
+}
+#player::backdrop {
+  background: none;
+}
+.ptop {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px var(--pad);
+  border-bottom: 1px solid var(--rule);
+  font-weight: 600;
+}
+.pwrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  container-type: size;
+}
+/* the video fills the photo's frame, whole, on the board's colour: as wide as the frame, or as tall, whichever
+   comes first (--ar is the video's own shape, set when its size is known). A press on the bare frame around it leaves. */
+.pwrap video {
+  grid-area: 1 / 1;
+  display: block;
+  width: min(100cqw, 100cqh * var(--ar, 1.7778));
+  aspect-ratio: var(--ar, 1.7778);
+  background: var(--board);
+  outline-offset: -4px;
+}
+.pwrap[data-state='loading'] video,
+.pwrap[data-state='failed'] video {
+  visibility: hidden;
+}
+.pstate {
+  grid-area: 1 / 1;
+  padding: var(--pad);
+  text-align: center;
+  color: var(--quiet);
+  pointer-events: none;
+}
+.pwrap[data-state='ready'] .pstate {
+  display: none;
+}
+.pwrap[data-state='failed'] .pstate {
+  color: var(--warning);
+}

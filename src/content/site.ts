@@ -1,23 +1,17 @@
-import type { SiteCopy, Zone } from './types';
-
-export const ZONES: readonly Zone[] = [
-  { id: 'mountains', label: 'In the mountains', short: 'mountains' },
-  { id: 'steppe', label: 'On the steppe', short: 'steppe' },
-  { id: 'sea', label: 'By the sea', short: 'sea' },
-  { id: 'night', label: 'At night: about and contact', short: 'night' },
-];
+import type { SiteCopy } from './types';
 
 export const SITE: SiteCopy = {
   title: 'Kaisar — I build things with computers',
   mark: 'Kaisar Turysbek',
   description: 'Kaisar builds things with computers in Kazakhstan. Seven of them are places you can walk into.',
   url: 'https://kekaisik1.github.io/portfolio/',
-  ogAlt: 'A watercolour of snowy mountains, spruce and a wooden hut on pale paper, with the words:',
+  ogAlt: 'A painting of a snowy summit above a sea of clouds at sunrise, with the words:',
   hero: {
     heading: "Hi, I'm Kaisar.",
     line: 'I live in Kazakhstan and I build things with computers.',
-    walk: 'Scroll to walk in',
+    walk: 'Scroll to depart',
   },
+  groups: { work: 'Work', play: 'Play' },
   source: { work: 'something I built for work', play: 'something I made for fun' },
   about: {
     heading: 'About',
@@ -38,21 +32,41 @@ export const SITE: SiteCopy = {
   },
   skip: 'Skip to the first place',
   travelHint: 'Arrow keys move between places.',
+  travelKeys: '↑ ↓ to travel',
+  boardLabel: 'Places',
+  switches: { label: 'Motion and sound', motion: 'Motion', sound: 'Sound' },
 };
 
 /** Everything a visitor can be told by the page itself (as opposed to by the API). */
 export const MESSAGES = {
-  goInside: (name: string): string => `Go inside ${name}`,
-  backOutside: 'Back outside',
-  /** what a screen reader hears when you arrive somewhere: "Steppe. LOWL." */
-  arrived: (country: string, place: string): string => `${country[0].toUpperCase()}${country.slice(1)}. ${place}.`,
-  noVideo: 'no video yet',
+  /** what a screen reader hears when you arrive somewhere: "Kyoto. Kana Notebook." */
+  arrived: (place: string, title: string): string => `${place}. ${title}.`,
+  /** a board row, read aloud: "07 Kyoto: Kana Notebook, LIVE" */
+  row: (n: string, place: string, title: string, status: string): string => `${n} ${place}: ${title}, ${status}`,
+  /** the phone's bottom bar, read aloud */
+  barLabel: (n: string, place: string, title: string): string => `${SITE.boardLabel}. Now at ${n} ${place}, ${title}`,
+  read: 'Read',
+  readLabel: (name: string): string => `Read about ${name}`,
+  close: 'Close',
+  watch: 'Watch',
+  /** read aloud between "Watch" and the length */
+  watchLabel: (name: string): string => ` the ${name} video,`,
   videoFailed: "the video didn't load",
   videoLoading: 'loading…',
   videoLabel: (name: string): string => `${name}, a short video`,
+  /** the footer clock, for a room that is nowhere in particular */
+  yourTime: 'your time',
+  newTab: ' (opens in a new tab)',
   lightLantern: 'Light a lantern',
   lanterns: (n: number): string => (n < 1 ? '' : n < 2 ? '1 lantern lit.' : `${Math.floor(n)} lanterns lit.`),
   note: {
+    heading: 'Leave a note',
+    text: 'Your note',
+    name: 'Your name',
+    nameHint: '(if you like)',
+    contact: 'Where can I answer?',
+    contactHint: '(only if you want an answer)',
+    done: 'Sent. Thank you, I read every note.',
     empty: 'Write something first.',
     tooLong: 'That is too long for the paper: 600 characters for the note, 60 for the name.',
     rateLimited: "That's a lot of notes. Try again in an hour, or email me instead.",

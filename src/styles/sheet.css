@@ -1,0 +1,75 @@
+/*
+ * A sheet: a solid panel raised from the bottom edge over the photo. The longer text ("Read") and the note are
+ * dialogs with this class; on phones the board itself is raised the same way (narrow.css).
+ */
+dialog.sheet {
+  position: fixed;
+  inset: auto 0 0 var(--col);
+  width: auto;
+  max-width: none;
+  max-height: min(86dvh, 720px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid var(--rule);
+  background: var(--board);
+  color: var(--ink);
+  flex-direction: column;
+}
+dialog.sheet[open] {
+  display: flex;
+  animation: sheet-up 0.16s steps(4, jump-none) both;
+}
+dialog.sheet::backdrop {
+  background: rgb(var(--shade) / 0.6);
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+.sheet-top {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px var(--pad);
+  border-bottom: 1px solid var(--rule);
+}
+.sheet-top .kicker {
+  margin: 0;
+  font-weight: 600;
+}
+.sheet-x {
+  background: none;
+}
+.sheet-x kbd {
+  font: inherit;
+  font-weight: 400;
+  font-size: var(--t-label);
+  opacity: 0.8;
+}
+.sheet-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y pinch-zoom;
+  padding: clamp(16px, 3vh, 28px) var(--pad) clamp(20px, 4vh, 36px);
+}
+.sheet-body > * {
+  max-width: 40rem;
+}
+.sheet-name {
+  font: 800 clamp(1.75rem, 5vw, 2.75rem) / 1 var(--big);
+  font-stretch: 100%;
+  letter-spacing: -0.03em;
+  margin: 0 0 0.5em -0.03em;
+}
+.sheet .more {
+  margin-top: 0;
+}

@@ -1,0 +1,46 @@
+/*
+ * The corner switches: motion and sound. Two small squares in the photo's bottom right corner (top right on
+ * phones, where the words and their buttons take the bottom). A switch that is off is struck through and dimmer:
+ * never colour alone.
+ */
+.switches {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 9;
+  display: flex;
+  gap: 8px;
+}
+.sw {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  background: rgb(var(--shade) / 0.72);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.sw svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.sw .off {
+  display: none;
+  stroke-width: 1.8;
+}
+.sw[aria-pressed='false'] {
+  color: var(--quiet);
+}
+.sw[aria-pressed='false'] .off {
+  display: inline;
+}
+.sw:hover {
+  background: var(--ink);
+  color: var(--board);
+}
+.sw:active {
+  transform: translateY(2px);
+}

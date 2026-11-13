@@ -1,0 +1,95 @@
+/* Without JavaScript, and on paper: a plain stacked document. The board is a list of links, every world's words follow. */
+html:not(.js) body {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 24px 20px 64px;
+  height: auto;
+}
+html:not(.js) #stage,
+html:not(.js) #cut,
+html:not(.js) .bar,
+html:not(.js) .veil,
+html:not(.js) .switches,
+html:not(.js) .keys,
+html:not(.js) .bfoot,
+html:not(.js) .read,
+html:not(.js) .walk,
+html:not(.js) .watch,
+html:not(.js) #note-open,
+html:not(.js) #lantern,
+html:not(.js) .lantern-n {
+  display: none;
+}
+html:not(.js) .brand,
+html:not(.js) .board,
+html:not(.js) main,
+html:not(.js) .world,
+html:not(.js) .block {
+  position: static;
+  width: auto;
+  max-width: none;
+  max-height: none;
+  height: auto;
+  padding: 0;
+  border: 0;
+  transform: none;
+  visibility: visible;
+}
+html:not(.js) .block::before {
+  display: none;
+}
+html:not(.js) .more {
+  display: block;
+}
+html:not(.js) .world {
+  padding-top: 56px;
+}
+html:not(.js) .name {
+  font-size: clamp(2.25rem, 9vw, 3.5rem);
+}
+
+@media print {
+  html,
+  body {
+    height: auto;
+    overflow: visible !important;
+    background: #fff;
+    color: #000;
+  }
+  #stage,
+  #cut,
+  .bar,
+  .veil,
+  .switches,
+  .board,
+  .brand,
+  .acts button {
+    display: none !important;
+  }
+  main,
+  .world,
+  .block {
+    position: static !important;
+    display: block !important;
+    max-width: none;
+    max-height: none;
+    text-shadow: none;
+  }
+  .block::before {
+    display: none;
+  }
+  .more {
+    display: block !important;
+  }
+  .world {
+    padding-top: 32px;
+    break-inside: avoid;
+  }
+  .kicker,
+  .line,
+  .more .note,
+  .write,
+  .kicker .pl {
+    color: #000;
+  }
+}

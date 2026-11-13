@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{{title}}</title>
     <meta name="description" content="{{description}}" />
-    <!-- the journey is a painting on paper: it stays light in dark mode too -->
-    <meta name="color-scheme" content="light" />
-    <meta name="theme-color" content="#ECE9E0" />
+    <!-- a dark board beside full-colour paintings: it is the same in light and dark mode -->
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0B0C0E" />
     <link rel="canonical" href="{{url}}" />
     <link
       rel="icon"
       type="image/svg+xml"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ECE9E0'/%3E%3Ccircle cx='46' cy='18' r='6.5' fill='%23A4502C' fill-opacity='.85'/%3E%3Cpath d='M4 47 C10 40 14 30 21 22 C25 27 27 32 31 31 C35 25 38 19 41 17 C47 26 53 36 60 47 Z' fill='%235D6F7E' fill-opacity='.55'/%3E%3Cpath d='M4 50 C14 46 26 44 38 45 C46 46 54 47 60 46 L60 56 L4 56 Z' fill='%235F8A78' fill-opacity='.6'/%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%230B0C0E'/%3E%3Crect x='10' y='14' width='6' height='36' fill='%23E8FF5A'/%3E%3Cpath d='M24 20h30M24 32h22M24 44h30' stroke='%23F4F1EA' stroke-width='5'/%3E%3C/svg%3E"
     />
-    <!-- the card people see when the link is pasted somewhere. og.jpg is a picture of the first screen. -->
+    <!-- the card people see when the link is pasted somewhere. og.jpg is the summit with the greeting on it. -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="{{url}}" />
     <meta property="og:site_name" content="Kaisar" />
@@ -23,96 +23,168 @@
     <meta property="og:image" content="{{url}}og.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="{{ogAlt}} {{heading}} {{line}}" />
+    <meta property="og:image:alt" content="{{ogAlt}} {{heading}}" />
     <meta name="twitter:card" content="summary_large_image" />
     <script type="application/ld+json">
       <!--app:jsonld-->
     </script>
-    <link rel="preload" href="/fonts/newsreader-latin.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/familjen-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/schibsted-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/martian-mono-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link
+      rel="preload"
+      as="image"
+      href="{{firstPhoto}}"
+      media="not ((max-width: 1100px) and (orientation: portrait))"
+      fetchpriority="high"
+    />
+    <link
+      rel="preload"
+      as="image"
+      href="{{firstPhotoTall}}"
+      media="(max-width: 1100px) and (orientation: portrait)"
+      fetchpriority="high"
+    />
     <script>
+      /* with scripts the page is a board and one world at a time. It opens on the summit alone (the board arrives
+         with the first step); a #link starts at its place (which may not be the summit), with the board there */
       document.documentElement.classList.add('js');
+      if (location.hash.length < 2) document.documentElement.classList.add('opening');
+      else if (location.hash !== '#hello') document.documentElement.classList.add('deep');
     </script>
     <link rel="stylesheet" href="/src/styles/index.css" />
   </head>
   <body>
-    <a class="skip" href="#front-desk">{{skip}}</a>
-    <!-- the painting: paper, the day's cut-outs, the night rising over them, grain, and clear paper behind the words -->
-    <div id="paper" aria-hidden="true"></div>
-    <div id="scene" aria-hidden="true"></div>
-    <div id="nightsky" aria-hidden="true">
-      <canvas id="dusk"></canvas>
-      <div class="deep"></div>
-    </div>
-    <div id="nightscene" aria-hidden="true"></div>
-    <div id="grain" aria-hidden="true"></div>
-    <div id="veil" class="veil" aria-hidden="true"></div>
-    <div id="veil-night" class="veil" aria-hidden="true"></div>
+    <a class="skip" href="#{{skipTo}}">{{skip}}</a>
 
-    <header class="top">
-      <a class="mark" href="#mountains">{{mark}}</a>
-      <a class="topmail" href="mailto:{{email}}">{{contactHeading}}</a>
+    <!-- the place: at most three photographs, the canvas that makes the one on screen move, the small things in
+         its air, and the lanterns over the campfire -->
+    <div id="stage">
+      <div class="lens" id="lens">
+        <!--app:frame-->
+        <canvas id="live" aria-hidden="true"></canvas>
+        <canvas id="fx" aria-hidden="true"></canvas>
+        <div id="lanterns" aria-hidden="true" hidden></div>
+      </div>
+    </div>
+    <div id="cut" aria-hidden="true"></div>
+
+    <header class="brand">
+      <a class="mark" href="#hello">{{mark}}</a>
+      <span class="keys" aria-hidden="true">{{travelKeys}}</span>
     </header>
 
-    <!-- the words of the journey are written in from src/content/ when the page is built -->
-    <main id="journey">
-      <!--app:journey-->
-    </main>
-
-    <nav class="horizon" id="horizon" aria-label="Where you are" aria-describedby="travel-hint">
-      <div class="band" aria-hidden="true"><span class="band-day"></span><span class="band-night"></span></div>
+    <!-- the board: every row is written in from src/content/ when the page is built -->
+    <nav class="board intro" id="board" aria-label="{{boardLabel}}" aria-describedby="travel-hint">
       <p id="travel-hint" class="sr-only">{{travelHint}}</p>
-      <div class="wrap">
-        <span class="hline" aria-hidden="true"></span>
-        <span class="hdot" aria-hidden="true"></span>
-        <ol>
-          <!--app:nav-->
-        </ol>
+      <ol class="rows" id="rows">
+        <!--app:rows-->
+      </ol>
+      <div class="bfoot" id="bfoot" aria-hidden="true">
+        <span id="f-pos">{{firstPos}}</span><span id="f-n">{{count}}</span>
+        <span class="clk"><span id="f-clk"></span><span id="f-tz"></span></span>
+        <span class="api" id="f-wx"></span>
+        <span class="api" id="f-now"></span>
       </div>
     </nav>
-    <p class="sr-only" id="where" aria-live="polite"></p>
-    <!-- the walk is as long as this: one STEP of scroll per stop -->
-    <div id="track" aria-hidden="true"></div>
 
-    <dialog id="inside" aria-labelledby="in-t">
-      <canvas id="in-paint" aria-hidden="true"></canvas>
-      <div class="in-scroll">
-        <div class="in-sheet">
-          <span class="tear" aria-hidden="true"></span>
-          <div class="in-words">
-            <h2 id="in-t" tabindex="-1"></h2>
-            <div class="in-text"></div>
-            <div class="in-vid"></div>
-            <div class="in-link"></div>
-          </div>
-        </div>
+    <!-- the words of every world are written in from src/content/ when the page is built -->
+    <main id="main">
+      <!--app:worlds-->
+    </main>
+
+    <div class="veil" id="veil" hidden></div>
+    <button class="bar" id="bar" type="button" aria-expanded="false" aria-controls="board" aria-label="{{barLabel}}">
+      <span class="n" id="bar-n" aria-hidden="true">{{firstNumber}}</span>
+      <span class="pl" aria-hidden="true"
+        ><span id="bar-pl">{{firstPlace}}</span><span class="pj" id="bar-pj">{{firstTitle}}</span></span
+      >
+      <span class="st {{firstTone}}" id="bar-st" aria-hidden="true">{{firstStatus}}</span>
+      <span class="ch" aria-hidden="true"></span>
+    </button>
+    <p class="sr-only" id="where" aria-live="polite"></p>
+
+    <!-- the corner switches: the places move (or stay still), and each has a sound (off until asked for) -->
+    <div class="switches" id="switches" role="group" aria-label="{{switchesLabel}}">
+      <button
+        class="sw"
+        id="sw-motion"
+        type="button"
+        aria-pressed="true"
+        aria-label="{{motionLabel}}"
+        title="{{motionLabel}}"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path d="M3 8h9.5a2.5 2.5 0 1 0-2.4-3.2M3 12h15a2.5 2.5 0 1 1-2.4 3.2M3 16h7.5a2 2 0 1 1-1.9 2.6" />
+          <path class="off" d="M4 20 20 4" />
+        </svg>
+      </button>
+      <button
+        class="sw"
+        id="sw-sound"
+        type="button"
+        aria-pressed="false"
+        aria-label="{{soundLabel}}"
+        title="{{soundLabel}}"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4zM15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11" />
+          <path class="off" d="M4 20 20 4" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- the longer text of a world, when the screen is too small to show it beside the photo -->
+    <dialog class="sheet" id="read" aria-labelledby="read-t">
+      <div class="sheet-top">
+        <p class="kicker" id="read-k"></p>
+        <button class="btn sheet-x" type="button" data-close>{{close}}</button>
       </div>
-      <div class="in-band">
-        <button class="back" type="button" id="back">{{backOutside}}</button
-        ><span class="tear" aria-hidden="true"></span>
+      <div class="sheet-body">
+        <h2 class="sheet-name" id="read-t" tabindex="-1"></h2>
+        <div class="more" id="read-more"></div>
+        <div class="acts" id="read-acts"></div>
       </div>
     </dialog>
 
-    <dialog id="note" aria-labelledby="note-t">
-      <div class="note-sheet">
-        <button class="note-x" type="button" aria-label="Close">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6 L18 18 M18 6 L6 18" /></svg>
-        </button>
-        <h2 id="note-t">Leave a note</h2>
+    <!-- the video: the photo area becomes the player -->
+    <dialog id="player" aria-labelledby="p-title">
+      <div class="ptop">
+        <p id="p-title"></p>
+        <button class="btn sheet-x" type="button" id="pclose">{{close}} <kbd aria-hidden="true">Esc</kbd></button>
+      </div>
+      <div class="pwrap" id="pwrap" data-state="loading">
+        <p class="pstate" id="pstate" role="status"></p>
+      </div>
+      <!-- Tab past the video's last control lands here and is sent round to Close: focus never leaves the player -->
+      <span id="pend" tabindex="0"></span>
+    </dialog>
+
+    <dialog class="sheet" id="note" aria-labelledby="note-t">
+      <div class="sheet-top">
+        <h2 class="kicker" id="note-t">{{noteHeading}}</h2>
+        <button class="btn sheet-x" type="button" data-close>{{close}}</button>
+      </div>
+      <div class="sheet-body">
         <form id="note-form" novalidate>
-          <label for="note-text">Your note</label>
-          <textarea id="note-text" name="text" rows="4" maxlength="600" required aria-describedby="note-msg"></textarea>
-          <label for="note-name">Your name <small>(if you like)</small></label>
-          <input id="note-name" name="name" type="text" maxlength="60" autocomplete="name" />
-          <label for="note-contact">Where can I answer? <small>(only if you want an answer)</small></label>
-          <input id="note-contact" name="contact" type="text" maxlength="120" autocomplete="off" />
+          <label for="note-text">{{noteText}}</label>
+          <textarea id="note-text" name="text" rows="3" maxlength="600" required aria-describedby="note-msg"></textarea>
+          <div class="note-pair">
+            <div>
+              <label for="note-name">{{noteName}} <small>{{noteNameHint}}</small></label>
+              <input id="note-name" name="name" type="text" maxlength="60" autocomplete="name" />
+            </div>
+            <div>
+              <label for="note-contact">{{noteContact}} <small>{{noteContactHint}}</small></label>
+              <input id="note-contact" name="contact" type="text" maxlength="120" autocomplete="off" />
+            </div>
+          </div>
           <div class="note-trap" aria-hidden="true" inert>
             <label>Website <input name="website" type="text" tabindex="-1" autocomplete="off" /></label>
           </div>
           <p class="note-msg" id="note-msg" role="alert" aria-live="assertive"></p>
-          <button class="note-send" type="submit">send it</button>
+          <button class="btn go note-send" type="submit">{{noteSend}}</button>
         </form>
-        <p class="note-done" id="note-done" tabindex="-1" role="status" hidden>Sent. Thank you, I read every note.</p>
+        <p class="note-done" id="note-done" tabindex="-1" role="status" hidden>{{noteDone}}</p>
       </div>
     </dialog>
 

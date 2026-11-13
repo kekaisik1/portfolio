@@ -1,41 +1,35 @@
-/*
- * Palette and type. The paintings mix their own pigments (src/paint/kinds/); these are the page's.
- * Earth and mineral, sunlit and muted: bare paper, ink, slate, verdigris, ochre, and oxide as the one sharp accent.
- * The journey is a painting on paper, so it stays light in dark mode (color-scheme: light in index.html).
- */
+/* The palette and the type. The paintings carry the colour; the board is one dark, one ink and one sharp signal. */
 :root {
-  --paper: #ece9e0;
-  --glow: #f8f7f2;
-  --ink: #24302c;
-  --slate: #4f6070;
-  --verdigris: #5f8a78;
-  --ochre: #c39046;
-  --oxide: #9a4826;
-  --night: #1b2440;
-  --night-deep: #1d2747;
-  --night-ink: #eee6d0;
-  --night-soft: #c3cbdd;
-  --night-accent: #f0b48a;
-  --moon: #f1e7c8;
-  --mat: #f8f7f2;
-  --screen: #dad6cb;
-  --video-bg: #2a2f33;
-  /* semantic */
-  --fg: var(--ink);
-  --fg-soft: var(--slate);
-  --accent: var(--oxide);
-  --error: #9a3a22;
-  --success: #3f6e5a;
-  /* rgb of the paper, for the soft paper patches behind words and labels */
-  --veil: 236, 233, 224;
-  --veil-night: 27, 36, 64;
-  --serif: 'Newsreader', 'Iowan Old Style', Georgia, serif;
-  --sans: 'Familjen Grotesk', 'Gill Sans', 'Trebuchet MS', sans-serif;
-  --band: 76px;
-  --ease: cubic-bezier(0.2, 0.7, 0.1, 1);
-}
-html.night {
-  --fg: var(--night-ink);
-  --fg-soft: var(--night-soft);
-  --accent: var(--night-accent);
+  --board: #0b0c0e;
+  --ink: #f4f1ea;
+  --soft: #dcdad4;
+  --quiet: #a3a7ad;
+  --signal: #e8ff5a;
+  --rule: rgb(244 241 234 / 0.16);
+  --line: rgb(244 241 234 / 0.55);
+  /* the dark laid under words that stand on a photo */
+  --shade: 8 9 11;
+
+  /* status words */
+  --live: var(--signal);
+  --building: #ffb86b;
+  --private: var(--quiet);
+  /* messages */
+  --success: #9be29a;
+  --warning: #ffb86b;
+  --error: #ff9c8f;
+  --info: var(--quiet);
+
+  --mono: 'Martian Mono', 'Martian Mono Fallback', ui-monospace, monospace;
+  --big: 'Schibsted Grotesk', 'Schibsted Fallback', sans-serif;
+
+  /* the board's width, the gap between a photo's edge and its words, the phone's bottom bar */
+  --col: 320px;
+  --pad: clamp(24px, 3.6vw, 56px);
+  --bar: 56px;
+
+  /* small type sizes: labels, the board, running words */
+  --t-label: 11px;
+  --t-row: 13px;
+  --t-body: clamp(15px, 2.05vh, 17.5px);
 }

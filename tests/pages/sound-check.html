@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Sound check</title>
+  </head>
+  <body>
+    <!-- Served by the dev server for tests/e2e/sound.spec.ts only: renders each place's ambience offline and
+         measures it. Never part of the build. -->
+    <script type="module">
+      import { WORLDS } from '/src/content/places.ts';
+      import { measureAmbience } from '/src/sound/render.ts';
+
+      window.measureAll = async (seconds) => {
+        const out = {};
+        for (const w of WORLDS) out[w.id] = await measureAmbience(w.id, seconds);
+        return out;
+      };
+      document.documentElement.dataset.ready = 'yes';
+    </script>
+  </body>
+</html>

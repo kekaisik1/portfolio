@@ -1,7 +1,7 @@
-/** The pure parts of the lanterns: what stored data may be, where each one hangs. Unit-tested. */
+/** The pure parts of the lanterns: what stored data may be, where each one hangs in the sky. Unit-tested. */
 import type { LanternDto } from '../api/schemas';
 
-/** how many of your own are kept (and hang on the string) */
+/** how many of your own are kept */
 export const MAX_OWN = 5;
 /** how many of everyone's are shown */
 export const MAX_SHARED = 80;
@@ -27,15 +27,7 @@ export function parseStored(raw: string | null): LanternDto[] {
   return saved.filter(isSaved).slice(-MAX_OWN);
 }
 
-/** Where your i-th lantern hangs on the string: in the gaps between the painted ones, then past the last. */
-export function slotOf(i: number, painted: readonly number[]): number {
-  const gaps = painted.slice(1).map((x, k) => (x + painted[k]) / 2);
-  const step = painted[1] - painted[0];
-  gaps.push(painted[painted.length - 1] + step / 2);
-  return gaps[i % gaps.length];
-}
-
-/** Where someone else's lantern floats among the stars (in the stars painting's units), and how faint. */
+/** Where a lantern hangs in a sky `w` wide and `h` high (it keeps to the upper half), how big and how faint. */
 export function skyPlace(
   l: LanternDto,
   i: number,

@@ -1,10 +1,12 @@
-/** Leave a note: a slip of paper that goes to Kaisar (through the API; with no API it says so and gives the email). */
+/**
+ * Leave a note, by the campfire: it goes to Kaisar through the API (with no API it says so and gives the email),
+ * and a note that was sent goes up as a lantern.
+ */
 import { api } from '../api';
 import { MESSAGES, SITE } from '../content/site';
 import { byId, pick } from '../lib/dom';
-import { noteDlg } from '../journey/dom';
-import { S } from '../journey/state';
-import { lightLantern } from '../night/lanterns';
+import { reduce } from '../lib/media';
+import { closeOnOutsidePress, closeOnSwipeDown } from '../sheet/swipe';
 import { NOTE_IDLE, nextNoteState, noteView, type NoteEvent, type NoteState } from './machine';
 import { readNote, validateNote } from './validate';
 
@@ -13,8 +15,9 @@ const NO_API_PAUSE_MS = 500;
 /** after a note is sent: how long the thank-you shows before the dialog steps aside for the lantern */
 const THANKS_MS = 1100;
 
-export function initNote(): void {
-  const open = byId<HTMLButtonElement>('note-open'),
+export function initNote(lightLantern: () => void, onToggle: (open: boolean) => void): void {
+  const noteDlg = byId<HTMLDialogElement>('note'),
+    open = byId<HTMLButtonElement>('note-open'),
     form = byId<HTMLFormElement>('note-form'),
     done = byId('note-done'),
     text = byId<HTMLTextAreaElement>('note-text'),
@@ -52,11 +55,12 @@ export function initNote(): void {
     show();
     noteDlg.showModal();
     text.focus();
+    onToggle(true);
   });
-  pick(noteDlg, '.note-x').addEventListener('click', () => noteDlg.close());
-  noteDlg.addEventListener('click', (e) => {
-    if (e.target === noteDlg) noteDlg.close();
-  });
+  pick(noteDlg, '[data-close]').addEventListener('click', () => noteDlg.close());
+  noteDlg.addEventListener('close', () => onToggle(false));
+  closeOnOutsidePress(noteDlg);
+  closeOnSwipeDown(noteDlg, () => noteDlg.close());
   text.addEventListener('input', () => dispatch({ type: 'edit' }));
 
   form.addEventListener('submit', (e) => {
@@ -76,7 +80,7 @@ export function initNote(): void {
       form.reset();
       done.focus();
       /* the note goes up as a lantern: step out of the way so it can be seen */
-      if (S.reduce) lightLantern();
+      if (reduce.matches) lightLantern();
       else
         setTimeout(() => {
           if (noteDlg.open) noteDlg.close();
