@@ -55,19 +55,23 @@ function watchButton(p: Project, videos: VideoManifest): string {
   );
 }
 
-/** One project's world: its place, name, line, the longer text, and what you can do there. */
+/** One project's world: its place, name, line, the longer text (and its Read button) if any, and what you can do there. */
 export function renderProject(w: World, i: number, videos: VideoManifest = {}): string {
   const p = w.project;
   if (!p) throw new Error(`The world "${w.id}" is a project's place but has no project.`);
   const note = p.note ? `<p class="note">${esc(p.note)}</p>` : '';
   const link = p.link ? linkHtml(p.link, p.link.external ? ' class="btn go"' : ' class="ask"') : '';
+  /* nothing longer to read: no empty .more and no Read button (on phones it would open an empty sheet) */
+  const hasMore = p.inside.length > 0 || note !== '';
+  const more = hasMore ? `<div class="more">${p.inside.map((t) => `<p>${esc(t)}</p>`).join('')}${note}</div>` : '';
+  const read = hasMore ? readButton(p.name) : '';
   return (
     `<section class="world" id="${p.slug}" ${placing(w, i)} data-kind="${p.group}" aria-labelledby="${p.slug}-t">` +
     `<div class="block">${kicker(w, i)}` +
     `<h2 class="name" id="${p.slug}-t" tabindex="-1">${esc(p.name)}</h2>` +
     `<p class="line">${esc(p.line)}</p>` +
-    `<div class="more">${p.inside.map((t) => `<p>${esc(t)}</p>`).join('')}${note}</div>` +
-    `<div class="acts">${readButton(p.name)}${watchButton(p, videos)}${link}</div>` +
+    more +
+    `<div class="acts">${read}${watchButton(p, videos)}${link}</div>` +
     `</div></section>`
   );
 }

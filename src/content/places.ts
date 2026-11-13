@@ -41,7 +41,7 @@ export const PROJECT_PLACES: Readonly<Record<string, PlaceWords>> = {
     place: "Dragon's hall",
     status: 'LIVE',
     tone: 'live',
-    pos: 'ruined hall, the dragon awake',
+    pos: 'ruined hall, midday',
     alt: 'A painting of four adventurers on a rock ledge facing a huge red dragon on its gold in a ruined hall, light falling through the arches, a red twenty-sided die in front',
   },
   'history-lens': {

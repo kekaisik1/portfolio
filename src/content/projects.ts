@@ -1,7 +1,5 @@
 import type { Project } from './types';
 
-const EMAIL = 'mailto:kaisar.turysbek@gmail.com';
-
 /**
  * The seven places, in the order of the board.
  * Adding a project = one entry here, its place in src/content/places.ts and its painting (see the README).
@@ -13,31 +11,22 @@ export const PROJECTS: readonly Project[] = [
     group: 'work',
     name: 'The Front Desk',
     line: 'An AI that picks up the phone.',
-    inside: [
-      "An AI that answers a small business's phone and books appointments, like a person at the front desk would. It checks the real calendar, remembers who called before, and hands the call to a human when it should. The hard part was never the AI talking. It was time: staff hours, buffers, daylight saving, two people trying to book the same slot.",
-    ],
-    note: 'built for a client, so no name.',
-    link: { href: EMAIL, label: "Private — ask me and I'll walk you through it.", external: false },
+    inside: [],
   },
   {
     slug: 'numbers-room',
     group: 'work',
-    name: 'The Numbers Room',
-    line: 'Ask your numbers a question.',
-    inside: [
-      'Her name is Abby. People @mention her in the team chat, ask about the budget in plain words, and she answers in the thread from their database, with a chart and the Excel and PDF behind it.',
-      "The part I'm proud of is boring: I don't let the AI do the math. The sums are ordinary checked code; the AI only writes the words around them. Each channel reaches only the data it's allowed to see, a second model reads every answer before it's posted, and on Mondays she sends the reports on her own.",
-    ],
-    note: 'the video runs on sample data.',
-    link: { href: EMAIL, label: "The real one is private. I can tell you how it's built.", external: false },
+    name: 'AI Finance Bot Assistant',
+    line: 'It answers budget questions in the team chat.',
+    inside: [],
   },
   {
     slug: 'lowl',
     group: 'work',
     name: 'LOWL',
-    line: 'A repair shop people can find.',
+    line: 'A website for a repair business.',
     inside: [
-      "A website for an appliance-repair business: lots of service pages so people can find them on Google, in Russian and English. Not glamorous. It's real, it's used.",
+      "The business repairs home appliances. The site has a page for every service they offer, in Russian and English, so people who search Google for a repair can find them. It's the plainest project here, and it's in use.",
     ],
   },
   {
@@ -46,11 +35,11 @@ export const PROJECTS: readonly Project[] = [
     name: 'Emberquill',
     line: 'A 3D tabletop for D&D fights.',
     inside: [
-      'A little 3D tabletop in the browser: rules, enemy AI, a map builder, and online battles with a human Dungeon Master. You can throw furniture. I started it over more than once; the old folders are still on my laptop.',
+      "It runs in the browser. It knows the rules, plays the enemies, has a map builder, and lets friends join online with a human Dungeon Master. You can throw the furniture. I've restarted it from scratch more than once, and the old versions are still on my laptop.",
     ],
     link: {
       href: 'https://dnd-production-080b.up.railway.app',
-      label: "It's live — go break something.",
+      label: "It's live. Go break something.",
       external: true,
     },
   },
@@ -58,9 +47,9 @@ export const PROJECTS: readonly Project[] = [
     slug: 'history-lens',
     group: 'play',
     name: 'History Lens',
-    line: 'Live a life from history.',
+    line: 'Play a real person from history.',
     inside: [
-      "A history game where you live someone's life instead of reading about it. You're John Snow hunting cholera in Soho in 1854, or a servant smuggling letters for Mary, Queen of Scots. At the end it sets your story beside the historical record: what was documented, what I invented, and what only happened because of you.",
+      'You make their choices. In one story you are John Snow, tracing cholera through Soho in 1854. In another you are a servant carrying secret letters for Mary, Queen of Scots. At the end it shows which parts are in the historical record, which parts I made up, and which parts happened because of your choices.',
     ],
     note: 'five stories so far.',
   },
@@ -68,21 +57,21 @@ export const PROJECTS: readonly Project[] = [
     slug: 'bookforge',
     group: 'play',
     name: 'BookForge',
-    line: 'Keep a whole story world straight.',
+    line: 'A tool for writers of long stories.',
     inside: [
-      "A place for writers to keep track of who knows what, who's where, and which plot threads are still open. The AI is an editor, not a ghostwriter: it says “this character couldn't know that yet”, but it never writes your book.",
+      "It keeps track of who knows what, where each character is, and which plot threads are still open. The AI works like an editor: it will tell you “this character couldn't know that yet”, and it never writes the book for you.",
     ],
-    note: 'still building.',
+    note: "I'm still building it.",
   },
   {
     slug: 'kana-notebook',
     group: 'play',
     name: 'Kana Notebook',
-    line: 'Learn Japanese, free.',
+    line: 'A free app for learning Japanese.',
     inside: [
-      "A small app for learning Japanese, in English and Russian: hiragana, words, grammar, review. Students can ask for what's missing and vote on it.",
+      "The lessons are in English and Russian: hiragana, words, grammar and review. Students can ask for what's missing and vote on what I add next.",
     ],
-    link: { href: 'https://kana-notebook-production.up.railway.app', label: "It's live.", external: true },
+    link: { href: 'https://kana-notebook-production.up.railway.app', label: "It's live. Try it.", external: true },
   },
 ];
 
