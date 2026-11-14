@@ -151,7 +151,8 @@ describe('content rendered into the page', () => {
     expect(html).toContain('<p class="line">An AI that picks up the phone.</p>');
     expect(html).not.toContain('class="more"');
     expect(html).not.toContain('data-read');
-    expect(html).toContain('<div class="acts"></div>');
+    /* only its try, for where the spot in the painting cannot be shown */
+    expect(html).toMatch(/<div class="acts"><button class="btn try" [^>]*>Try it<\/button><\/div>/);
   });
 
   it('keeps the Watch button and the link of a project with no longer text', () => {

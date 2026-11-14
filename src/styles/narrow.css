@@ -245,6 +245,19 @@
   dialog.sheet {
     max-height: 88dvh;
   }
+  /* the try card is a sheet from the bottom edge, like the others */
+  dialog.sheet.try-card {
+    inset: auto 0 0 0;
+    width: auto;
+    max-height: 88dvh;
+    margin: 0;
+    border-width: 1px 0 0;
+  }
+  dialog.sheet.try-card[open] {
+    animation-name: sheet-up;
+    animation-duration: 0.16s;
+    animation-timing-function: steps(4, jump-none);
+  }
   .note-pair {
     grid-template-columns: 1fr;
   }

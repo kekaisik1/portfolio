@@ -162,6 +162,22 @@
       <span id="pend" tabindex="0"></span>
     </dialog>
 
+    <!-- a "try it": a taste of a project in one or two presses (src/try/), a small card over its painting -->
+    <dialog class="sheet try-card" id="try" aria-labelledby="try-t">
+      <div class="sheet-top">
+        <h2 class="kicker" id="try-t" tabindex="-1"></h2>
+        <button class="btn sheet-x" type="button" data-close>{{close}} <kbd aria-hidden="true">Esc</kbd></button>
+      </div>
+      <div class="sheet-body">
+        <p class="try-step" id="try-step"></p>
+        <div class="try-blocks" id="try-blocks"></div>
+        <div class="try-choices" id="try-choices"></div>
+        <div class="try-blocks try-after" id="try-after"></div>
+        <p class="try-end" id="try-end"></p>
+      </div>
+      <p class="sr-only" id="try-said" aria-live="polite"></p>
+    </dialog>
+
     <dialog class="sheet" id="note" aria-labelledby="note-t">
       <div class="sheet-top">
         <h2 class="kicker" id="note-t">{{noteHeading}}</h2>

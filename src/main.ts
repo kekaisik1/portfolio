@@ -5,7 +5,7 @@ import { initBoard } from './board/board';
 import { initFooter } from './board/footer';
 import { WORLDS } from './content/places';
 import { byId, pickAll } from './lib/dom';
-import { narrow, tall } from './lib/media';
+import { narrow, reduce, tall } from './lib/media';
 import { createTicker } from './lib/ticker';
 import { createLiving } from './living/living';
 import { worldOfHash } from './nav/routing';
@@ -17,6 +17,7 @@ import { initRead } from './sheet/read';
 import { createSound } from './sound/sound';
 import { initSwitches } from './switches/switches';
 import { initInput } from './travel/input';
+import { initTry } from './try/panel';
 import { createTravel } from './travel/travel';
 import { initPlayer } from './video/player';
 import { lookOf } from './worlds/looks';
@@ -109,6 +110,7 @@ function boot(): void {
     sound.duck(open);
   });
   initNote(lanterns.light, covered);
+  initTry({ covered, motion: () => switches.motion() && !reduce.matches, cue: (voice) => sound.cue(voice) });
 
   const start = worldOfHash(location.hash);
   travel.start(start < 0 ? 0 : start);

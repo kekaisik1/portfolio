@@ -7,9 +7,10 @@ import type { VideoManifest } from '../../scripts/video-manifest';
 import { TALL_QUERY } from '../lib/queries';
 import placeholders from '../worlds/placeholders.json';
 import { lookOf, photoUrl } from '../worlds/looks';
-import { spotOf } from '../worlds/spots';
+import { spotsOf, type Spot } from '../worlds/spots';
 import { WORLDS, rowNumber } from './places';
 import { MESSAGES, SITE } from './site';
+import { tryOf } from './tries';
 import type { Project, ProjectLink, World } from './types';
 
 const ENTITIES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
@@ -56,21 +57,48 @@ function watchButton(p: Project, videos: VideoManifest): string {
   );
 }
 
-/**
- * The spot in the painting that opens the project's video: a dot and a small label, placed over its object by
- * src/worlds/spot-view.ts. Hidden until then (and without scripts, where the Watch button is the way in).
- */
-function spotButton(p: Project, videos: VideoManifest): string {
-  const spot = spotOf(p.slug);
-  if (!spot || !p.spot || spot.opens !== 'video' || !Object.hasOwn(videos, p.slug)) return '';
+/** The dot and its label: one real button, placed over its object by src/worlds/spot-view.ts. */
+const spotHtml = (spot: Spot, k: number, data: string, name: string, label: string): string =>
+  `<button class="spot ${spot.side}" type="button" ${data} data-k="${k}" aria-haspopup="dialog" ` +
+  `aria-label="${esc(name)}" hidden>` +
+  `<span class="spot-dot" aria-hidden="true"></span><span class="spot-l" aria-hidden="true">${label}</span></button>`;
+
+/** A spot that opens the project's video: only where there is a label for it and a video to open. */
+function videoSpot(p: Project, spot: Spot, k: number, videos: VideoManifest): string {
+  if (!p.spot || !Object.hasOwn(videos, p.slug)) return '';
   const seconds = videos[p.slug].seconds;
   const length = seconds === undefined ? '' : clock(seconds);
   const name = `${MESSAGES.watch}${MESSAGES.watchLabel(p.name)} ${length}`.trim();
+  const label = `${esc(p.spot)}${length ? ` <span class="len">${length}</span>` : ''}`;
+  return spotHtml(spot, k, `data-video="${p.slug}"`, name, label);
+}
+
+/** A spot that opens the project's try. */
+function trySpot(p: Project, spot: Spot, k: number): string {
+  const t = tryOf(p.slug);
+  return t ? spotHtml(spot, k, `data-try="${p.slug}"`, MESSAGES.tryLabel(p.name, t.spot), esc(t.spot)) : '';
+}
+
+/**
+ * The spots in the painting (hidden until they are placed, and without scripts, where the buttons in the words are
+ * the way in). The layer is there in every world: it pushes in with the painting.
+ */
+function spotsLayer(p: Project | undefined, videos: VideoManifest): string {
+  const spots = p
+    ? spotsOf(p.slug)
+        .map((s, k) => (s.opens === 'video' ? videoSpot(p, s, k, videos) : trySpot(p, s, k)))
+        .join('')
+    : '';
+  return `<div class="spots">${spots}</div>`;
+}
+
+/** The Try it button in the words: the way in where the try's spot cannot be shown. */
+function tryButton(p: Project): string {
+  const t = tryOf(p.slug);
+  if (!t) return '';
   return (
-    `<div class="spots"><button class="spot ${spot.side}" type="button" data-video="${p.slug}" aria-haspopup="dialog" ` +
-    `aria-label="${esc(name)}" hidden><span class="spot-dot" aria-hidden="true"></span>` +
-    `<span class="spot-l" aria-hidden="true">${esc(p.spot)}${length ? ` <span class="len">${length}</span>` : ''}</span>` +
-    `</button></div>`
+    `<button class="btn try" type="button" data-try="${p.slug}" aria-haspopup="dialog" ` +
+    `aria-label="${esc(MESSAGES.tryLabel(p.name, t.spot))}">${esc(MESSAGES.tryIt)}</button>`
   );
 }
 
@@ -90,8 +118,8 @@ export function renderProject(w: World, i: number, videos: VideoManifest = {}): 
     `<h2 class="name" id="${p.slug}-t" tabindex="-1">${esc(p.name)}</h2>` +
     `<p class="line">${esc(p.line)}</p>` +
     more +
-    `<div class="acts">${read}${watchButton(p, videos)}${link}</div>` +
-    `</div>${spotButton(p, videos)}</section>`
+    `<div class="acts">${read}${tryButton(p)}${watchButton(p, videos)}${link}</div>` +
+    `</div>${spotsLayer(p, videos)}</section>`
   );
 }
 
@@ -101,7 +129,7 @@ function hello(w: World, i: number): string {
     `<h1 class="name" id="hello-t" tabindex="-1">${esc(SITE.hero.heading)}</h1>` +
     `<p class="lede">${esc(SITE.hero.line)}</p>` +
     `<div class="acts"><button class="btn walk" type="button" data-go="1">${esc(SITE.hero.walk)}</button></div>` +
-    `</div></section>`
+    `</div>${spotsLayer(undefined, {})}</section>`
   );
 }
 
@@ -114,7 +142,7 @@ function about(w: World, i: number): string {
     `<p class="lede">${esc(first)}</p>` +
     `<div class="more">${rest.map((t) => `<p>${esc(t)}</p>`).join('')}</div>` +
     `<div class="acts">${readButton(SITE.about.heading)}</div>` +
-    `</div></section>`
+    `</div>${spotsLayer(undefined, {})}</section>`
   );
 }
 
@@ -132,7 +160,7 @@ function contact(w: World, i: number): string {
     `<button class="btn lantern-btn" id="lantern" type="button"><span class="dot" aria-hidden="true"></span>` +
     `${esc(MESSAGES.lightLantern)}</button></div>` +
     `<p class="lantern-n" id="lantern-n" aria-live="polite"></p>` +
-    `</div></section>`
+    `</div>${spotsLayer(undefined, {})}</section>`
   );
 }
 

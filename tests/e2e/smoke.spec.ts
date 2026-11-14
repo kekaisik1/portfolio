@@ -423,7 +423,7 @@ test.describe('the video', () => {
     await page.keyboard.press('Escape');
 
     await expect(page.locator('#player')).toBeHidden();
-    await expect(page.locator('#kana-notebook .spot')).toBeFocused();
+    await expect(page.locator('#kana-notebook .spot[data-video]')).toBeFocused();
     await expect(page.locator('#player video')).toHaveCount(0);
   });
 
@@ -441,7 +441,7 @@ test.describe('the video', () => {
     if (!wrap || !video) throw new Error('the player has no frame to press beside');
     await page.mouse.click(wrap.x + 40, (wrap.y + video.y) / 2);
     await expect(page.locator('#player')).toBeHidden();
-    await expect(page.locator('#kana-notebook .spot')).toBeFocused();
+    await expect(page.locator('#kana-notebook .spot[data-video]')).toBeFocused();
   });
 
   test('the arrow keys do not travel while the video is open', async ({ page }) => {
@@ -454,32 +454,48 @@ test.describe('the video', () => {
   });
 });
 
-/** Where the on-screen world's spot and the things it must not stand on are, or null when it is not shown. */
-const spotPlace = (page: Page): Promise<{ spot: DOMRect; others: Record<string, DOMRect>; watch: boolean } | null> =>
+/**
+ * Where the on-screen world's shown spots and the things they must not stand on are, and which of the buttons in
+ * the words that open the same things (Watch, Try it) are showing.
+ */
+const spotPlace = (
+  page: Page,
+): Promise<{ spots: { opens: string; r: DOMRect }[]; others: Record<string, DOMRect>; buttons: string[] }> =>
   page.evaluate(() => {
     const world = document.querySelector<HTMLElement>('.world.on');
-    const spot = world?.querySelector<HTMLElement>('.spot');
-    const watch = world?.querySelector<HTMLElement>('.watch');
     const visible = (el: Element | null | undefined): boolean => !!el && (el as HTMLElement).offsetParent !== null;
     const box = (sel: string): DOMRect => {
       const el = document.querySelector(sel);
       if (!el) throw new Error(`nothing at ${sel}`);
       return el.getBoundingClientRect();
     };
-    if (!world || !spot || spot.hidden) return null;
+    const spots = Array.from(world?.querySelectorAll<HTMLElement>('.spot') ?? [])
+      .filter((s) => !s.hidden)
+      .map((s) => ({ opens: s.dataset.video === undefined ? 'try' : 'video', r: s.getBoundingClientRect() }));
     return {
-      spot: spot.getBoundingClientRect(),
+      spots,
       others: {
         words: box('.world.on .block'),
         switches: box('#switches'),
         mark: box('.brand .mark'),
         tag: box('#bar'),
       },
-      watch: visible(watch),
+      buttons: [
+        ...(visible(world?.querySelector('.acts .watch')) ? ['video'] : []),
+        ...(visible(world?.querySelector('.acts .try')) ? ['try'] : []),
+      ],
     };
   });
 const apart = (a: DOMRect, b: DOMRect): boolean =>
   a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top;
+const PROJECT_IDS = WORLDS.slice(1, 8).map((w) => w[0]);
+/** what each project's world can open: its try, and its video where it has one */
+const OPENS: Record<string, string[]> = Object.fromEntries(
+  PROJECT_IDS.map((id) => [
+    id,
+    ['numbers-room', 'emberquill', 'kana-notebook'].includes(id) ? ['try', 'video'] : ['try'],
+  ]),
+);
 
 test.describe('the spot in the painting', () => {
   test('Kyoto: a dot on the lantern opens the video, and is the one way in (no Watch button beside it)', async ({
@@ -488,7 +504,7 @@ test.describe('the spot in the painting', () => {
     const problems = await watch(page);
     await open(page, './#kana-notebook');
     await arrived(page, 'kana-notebook');
-    const spot = page.locator('#kana-notebook .spot');
+    const spot = page.locator('#kana-notebook .spot[data-video]');
 
     await expect(spot).toBeVisible();
     await expect(spot).toHaveAccessibleName('Watch the Kana Notebook video, 0:44');
@@ -515,7 +531,7 @@ test.describe('the spot in the painting', () => {
     await open(page, './#emberquill');
     await arrived(page, 'emberquill');
 
-    await page.locator('#emberquill .spot').click();
+    await page.locator('#emberquill .spot[data-video]').click();
 
     await expect(page.locator('#player')).toBeVisible();
     await expect(page.locator('#p-title')).toHaveText('Emberquill');
@@ -527,7 +543,7 @@ test.describe('the spot in the painting', () => {
     await arrived(page, 'kana-notebook');
     const ring = (): Promise<string> =>
       page.evaluate(() => {
-        const dot = document.querySelector('#kana-notebook .spot-dot');
+        const dot = document.querySelector('#kana-notebook .spot[data-video] .spot-dot');
         return dot ? getComputedStyle(dot, '::after').animationName : 'missing';
       });
 
@@ -537,24 +553,27 @@ test.describe('the spot in the painting', () => {
   });
 
   for (const size of [{ width: 1440, height: 900 }, { width: 1366, height: 680 }, PHONE, SMALL_PHONE]) {
-    test(`at ${size.width}x${size.height} it never stands on the words, the switches or the tag`, async ({ page }) => {
+    test(`at ${size.width}x${size.height} no spot stands on the words, the switches, the tag or another spot`, async ({
+      page,
+    }) => {
       await page.setViewportSize(size);
-      for (const id of ['kana-notebook', 'emberquill']) {
+      for (const id of PROJECT_IDS) {
         await page.goto('about:blank');
         await open(page, `./#${id}`);
         await arrived(page, id);
         const placed = await spotPlace(page);
-        if (!placed) {
-          /* cut off by this crop, or no room: the Watch button is the way in */
-          await expect(page.locator(`#${id} .watch`), id).toBeVisible();
-          continue;
-        }
-        expect(placed.watch, `${id}: the Watch button goes where the spot is`).toBe(false);
-        for (const [name, r] of Object.entries(placed.others))
-          expect(apart(placed.spot, r), `${id}: the spot stands on the ${name}`).toBe(true);
-        expect(placed.spot.left).toBeGreaterThanOrEqual(0);
-        expect(placed.spot.right).toBeLessThanOrEqual(size.width);
-        expect(placed.spot.bottom).toBeLessThanOrEqual(size.height);
+        /* every way in exactly once: a spot in the painting, or the button in the words where it cannot stand */
+        const ways = [...placed.spots.map((s) => s.opens), ...placed.buttons].sort();
+        expect(ways, `${id}: each thing it opens has exactly one way in`).toEqual([...OPENS[id]].sort());
+        placed.spots.forEach(({ opens, r }, k) => {
+          for (const [name, o] of Object.entries(placed.others))
+            expect(apart(r, o), `${id}: the ${opens} spot stands on the ${name}`).toBe(true);
+          for (const other of placed.spots.slice(k + 1))
+            expect(apart(r, other.r), `${id}: the two spots crowd each other`).toBe(true);
+          expect(r.left).toBeGreaterThanOrEqual(0);
+          expect(r.right).toBeLessThanOrEqual(size.width);
+          expect(r.bottom).toBeLessThanOrEqual(size.height);
+        });
       }
     });
   }

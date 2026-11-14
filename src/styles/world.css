@@ -229,7 +229,7 @@ main {
 }
 
 /*
- * The spot: one thing to open inside the painting (src/worlds/spots.ts). A small dot on the object, a slow
+ * The spots: things to open inside the painting (src/worlds/spots.ts), at most two. A small dot on the object, a slow
  * breathing ring around it, and a small label beside it on its own dark ground. The layer is the stage's size and
  * pushes in with the painting, so the dot stays on its object. Placed by src/worlds/spot-view.ts.
  */
@@ -331,7 +331,8 @@ main {
 .spot:focus-visible {
   outline-offset: 0;
 }
-/* where the spot is shown, it is the way in: no separate Watch button */
-.world.spotted .acts .watch {
+/* where a spot is shown, it is the way in: no separate Watch or Try it button for the same thing */
+.world.spotted-video .acts .watch,
+.world.spotted-try .acts .try {
   display: none;
 }

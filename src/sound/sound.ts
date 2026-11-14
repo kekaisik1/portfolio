@@ -5,7 +5,7 @@
  * a video ducks it to silence; a hidden tab suspends it.
  */
 import { buildAmbience, makeBank, type Ambience, type Bank } from './engine';
-import { FADE_S, MASTER_GAIN, recipeOf } from './recipe';
+import { FADE_S, MASTER_GAIN, recipeOf, type Voice } from './recipe';
 
 /** how far ahead the now-and-then voices are scheduled, and how often that is topped up */
 const AHEAD_S = 2;
@@ -23,7 +23,13 @@ export interface Sound {
   go(world: string): void;
   /** A video is playing (or has stopped): be silent under it. */
   duck(on: boolean): void;
+  /** One short sound now (a ring when a try's phone is picked up), only if the sound is on and already started. */
+  cue(voice: Voice): void;
 }
+
+/** a cue is one event of a recipe of its own, far quieter than any ambience */
+const CUE_GAIN = 0.08;
+const CUE_S = 2;
 
 export function createSound(): Sound {
   let ctx: AudioContext | null = null;
@@ -137,6 +143,19 @@ export function createSound(): Sound {
     duck(wanted) {
       ducked = wanted;
       if (ctx && duckGain) ramp(duckGain.gain, ducked ? 0 : 1, ctx.currentTime);
+    },
+    cue(voice) {
+      /* never a context of its own: only into one a gesture has already started */
+      if (!on || !ctx || !bank || !duckGain || ctx.state !== 'running') return;
+      const one = buildAmbience(
+        ctx,
+        [{ kind: 'event', voice, every: 60, jitter: 0, first: 0.05, gain: CUE_GAIN }],
+        bank,
+      );
+      one.out.connect(duckGain);
+      one.schedule(ctx.currentTime + 1);
+      one.stop(ctx.currentTime + CUE_S);
+      window.setTimeout(() => one.out.disconnect(), CUE_S * 1000 + 100);
     },
   };
 }

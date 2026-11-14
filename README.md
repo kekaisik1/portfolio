@@ -2,7 +2,7 @@
 
 "Departures": a departures board where every destination is a place, and seven of the places are projects. It opens on the summit alone, filling the window: the name, "Hi, I'm Kaisar." low in the frame, one line, a hint, and two small switches in the corner. Every other place is built the same way: its painting fills the window, and low in the corner the painting leaves calm stand a kicker, the project's name, big, one line and its buttons; the longer text is one press away, behind "Read". The first step (wheel, arrow key, swipe, the hint, Tab) brings in a small caption in the top corner, `07/09  Kyoto  LIVE  ↑ ↓ to travel`: pressing it slides the board in from the left, a crisp mono index of ten rows (place, project, status) with the place's coordinates and clock at its foot. Choosing a row, turning the wheel, pressing an arrow key or swiping cuts to the next place like a board flipping: a few uneven slats close over the old picture in 300 ms and the new words are there. Summit (the greeting), Mountain pass, Observatory, Repair shop, Dragon's hall, Rome 117 AD, The open book, Kyoto, The road (about) and Campfire (write me, leave a note, light a lantern).
 
-The places are paintings, and they move. Quietly: nothing in them is pushed by wind, so the painting never smears. Lights breathe and flicker (the booth on the pass, the dragon's gold, the lanterns of Kyoto, the campfire), stars twinkle, water runs and shimmers (the waterfall off the open book), and the air carries snow off the summit, sparks, petals and dust. And each has a sound, synthesised in the browser (wind, a cavern, drips after rain, a far phone, a bell), off until the sound switch is pressed. The other switch stops the motion (stills only). A project with a video plays it in the picture's frame, and two places have something to open inside the painting: a small breathing dot with a label on Kyoto's big paper lantern and on the red die in the dragon's hall, which play the Kana Notebook video and a recording of a fight on the real Emberquill table. On phones the words take the lower or upper third, and the board is a sheet raised from a bar at the bottom.
+The places are paintings, and they move. Quietly: nothing in them is pushed by wind, so the painting never smears. Lights breathe and flicker (the booth on the pass, the dragon's gold, the lanterns of Kyoto, the campfire), stars twinkle, water runs and shimmers (the waterfall off the open book), and the air carries snow off the summit, sparks, petals and dust. And each has a sound, synthesised in the browser (wind, a cavern, drips after rain, a far phone, a bell), off until the sound switch is pressed. The other switch stops the motion (stills only). A project with a video plays it in the picture's frame, and every project has something to try inside its painting: a small breathing dot with a label on an object of the picture (the phone in the booth, the telescope, the washing machine, the red die, the terrace in Rome, the fountain pen, the shop sign in Kyoto) opens a small card with a taste of the project that takes a few seconds: read three kana cards, roll a d20 against an orc, listen in on an example call, ask the finance bot an example question, say what broke and get the repair shop's real page, make John Snow's choice at the parish Board (and see what is in the record), or find the line an editor would stop at. Kyoto's big lantern and the wizard's staff in the dragon's hall are spots too: they play the Kana Notebook video and a recording of a fight on the real Emberquill table. On phones the words take the lower or upper third, and the board is a sheet raised from a bar at the bottom.
 
 Live: https://kekaisik.dev/
 
@@ -30,12 +30,13 @@ index.html            the page shell: meta, the stage, the name and the tag, the
                       written into at build time
 src/main.ts           start-up: wires the parts together
 src/content/          every word on the page: projects.ts, places.ts (the board's rows: place, status, coordinates),
+                      tries.ts (each project's "try it": its words and data),
                       site.ts (greeting, about, contact, messages) and render.ts (how it all becomes HTML)
 src/worlds/           the paintings: looks.ts (where each world's words stand, its crop, what is in its air),
                       photos.ts (at most three mounted, each decoded before it is shown), cut.ts + slats.ts (the cut),
                       cover.ts (where a photo's pixels land on screen), words.ts (showing a world's words),
-                      spots.ts (the thing to open inside a painting: where it stands; pure), spot-view.ts (putting
-                      it on its object),
+                      spots.ts (the things to open inside a painting: where they stand; pure), spot-view.ts
+                      (putting them on their objects),
                       placeholders.json (tiny blurred stand-ins, made by `npm run worlds`)
 src/living/           the living picture: scenes.ts (what moves in each painting: the data you author), scene.ts (its
                       shape), raster.ts (regions -> two small mask textures; pure), noise.ts (a seamless noise tile;
@@ -53,6 +54,8 @@ src/board/            the index rows, the drawer and the tag that opens it (on p
                       the footer with coordinates, a live
                       clock and the API's lines (footer.ts), the status-word flourish (scramble.ts)
 src/video/            the player: the picture area becomes a modal video
+src/try/              "try it": one small state machine per kind of try (kana.ts, fight.ts, call.ts, pick.ts; pure),
+                      what a panel shows (view.ts), one play of a try (run.ts), and the card that draws it (panel.ts)
 src/sheet/            "Read": the longer text as a sheet over the picture (every layout); swipe-down and press-outside closing
 src/note/             the note form by the campfire: validation, a small state machine, the form itself
 src/night/            lanterns over the campfire, and the weather / "last seen working on" lines from the API
@@ -129,13 +132,24 @@ Run `npm run video -- <your file> <slug>` (needs ffmpeg). It writes `public/vide
 
 ## Add a spot
 
-A spot is one thing to open inside a painting: a dot on an object of the picture, a slow breathing ring around it and a small label beside it, all one real button. Pressing it (or Enter) opens the project's video. There is at most one per world.
+A spot is one thing to open inside a painting: a dot on an object of the picture, a slow breathing ring around it and a small label beside it, all one real button. Pressing it (or Enter) opens the project's video (`opens: 'video'`) or its try (`opens: 'try'`, see "Add a try-it"). A world has at most two, one of each, so the painting stays calm.
 
-1. The project needs a video first (see "Add a video").
+1. A video spot needs the video first (see "Add a video"); a try spot needs the try.
 2. Put a 10x10 grid over the source painting (as in "Make a place move") and read where the object is: `u` across and `v` down, 0..1, in the **landscape** painting.
-3. Add it to `SPOTS` in `src/worlds/spots.ts`: `u`, `v`, which `side` of the dot the label stands (where it covers the least of the object) and `opens: 'video'`.
-4. Give the project its label, `spot`, in `src/content/projects.ts` (a few words, lower case: "watch the app"; the running time is added).
-5. Look at it at 1440x900, 1366x680, 390x844 and 320x568. The page places the spot with the same cover maths as the painting (`src/worlds/cover.ts`), for the landscape picture and the upright crop, again on every resize, and the layer pushes in with the painting. Where the object is cut off, or the spot would stand on the words, the corner switches or the tag, it is not shown and the project's Watch button stays; where it is shown, the Watch button goes (one way in). The e2e suite checks this at those four sizes.
+3. Add it to the world's list in `SPOTS` in `src/worlds/spots.ts`: `u`, `v`, which `side` of the dot the label stands (where it covers the least of the object) and what it `opens`. Where two would crowd each other, the first in the list stays.
+4. Give it its label: a video spot's is the project's `spot` in `src/content/projects.ts` ("watch the app"; the running time is added), a try spot's is the try's `spot` in `src/content/tries.ts` ("read a card"). A few words, lower case.
+5. Look at it at 1440x900, 1366x680, 390x844 and 320x568. The page places the spots with the same cover maths as the painting (`src/worlds/cover.ts`), for the landscape picture and the upright crop, again on every resize, and the layer pushes in with the painting. Where the object is cut off, or a spot would stand on the words, the corner switches, the tag or the other spot, it is not shown and the button in the words that opens the same thing (Watch, Try it) stays; where it is shown, that button goes (one way in). The e2e suite checks this at those four sizes.
+
+## Add a try-it
+
+A try is a taste of a project that takes five to fifteen seconds: pick something, then see what it meant. Kaisar's rules for them: plain choices, nothing to drag, nothing to learn first, plain first-person words, and a private project's try is clearly an example (no client names, real numbers or currencies).
+
+1. Pick a kind (`src/try/`): `kana` (cards with readings to pick), `fight` (roll a d20 against an enemy, real 5e arithmetic, dice from a seeded random source), `call` (lines that appear one after another once you pick up) or `pick` (choices that show what they meant: `once` for one decision, `find` for the one line that is wrong, `any` for answers to every question). A new kind is a new pure machine beside them (a `start`, a `press` and a `view`, see `view.ts`) with its unit tests, and a case in `run.ts`; the panel draws any view, so it does not change.
+2. Write its words and data in `TRIES` in `src/content/tries.ts`: the spot's label, the heading, and what the kind needs. A link to a live site's page only once you have opened that page.
+3. Give it a spot in its painting (`opens: 'try'`, see "Add a spot"). Where the spot cannot be shown, the project's Try it button opens it instead.
+4. Play it through at 1440x900 and 320x568: it should fit the card without scrolling on a laptop, and every line should say what it means in words (right, wrong, your choice), never by colour alone. The unit tests play every try to its end; the e2e suite opens each from its painting, finishes it, and closes it with Esc.
+
+The card (`src/try/panel.ts`, `styles/try.css`) is a modal dialog like the Read sheet: Esc, Close, a press outside or a swipe down close it, focus goes back to whatever opened it, each press is told to screen readers through a live line, and the frame loop rests under it. The d20 flickers through a few faces before it lands, except with the motion switched off; the example call's phone rings once as it is picked up, only if the sound is already on.
 
 ## Environment
 

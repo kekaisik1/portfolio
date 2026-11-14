@@ -11,6 +11,8 @@
   .js .intro .rows li,
   .js .intro .bfoot,
   dialog.sheet[open],
+  dialog.sheet.try-card[open],
+  .try-blocks > .new,
   .lit.rise {
     animation: none;
   }

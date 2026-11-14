@@ -1,0 +1,190 @@
+/*
+ * The "try it" card (src/try/panel.ts): a small sheet over the painting, low in the middle of a wide screen and
+ * raised from the bottom edge on a phone (narrow.css). Built from the sheet's own parts; it grows upwards only, so
+ * nothing jumps as lines arrive. Marks are words beside a choice, never colour alone.
+ */
+dialog.sheet.try-card {
+  inset: auto 0 max(24px, 5vh) 0;
+  width: min(29rem, calc(100vw - 32px));
+  max-height: min(80dvh, 640px);
+  margin: 0 auto;
+  border: 1px solid var(--rule);
+}
+dialog.sheet.try-card[open] {
+  animation: try-in 0.18s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+dialog.sheet.try-card::backdrop {
+  background: rgb(var(--shade) / 0.35);
+}
+@keyframes try-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.try-card {
+  --pad: 24px;
+}
+.try-card .sheet-top .kicker {
+  font-weight: 600;
+}
+.try-card .sheet-body {
+  padding-top: 16px;
+  padding-bottom: 20px;
+}
+.try-step {
+  margin: 0 0 10px;
+  font: 500 var(--t-label) / 1.3 var(--mono);
+  font-stretch: 85%;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--quiet);
+}
+.try-blocks {
+  display: grid;
+  gap: 10px;
+}
+.try-line {
+  margin: 0;
+  font: 450 16px / 1.45 var(--big);
+  font-stretch: 100%;
+  color: var(--soft);
+}
+.try-line.strong {
+  font-weight: 650;
+  color: var(--ink);
+}
+.try-line.quiet {
+  font-size: 14px;
+  color: var(--quiet);
+}
+.try-tag,
+.try-who {
+  font: 600 var(--t-label) / 1 var(--mono);
+  font-stretch: 85%;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.try-tag {
+  display: inline-block;
+  padding: 3px 6px;
+  margin-right: 2px;
+  vertical-align: 2px;
+  color: var(--board);
+  background: var(--soft);
+}
+.try-who {
+  color: var(--quiet);
+}
+/* a line that has just arrived comes in softly */
+.try-blocks > .new {
+  animation: try-line-in 0.24s ease-out both;
+}
+@keyframes try-line-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.try-glyph {
+  margin: 0;
+  font:
+    400 clamp(4.5rem, 14vh, 6.5rem) / 1 'Hiragino Mincho ProN',
+    'Yu Mincho',
+    'Noto Serif JP',
+    serif;
+  text-align: center;
+  color: var(--ink);
+}
+.try-roll {
+  margin: 0;
+  font: 700 clamp(3rem, 9vh, 4.25rem) / 1 var(--mono);
+  font-stretch: 85%;
+  font-variant-numeric: tabular-nums;
+  color: var(--signal);
+}
+.try-meter {
+  display: grid;
+  gap: 6px;
+}
+.try-bar {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  background: rgb(244 241 234 / 0.12);
+}
+.try-fill {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+  transform-origin: left center;
+}
+.try-meter-t {
+  font: 500 var(--t-label) / 1.3 var(--mono);
+  font-stretch: 85%;
+  color: var(--soft);
+}
+.try-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.try-after {
+  margin-top: 14px;
+}
+.try-choice {
+  justify-content: space-between;
+  text-align: left;
+  white-space: normal;
+}
+/* long choices (a question, a line of a story, a decision) stack, one to a row, in the running typeface */
+.try-card[data-kind='pick'] .try-choice {
+  flex: 1 1 100%;
+  font: 550 15px / 1.35 var(--big);
+  font-stretch: 100%;
+}
+.try-card[data-kind='pick'] .try-mark {
+  font-family: var(--mono);
+  font-stretch: 85%;
+}
+.try-choice[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--board);
+}
+.try-choice:disabled {
+  opacity: 1;
+  color: var(--quiet);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.try-choice[data-mark]:disabled {
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.try-mark {
+  flex: 0 0 auto;
+  font-weight: 400;
+  font-size: var(--t-label);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.try-mark::before {
+  content: '· ';
+}
+.try-end {
+  margin: 16px 0 0;
+}
+.try-end[hidden],
+.try-step[hidden],
+.try-choices[hidden],
+.try-after[hidden] {
+  display: none;
+}

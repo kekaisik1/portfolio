@@ -55,6 +55,12 @@ export const MESSAGES = {
   videoFailed: "the video didn't load",
   videoLoading: 'loading…',
   videoLabel: (name: string): string => `${name}, a short video`,
+  /** the button in a world's words that opens its try where the spot in the painting cannot be shown */
+  tryIt: 'Try it',
+  /** a try's spot and its Try it button, read aloud: "Try Kana Notebook: read a card" */
+  tryLabel: (name: string, spot: string): string => `Try ${name}: ${spot}`,
+  /** what a choice in a try turned out to be, in words beside it (never colour alone) */
+  marks: { right: 'right', wrong: 'not this one', chosen: 'your choice', fine: 'fine', found: 'this one' },
   /** the footer clock, for a room that is nowhere in particular */
   yourTime: 'your time',
   newTab: ' (opens in a new tab)',

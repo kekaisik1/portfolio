@@ -25,6 +25,113 @@ export interface Project {
   spot?: string;
 }
 
+/**
+ * A "try it": a taste of a project in one or two presses, opened from a spot in its painting (or the Try it button).
+ * Each kind is a small state machine in src/try/; this is only its words and data.
+ */
+export type TryCopy = KanaTry | FightTry | CallTry | PickTry;
+
+interface TryBase {
+  /** the label of its spot in the painting, a few words, lower case: "read a card" */
+  spot: string;
+  /** the heading of the panel */
+  heading: string;
+  /** where it ends: the project's own link, if it has one */
+  link?: ProjectLink;
+}
+
+export interface KanaCard {
+  kana: string;
+  romaji: string;
+  /** the readings offered, the right one among them */
+  choices: readonly string[];
+}
+
+export interface KanaTry extends TryBase {
+  kind: 'kana';
+  cards: readonly KanaCard[];
+  /** the small line over a card: "card 1 of 3" */
+  step: (n: number, of: number) => string;
+  /** what the card is, for a screen reader (the character itself would say its reading) */
+  cardLabel: (n: number) => string;
+  right: (kana: string, romaji: string) => string;
+  wrong: (kana: string, romaji: string) => string;
+  next: string;
+  /** the last line: "3 of 3." and what the app has */
+  score: (right: number, of: number) => string;
+  end: string;
+}
+
+export interface FightTry extends TryBase {
+  kind: 'fight';
+  intro: string;
+  enemy: string;
+  ac: number;
+  hp: number;
+  toHit: number;
+  damage: { count: number; sides: number; bonus: number };
+  roll: string;
+  /** "14 + 5 = 19 vs AC 15" */
+  sum: (d20: number, bonus: number, total: number, ac: number) => string;
+  hit: (damage: number) => string;
+  crit: (damage: number) => string;
+  miss: string;
+  fumble: string;
+  hpText: (hp: number, max: number) => string;
+  down: (rolls: number) => string;
+}
+
+export interface CallLine {
+  who: string;
+  text: string;
+}
+
+export interface CallTry extends TryBase {
+  kind: 'call';
+  /** said before anything else: it is an example */
+  mark: string;
+  pickUp: string;
+  lines: readonly CallLine[];
+  booked: string;
+  end: string;
+}
+
+/** A line shown after a choice, with an optional tag in front of it ("Documented", "Your outcome"). */
+export interface ResultLine {
+  text: string;
+  tag?: string;
+}
+
+export interface PickOption {
+  id: string;
+  label: string;
+  result: readonly ResultLine[];
+  /** a plain bar under the result: how much of what */
+  meter?: { value: number; max: number };
+  /** a page to go on to (a live site's real page) */
+  link?: ProjectLink;
+  /** 'find' mode: the one the visitor is looking for */
+  target?: boolean;
+}
+
+export interface PickTry extends TryBase {
+  kind: 'pick';
+  /**
+   * once: one choice, then what it meant (the others close); find: press until the one you are looking for
+   * (the others say so); any: every choice shows its own answer, as often as you like
+   */
+  mode: 'once' | 'find' | 'any';
+  /** a small line over it all: "an example, with made-up numbers" */
+  step?: string;
+  intro: readonly ResultLine[];
+  ask: string;
+  options: readonly PickOption[];
+  /** 'find': what a wrong press says */
+  fine?: string;
+  /** the last line, once it is done */
+  end?: ResultLine;
+}
+
 /** How a status word on the board is coloured. */
 export type StatusTone = 'live' | 'use' | 'building' | 'private' | 'plain';
 
