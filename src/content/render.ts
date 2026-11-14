@@ -7,6 +7,7 @@ import type { VideoManifest } from '../../scripts/video-manifest';
 import { TALL_QUERY } from '../lib/queries';
 import placeholders from '../worlds/placeholders.json';
 import { lookOf, photoUrl } from '../worlds/looks';
+import { reactionOf } from '../worlds/reactions';
 import { spotsOf, type Spot } from '../worlds/spots';
 import { WORLDS, rowNumber } from './places';
 import { MESSAGES, SITE } from './site';
@@ -80,16 +81,24 @@ function trySpot(p: Project, spot: Spot, k: number): string {
 }
 
 /**
- * The spots in the painting (hidden until they are placed, and without scripts, where the buttons in the words are
- * the way in). The layer is there in every world: it pushes in with the painting.
+ * The one thing in the painting that answers a press (src/worlds/reactions.ts): an invisible button the size of its
+ * object, placed by src/worlds/react-view.ts. Hidden until then, and without scripts.
  */
-function spotsLayer(p: Project | undefined, videos: VideoManifest): string {
+const reactButton = (w: World): string =>
+  reactionOf(w.id) ? `<button class="react" type="button" aria-label="${esc(w.react)}" hidden></button>` : '';
+
+/**
+ * The layer over the painting that pushes in with it: the world's reaction and its spots (hidden until they are
+ * placed, and without scripts, where the buttons in the words are the way in). Every world has one.
+ */
+function spotsLayer(w: World, videos: VideoManifest): string {
+  const p = w.project;
   const spots = p
     ? spotsOf(p.slug)
         .map((s, k) => (s.opens === 'video' ? videoSpot(p, s, k, videos) : trySpot(p, s, k)))
         .join('')
     : '';
-  return `<div class="spots">${spots}</div>`;
+  return `<div class="spots">${reactButton(w)}${spots}</div>`;
 }
 
 /** The Try it button in the words: the way in where the try's spot cannot be shown. */
@@ -119,7 +128,7 @@ export function renderProject(w: World, i: number, videos: VideoManifest = {}): 
     `<p class="line">${esc(p.line)}</p>` +
     more +
     `<div class="acts">${read}${tryButton(p)}${watchButton(p, videos)}${link}</div>` +
-    `</div>${spotsLayer(p, videos)}</section>`
+    `</div>${spotsLayer(w, videos)}</section>`
   );
 }
 
@@ -129,7 +138,7 @@ function hello(w: World, i: number): string {
     `<h1 class="name" id="hello-t" tabindex="-1">${esc(SITE.hero.heading)}</h1>` +
     `<p class="lede">${esc(SITE.hero.line)}</p>` +
     `<div class="acts"><button class="btn walk" type="button" data-go="1">${esc(SITE.hero.walk)}</button></div>` +
-    `</div>${spotsLayer(undefined, {})}</section>`
+    `</div>${spotsLayer(w, {})}</section>`
   );
 }
 
@@ -142,7 +151,7 @@ function about(w: World, i: number): string {
     `<p class="lede">${esc(first)}</p>` +
     `<div class="more">${rest.map((t) => `<p>${esc(t)}</p>`).join('')}</div>` +
     `<div class="acts">${readButton(SITE.about.heading)}</div>` +
-    `</div>${spotsLayer(undefined, {})}</section>`
+    `</div>${spotsLayer(w, {})}</section>`
   );
 }
 
@@ -160,7 +169,7 @@ function contact(w: World, i: number): string {
     `<button class="btn lantern-btn" id="lantern" type="button"><span class="dot" aria-hidden="true"></span>` +
     `${esc(MESSAGES.lightLantern)}</button></div>` +
     `<p class="lantern-n" id="lantern-n" aria-live="polite"></p>` +
-    `</div>${spotsLayer(undefined, {})}</section>`
+    `</div>${spotsLayer(w, {})}</section>`
   );
 }
 

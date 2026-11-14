@@ -22,6 +22,7 @@ import { createTravel } from './travel/travel';
 import { initPlayer } from './video/player';
 import { lookOf } from './worlds/looks';
 import { createPhotos } from './worlds/photos';
+import { initReactions } from './worlds/react-view';
 import { initSpots } from './worlds/spot-view';
 
 const RESIZE_SETTLE_MS = 150;
@@ -56,8 +57,18 @@ function boot(): void {
     smooth: () => smooth && switches.motion(),
   });
   const spots = initSpots(worlds, lens, upright);
+  const reactions = initReactions(worlds, lens, upright, {
+    ambient,
+    motion: () => smooth && switches.motion(),
+    spotsShown: (i) => spots.shown(i),
+  });
+  /* the spots first: a reacting object never stands on one */
+  const place = (i: number): void => {
+    spots.layout(i);
+    reactions.layout(i);
+  };
   const relayout = (): void => {
-    spots.layout(travel.current());
+    place(travel.current());
     living.resize();
     ambient.resize();
     lanterns.layout();
@@ -97,7 +108,7 @@ function boot(): void {
     lanterns.show(false);
   });
   travel.onArrive((i) => {
-    spots.layout(i);
+    place(i);
     living.show(i);
     ambient.set(lookOf(WORLDS[i].id));
     lanterns.show(i === contact);
@@ -125,7 +136,7 @@ function boot(): void {
   narrow.addEventListener('change', settled);
 
   /* the words are measured again once the typefaces are in: the spot must not stand on them */
-  void document.fonts.ready.then(() => spots.layout(travel.current()));
+  void document.fonts.ready.then(() => place(travel.current()));
 
   void loadToday().then((today) => {
     if (today) footer.setToday(today.weather, today.now);

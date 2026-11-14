@@ -3,11 +3,14 @@
  * blossom petals, dust in the light. (What moves inside the painting itself is src/living/.) The canvas is half
  * the stage's size, draws about thirty times a second from the page's one frame loop (src/lib/ticker.ts), and is
  * off the loop whenever its world has nothing in the air. It says whether it is drawing in data-live (on / off).
+ * A press on something in the painting can add a short burst of particles from a point (src/worlds/reactions.ts):
+ * they live a second or two in a small pool of their own, and the canvas leaves the loop again once they are gone.
  */
 import { ctx2d } from '../lib/dom';
 import type { Ticker } from '../lib/ticker';
 import { coverFit, placeX, placeY, tallU, TALL_SIZE, WIDE_SIZE, type Fit } from '../worlds/cover';
 import type { Look } from '../worlds/looks';
+import { MAX_BURST, type Burst } from '../worlds/reactions';
 import { MAX_PARTICLES, type AmbientSpec, type Point } from './spec';
 
 /** canvas pixels per CSS pixel */
@@ -36,6 +39,13 @@ export interface Ambient {
   set(look: Look | null): void;
   /** The stage changed size or the photo changed crop. */
   resize(): void;
+  /** A short burst of particles from a point of the painting (a reaction to a press). */
+  burst(b: Burst): void;
+}
+
+interface Spark extends Particle {
+  style: Burst['style'];
+  rgb: string;
 }
 
 const rand = (a: number, b: number): number => a + Math.random() * (b - a);
@@ -63,6 +73,8 @@ export function createAmbient(canvas: HTMLCanvasElement, opts: { upright: () => 
   let t = 0;
   let due = 0;
   let stop: (() => void) | null = null;
+  /** the bursts' own pool: the oldest is reused when it is full */
+  const sparks: Spark[] = [];
 
   const sync = (): void => {
     canvas.dataset.live = stop !== null && ticker.running() ? 'on' : 'off';
@@ -151,9 +163,79 @@ export function createAmbient(canvas: HTMLCanvasElement, opts: { upright: () => 
     }
   }
 
+  /** A burst's particle: born near its point, moving the way its style says. */
+  function spark(b: Burst): Spark {
+    const [ox, oy] = px(b.at);
+    const r = b.spread * fit.height;
+    const p: Spark = {
+      x: ox + rand(-r, r),
+      y: oy + rand(-r, r) * 0.6,
+      vx: 0,
+      vy: 0,
+      s: 1,
+      a: 1,
+      ph: rand(0, TAU),
+      age: 0,
+      life: 1,
+      style: b.style,
+      rgb: b.rgb,
+    };
+    switch (b.style) {
+      case 'rise':
+        p.vx = rand(-16, 16);
+        p.vy = rand(-34, -80);
+        p.s = rand(1.6, 3.4);
+        p.life = rand(0.9, 1.9);
+        break;
+      case 'fall':
+        p.vx = rand(-14, 4);
+        p.vy = rand(14, 34);
+        p.s = rand(2, 3.6);
+        p.a = rand(0.6, 0.9);
+        p.life = rand(1.6, 3);
+        break;
+      case 'drift':
+        p.vx = (b.dir ?? 1) * rand(0.05, 0.12) * fit.height;
+        p.vy = rand(-0.02, 0.006) * fit.height;
+        p.s = rand(1.4, 2.6);
+        p.a = rand(0.55, 0.95);
+        p.life = rand(1, 2);
+        break;
+      case 'sparkle':
+        p.vx = rand(-3, 3);
+        p.vy = rand(4, 14);
+        p.s = rand(1.8, 3.4);
+        p.life = rand(0.5, 1.3);
+        break;
+    }
+    return p;
+  }
+
+  function drawSparks(dt: number): void {
+    let n = 0;
+    for (const p of sparks) {
+      p.age += dt;
+      if (p.age > p.life) continue;
+      sparks[n++] = p;
+      p.x += p.vx * dt + (p.style === 'fall' ? Math.sin(t * 1.3 + p.ph) * 14 * dt : 0);
+      p.y += p.vy * dt;
+      const q = p.age / p.life;
+      const fade = Math.max(0, q < 0.15 ? q / 0.15 : 1 - (q - 0.15) / 0.85);
+      ctx.fillStyle = `rgb(${p.rgb})`;
+      ctx.globalAlpha = p.a * fade * (p.style === 'sparkle' ? 0.5 + 0.5 * Math.sin(t * 9 + p.ph) : 1);
+      if (p.style === 'drift') ctx.fillRect(p.x, p.y, p.s * 2.2, p.s);
+      else if (p.style === 'fall')
+        ctx.fillRect(p.x, p.y, p.s * 1.6 * (0.35 + 0.65 * Math.abs(Math.cos(t * 1.9 + p.ph))), p.s);
+      else ctx.fillRect(p.x, p.y, p.s, p.s);
+    }
+    sparks.length = n;
+    ctx.globalAlpha = 1;
+  }
+
   function draw(dt: number): void {
-    if (!spec) return;
     ctx.clearRect(0, 0, W, H);
+    if (sparks.length > 0) drawSparks(dt);
+    if (!spec) return;
     switch (spec.kind) {
       case 'spindrift':
         ctx.fillStyle = '#fff';
@@ -223,11 +305,18 @@ export function createAmbient(canvas: HTMLCanvasElement, opts: { upright: () => 
     due = 0;
     t += step;
     draw(step);
+    /* a world with nothing in its air leaves the loop again once its burst is over */
+    if (live === 0 && sparks.length === 0) {
+      stop?.();
+      stop = null;
+      sync();
+    }
   }
 
   function restart(): void {
     stop?.();
     stop = null;
+    sparks.length = 0;
     measure();
     ctx.clearRect(0, 0, W, H);
     live = spec && W > 0 ? Math.min(MAX_PARTICLES, spec.count) : 0;
@@ -245,5 +334,14 @@ export function createAmbient(canvas: HTMLCanvasElement, opts: { upright: () => 
       restart();
     },
     resize: restart,
+    burst(b) {
+      if (W === 0) return;
+      for (let i = 0; i < Math.min(b.count, MAX_BURST); i++) {
+        if (sparks.length >= MAX_BURST) sparks.shift();
+        sparks.push(spark(b));
+      }
+      if (!stop) stop = ticker.add(tick);
+      sync();
+    },
   };
 }

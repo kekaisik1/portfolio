@@ -6,7 +6,7 @@
  * with the same cover maths as the paintings (cover.ts). Their words (the labels) are the project's `spot` in
  * src/content/projects.ts (the video) and its try's `spot` in src/content/tries.ts. Pure, so it is unit-tested.
  */
-import { coverFit, placeX, placeY, tallU, TALL_SIZE, WIDE_SIZE } from './cover';
+import { coverFit, placeX, placeY, tallU, TALL_SIZE, WIDE_SIZE, type Fit } from './cover';
 import type { Look } from './looks';
 
 export interface Spot {
@@ -57,19 +57,27 @@ export interface Point {
 }
 
 /**
- * Where a spot lands in a box the painting covers (the stage, in CSS pixels): the landscape picture at its look's
- * `x`, or the upright crop cut around its look's `focus` and centred. Null when the object is cut off.
+ * How the painting covers a box (the stage, in CSS pixels): the landscape picture at its look's `x`, or the upright
+ * crop cut around its look's `focus` and centred.
+ */
+export const fitOf = (look: Look, box: { width: number; height: number }, upright: boolean): Fit => {
+  const aspect = upright ? TALL_SIZE.w / TALL_SIZE.h : WIDE_SIZE.w / WIDE_SIZE.h;
+  return coverFit(box.width, box.height, aspect, upright ? 0.5 : look.x / 100);
+};
+
+/**
+ * Where a point of the landscape painting (a spot, a thing that reacts) lands in a box the painting covers. Null
+ * when it is cut off.
  */
 export function spotPoint(
-  spot: Spot,
+  spot: { u: number; v: number },
   look: Look,
   box: { width: number; height: number },
   upright: boolean,
 ): Point | null {
   const u = upright ? tallU(spot.u, look.focus) : spot.u;
   if (u < 0 || u > 1) return null;
-  const aspect = upright ? TALL_SIZE.w / TALL_SIZE.h : WIDE_SIZE.w / WIDE_SIZE.h;
-  const fit = coverFit(box.width, box.height, aspect, upright ? 0.5 : look.x / 100);
+  const fit = fitOf(look, box, upright);
   const x = placeX(fit, u);
   const y = placeY(fit, spot.v);
   if (x < 0 || x > box.width || y < 0 || y > box.height) return null;

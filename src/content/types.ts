@@ -152,6 +152,8 @@ export interface Place {
   tzLabel?: string;
   /** What the painting shows, for people who cannot see it. */
   alt: string;
+  /** The name of the one thing in the painting that answers a press (src/worlds/reactions.ts says where). */
+  react: string;
 }
 
 /** A place together with what stands in it. */

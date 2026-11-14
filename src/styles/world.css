@@ -336,3 +336,54 @@ main {
 .world.spotted-try .acts .try {
   display: none;
 }
+
+/*
+ * The thing in the painting that answers a press (src/worlds/reactions.ts): an invisible button the size of its
+ * object. No hover: only the pointer says it can be pressed, and a ring when the keyboard reaches it. Its effects
+ * (a soft light, a shooting star) are elements in the same layer, moved with opacity and transform only.
+ */
+.react {
+  position: absolute;
+  padding: 0;
+  pointer-events: auto;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.react:focus-visible {
+  outline-offset: 2px;
+}
+[data-motion='off'] .react {
+  display: none;
+}
+.flare,
+.streak {
+  position: absolute;
+  left: var(--fx);
+  top: var(--fy);
+  pointer-events: none;
+  opacity: 0;
+}
+.flare {
+  width: var(--fs);
+  height: var(--fs);
+  margin: calc(var(--fs) / -2) 0 0 calc(var(--fs) / -2);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgb(255 248 232 / 0.75) 0,
+    rgb(var(--frgb) / 0.6) 14%,
+    rgb(var(--frgb) / 0.3) 36%,
+    rgb(var(--frgb) / 0.09) 55%,
+    transparent 70%
+  );
+}
+.streak {
+  width: var(--len);
+  height: 2px;
+  margin-top: -1px;
+  transform-origin: 0 50%;
+  border-radius: 1px;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.95));
+}
