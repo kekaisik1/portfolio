@@ -155,18 +155,36 @@ export function poseAt(t: number, n: number, turns: number): Pose {
 const LIGHT: Vec3 = norm([0.4, 0.75, 0.52]);
 const DARK = [112, 26, 34] as const;
 const LIT = [236, 96, 62] as const;
-const GLOW = [255, 176, 128] as const;
 
 const mix = (a: readonly number[], b: readonly number[], k: number): string =>
   `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * k)).join(' ')})`;
 
+/** how many times a second the thrown die is redrawn: like the painting, it is hand-made, not smooth */
+export const DRAWN_PER_SECOND = 12;
+
+/** The moment a drawing made `ms` into a throw shows: the start of its twelfth of a second. */
+export const drawnAt = (ms: number): number => Math.floor((ms * DRAWN_PER_SECOND) / 1000) * (1000 / DRAWN_PER_SECOND);
+
 /**
  * Draw the die: middle at (cx, cy) in canvas pixels, `r` its radius. Only the faces turned to the viewer are drawn
  * (it is convex, so they never overlap); a number is drawn on a face once it is turned far enough to be read.
+ *
+ * It is painted, not rendered: every face is filled with `paint`, a patch of the painted die's own brushwork that
+ * lies on the face and turns with it (a different part of the patch for each face), then glazed lighter or darker
+ * by how it meets the light, with a loose pale line along its edges like the painting's. Without `paint` (it did
+ * not load) the faces are plain colour.
  */
-export function drawDie(ctx: CanvasRenderingContext2D, m: Mat3, cx: number, cy: number, r: number): void {
+export function drawDie(
+  ctx: CanvasRenderingContext2D,
+  m: Mat3,
+  cx: number,
+  cy: number,
+  r: number,
+  paint: CanvasImageSource | null = null,
+): void {
   const at = (v: Vec3): [number, number] => [cx + v[0] * r, cy - v[1] * r];
   ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   for (let k = 0; k < FACES.length; k++) {
@@ -175,34 +193,50 @@ export function drawDie(ctx: CanvasRenderingContext2D, m: Mat3, cx: number, cy: 
     if (out[2] <= 0.02) continue;
     const pts = FACES[k].map((i) => at(apply(m, CORNERS[i])));
     const lit = Math.max(0, dot(out, LIGHT));
-    ctx.beginPath();
-    ctx.moveTo(pts[0][0], pts[0][1]);
-    ctx.lineTo(pts[1][0], pts[1][1]);
-    ctx.lineTo(pts[2][0], pts[2][1]);
-    ctx.closePath();
-    /* a face is not one flat colour in the painting: lighter towards its upper corner */
-    const top = pts.reduce((a, b) => (b[1] < a[1] ? b : a));
-    const low = pts.reduce((a, b) => (b[1] > a[1] ? b : a));
-    const g = ctx.createLinearGradient(top[0], top[1], low[0], low[1]);
-    g.addColorStop(
-      0,
-      lit > 0.72 ? mix(LIT, GLOW, (lit - 0.72) / 0.28) : mix(DARK, LIT, Math.min(1, lit / 0.72 + 0.12)),
-    );
-    g.addColorStop(1, mix(DARK, LIT, Math.min(1, lit / 0.72) * 0.86));
-    ctx.fillStyle = g;
-    ctx.fill();
-    ctx.lineWidth = Math.max(1, r * 0.022);
-    ctx.strokeStyle = `rgb(255 214 190 / ${0.28 + 0.4 * lit})`;
-    ctx.stroke();
-    if (out[2] < 0.3) continue;
     const mid = at(apply(m, f.mid));
     const right = apply(m, f.right);
     const up = apply(m, f.up);
+    const outline = (): void => {
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      ctx.lineTo(pts[1][0], pts[1][1]);
+      ctx.lineTo(pts[2][0], pts[2][1]);
+      ctx.closePath();
+    };
+    outline();
+    if (paint) {
+      ctx.save();
+      ctx.clip();
+      /* the face's own right and down, flattened onto the canvas: what is drawn now lies on the face */
+      ctx.transform(right[0], -right[1], -up[0], up[1], mid[0], mid[1]);
+      ctx.rotate(k * 2.4);
+      const size = r * 2.1;
+      ctx.drawImage(paint, -size / 2 + ((k % 5) - 2) * r * 0.06, -size / 2 + ((k % 3) - 1) * r * 0.08, size, size);
+      ctx.restore();
+      /* a glaze: warm light on the faces that meet it, the painting's violet shadow on those that turn away */
+      outline();
+      ctx.fillStyle = lit > 0.5 ? `rgb(255 206 160 / ${(lit - 0.5) * 0.7})` : `rgb(74 16 58 / ${(0.5 - lit) * 0.6})`;
+      ctx.fill();
+    } else {
+      ctx.fillStyle = mix(DARK, LIT, Math.min(1, lit / 0.72));
+      ctx.fill();
+    }
+    /* the edge: a pale line, then a thinner darker one beside it, as a brush leaves them */
+    ctx.lineWidth = Math.max(1, r * 0.03);
+    ctx.strokeStyle = `rgb(255 222 200 / ${0.22 + 0.38 * lit})`;
+    ctx.stroke();
+    ctx.lineWidth = Math.max(0.75, r * 0.011);
+    ctx.strokeStyle = 'rgb(92 20 40 / 0.35)';
+    ctx.stroke();
+    if (out[2] < 0.3) continue;
     ctx.save();
-    /* the face's own right and down, flattened onto the canvas: the figure lies on the face */
     ctx.transform(right[0], -right[1], -up[0], up[1], mid[0], mid[1]);
     ctx.font = `800 ${r * 0.4}px "Schibsted Grotesk", system-ui, sans-serif`;
-    ctx.fillStyle = `rgb(255 244 232 / ${Math.min(1, (out[2] - 0.3) / 0.35)})`;
+    const seen = Math.min(1, (out[2] - 0.3) / 0.35);
+    /* the figure: dark paint under cream paint, a little off, so it reads as brushed on */
+    ctx.fillStyle = `rgb(84 14 30 / ${0.55 * seen})`;
+    ctx.fillText(String(k + 1), r * 0.018, r * 0.062);
+    ctx.fillStyle = `rgb(255 240 222 / ${0.92 * seen})`;
     ctx.fillText(String(k + 1), 0, r * 0.04);
     ctx.restore();
   }

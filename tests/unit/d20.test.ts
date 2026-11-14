@@ -1,5 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { apply, CORNERS, FACES, frameOf, mul, poseAt, restOf, turn, type Mat3, type Vec3 } from '../../src/worlds/d20';
+import {
+  apply,
+  CORNERS,
+  DRAWN_PER_SECOND,
+  drawnAt,
+  FACES,
+  frameOf,
+  mul,
+  poseAt,
+  restOf,
+  turn,
+  type Mat3,
+  type Vec3,
+} from '../../src/worlds/d20';
 
 const len = (v: Vec3): number => Math.hypot(v[0], v[1], v[2]);
 const dot = (a: Vec3, b: Vec3): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -85,5 +98,15 @@ describe('the twenty-sided die', () => {
     for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) expect(nearly.turn[r][c]).toBeCloseTo(rest[r][c], 9);
     /* and it never goes below the ground or turns backwards into the rest */
     for (let t = 0; t <= 1; t += 0.05) expect(poseAt(t, 7, 2).height).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('the thrown die is hand-made', () => {
+  it('is redrawn twelve times a second: every moment shows the drawing made at the start of its twelfth', () => {
+    expect(DRAWN_PER_SECOND).toBe(12);
+    expect(drawnAt(0)).toBe(0);
+    expect(drawnAt(80)).toBe(0);
+    expect(drawnAt(84)).toBeCloseTo(83.33, 1);
+    expect(drawnAt(1000)).toBeCloseTo(1000, 6);
   });
 });

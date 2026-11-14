@@ -39,6 +39,8 @@ export interface Swap {
 export interface Throw {
   /** the ledge without the painted die, shown while the real one is out */
   ledge: Piece;
+  /** the paint the thrown die is made of: a patch of the painted die's own brushwork, under public/states/<world>/ */
+  paint: string;
   /** the part of the painting the die may move in: its canvas */
   room: Omit<Piece, 'file'>;
   /** where the painted die's middle is, and its radius in picture heights */
@@ -81,9 +83,6 @@ const px = (x: number, y: number, w: number, h: number): Omit<Piece, 'file'> => 
   w: w / 1536,
   h: h / 1024,
 });
-
-/** where the smoke piece lies in the painting's pixels (printed by make_states.py) */
-const SMOKE = [500, 40, 610, 410] as const;
 
 /** In the order they are laid down: a later toy lies over an earlier one where their places overlap. */
 export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
@@ -144,6 +143,7 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
       h: 0.2,
       throw: {
         ledge: { file: 'ledge.webp', ...px(544, 747, 312, 277) },
+        paint: 'die-paint.webp',
         room: px(430, 520, 540, 504),
         at: [700 / 1536, 897 / 1024],
         radius: 0.118,
@@ -152,10 +152,10 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
         ms: 1900,
         rest: 3400,
         sides: 20,
-        /* a 1: the dragon only snorts. Under 10: the wizard's bolt goes wide. 10 and over: it strikes the dragon.
+        /* a 1: the dragon breathes fire over the party. Under 10: the wizard's bolt goes wide. 10 and over: it strikes the dragon.
            A 20: a blast that throws the hoard into the air */
         outcomes: [
-          { upTo: 1, toys: ['snort'] },
+          { upTo: 1, toys: ['burn'] },
           { upTo: 9, toys: ['miss'] },
           { upTo: 19, toys: ['hit'] },
           { upTo: 20, toys: ['crit'] },
@@ -164,18 +164,13 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
     },
     /* only the die sets these off */
     {
-      id: 'snort',
+      id: 'burn',
       unseen: true,
-      u: 0.66,
-      v: 0.3,
+      u: 0.5,
+      v: 0.5,
       w: 0,
       h: 0,
-      swap: {
-        piece: { file: 'smoke.webp', ...px(SMOKE[0], SMOKE[1], SMOKE[2], SMOKE[3]) },
-        rise: 700,
-        hold: 1500,
-        fall: 1500,
-      },
+      swap: { piece: { file: 'burn.webp', ...px(330, 150, 930, 680) }, rise: 600, hold: 1700, fall: 1400 },
     },
     {
       id: 'miss',

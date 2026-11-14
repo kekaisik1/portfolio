@@ -10,7 +10,7 @@ import { WORLDS } from '../content/places';
 import { TOY_SAYS } from '../content/toys';
 import { byId, pick } from '../lib/dom';
 import type { Ticker } from '../lib/ticker';
-import { drawDie, poseAt } from './d20';
+import { drawDie, drawnAt, poseAt } from './d20';
 import type { Effects } from './effects';
 import { lookOf } from './looks';
 import { reactionRect } from './reactions';
@@ -156,7 +156,14 @@ export function initToys(
       lift(ledge);
       busy.delete(key);
     };
-    void ledge.decode().then(() => {
+    /* the paint the die is made of; if it does not load the die is plain */
+    const paint = new Image();
+    paint.src = pieceUrl(WORLDS[i].id, t.paint);
+    const painted = paint.decode().then(
+      () => paint,
+      () => null,
+    );
+    void Promise.all([ledge.decode(), painted]).then(([, swatch]) => {
       const ctx = canvas.getContext('2d');
       if (!canvas.isConnected || !ctx) return over();
       const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -171,16 +178,21 @@ export function initToys(
       canvas.style.opacity = '1';
       let ms = 0;
       let told = false;
+      let last = -1;
       const draw = (dt: number): void => {
         ms += dt * 1000;
-        const pose = poseAt(ms / t.ms, n, t.turns);
+        /* drawn twelve times a second, like something hand-made, not smoothly: the painting is not smooth either */
+        const now = Math.min(t.ms, drawnAt(ms));
+        if (now === last && ms < t.ms) return;
+        last = now;
+        const pose = poseAt((ms >= t.ms ? t.ms : now) / t.ms, n, t.turns);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         /* its shadow on the ledge: smaller and fainter the higher it is */
         ctx.fillStyle = `rgb(38 28 46 / ${0.3 - 0.16 * pose.height})`;
         ctx.beginPath();
         ctx.ellipse(cx, ground + r * 0.86, r * (0.95 - 0.3 * pose.height), r * 0.2, 0, 0, Math.PI * 2);
         ctx.fill();
-        drawDie(ctx, pose.turn, cx, ground - pose.height * t.lift * unit, r);
+        drawDie(ctx, pose.turn, cx, ground - pose.height * t.lift * unit, r, swatch);
         if (ms >= t.ms && !told) {
           told = true;
           stop?.();

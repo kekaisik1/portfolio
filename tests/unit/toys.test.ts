@@ -100,7 +100,7 @@ describe('the paintings that are toys', () => {
     const die = TOYS.emberquill.find((t) => t.id === 'die')?.throw;
     if (!die) throw new Error('the dragon has no die');
 
-    expect(outcomeOf(die, 1)).toEqual(['snort']);
+    expect(outcomeOf(die, 1)).toEqual(['burn']);
     for (const n of [2, 5, 9]) expect(outcomeOf(die, n)).toEqual(['miss']);
     for (const n of [10, 15, 19]) expect(outcomeOf(die, n)).toEqual(['hit']);
     expect(outcomeOf(die, 20)).toEqual(['crit']);
@@ -135,7 +135,7 @@ describe('the paintings that are toys', () => {
       '<button class="react toy" type="button" data-toy="dragon" aria-label="Wake the dragon" hidden></button>',
     );
     expect(html.match(/class="react toy"/g)).toHaveLength(TOYS.emberquill.filter((t) => !t.unseen).length);
-    expect(html).not.toContain('data-toy="snort"');
+    expect(html).not.toContain('data-toy="burn"');
     expect(html).toContain('<span class="sr-only toy-say" role="status"></span>');
     expect(html).not.toContain('data-try="emberquill"');
   });

@@ -102,7 +102,7 @@ test.describe("the dragon's hall is a toy", () => {
   });
 
   for (const [random, shows, what] of [
-    [0, 'smoke.webp', 'a 1: the dragon only snorts'],
+    [0, 'burn.webp', 'a 1: the dragon breathes fire over the party'],
     [0.2, 'miss.webp', "under 10: the wizard's bolt goes wide"],
     [0.6, 'hit.webp', '10 and over: the bolt strikes the dragon'],
     [0.99, 'crit.webp', 'a 20: a blast throws the hoard into the air'],
