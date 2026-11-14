@@ -75,6 +75,13 @@ export interface Toy {
   then?: { toy: string; after: number };
   /** not a thing to press: only set off by another toy (a throw of the die) */
   unseen?: true;
+  /**
+   * An easter egg that says what it stands for: where its note stands in the painting (its words are in
+   * src/content/toys.ts). The note is a small board chip, the one crisp thing beside what was pressed.
+   */
+  note?: PicturePoint;
+  /** its piece is the whole painting again (the same place at another time): while it is in, nothing else answers */
+  whole?: true;
 }
 
 const px = (x: number, y: number, w: number, h: number): Omit<Piece, 'file'> => ({
@@ -315,6 +322,7 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
     /* the brazier's flame rises three times as tall */
     {
       id: 'brazier',
+      note: [0.86, 0.33],
       u: 0.925,
       v: 0.72,
       w: 0.11,
@@ -324,6 +332,7 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
     /* legionaries march along the road through the arch */
     {
       id: 'legion',
+      note: [0.37, 0.8],
       u: 0.36,
       v: 0.66,
       w: 0.14,
@@ -333,6 +342,7 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
     /* the temple's doors open on gold light */
     {
       id: 'temple',
+      note: [0.69, 0.68],
       u: 0.68,
       v: 0.5,
       w: 0.14,
@@ -342,11 +352,33 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
     /* doves fly up over the Colosseum */
     {
       id: 'doves',
+      note: [0.5, 0.13],
       u: 0.47,
       v: 0.36,
       w: 0.2,
       h: 0.12,
       swap: { piece: { file: 'doves.webp', ...px(568, 154, 369, 163) }, rise: 600, hold: 3000, fall: 1400 },
+    },
+    /* easter eggs that stand for what the project is. A Roman at the rail: you play someone who was there */
+    {
+      id: 'you',
+      note: [0.56, 0.56],
+      u: 0.56,
+      v: 0.82,
+      w: 0.1,
+      h: 0.22,
+      swap: { piece: { file: 'you.webp', ...px(737, 614, 430, 410) }, rise: 700, hold: 0, fall: 1400, stays: true },
+    },
+    /* the whole view as it is today, in ruins: pressed in the sky, where nothing says it is there */
+    {
+      id: 'now',
+      note: [0.5, 0.2],
+      whole: true,
+      u: 0.52,
+      v: 0.07,
+      w: 0.3,
+      h: 0.12,
+      swap: { piece: { file: 'now.webp', ...px(0, 0, 1536, 1024) }, rise: 1600, hold: 0, fall: 1600, stays: true },
     },
   ],
   bookforge: [
@@ -371,6 +403,7 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
     /* the pen's nib glows */
     {
       id: 'pen',
+      note: [0.86, 0.52],
       u: 0.9,
       v: 0.3,
       w: 0.06,
@@ -391,6 +424,36 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
         fall: 1400,
         stays: true,
       },
+    },
+    /* easter eggs that stand for what the project is. Three characters tied by a gold thread: where everyone is */
+    {
+      id: 'threads',
+      note: [0.58, 0.71],
+      u: 0.8,
+      v: 0.57,
+      w: 0.1,
+      h: 0.1,
+      swap: { piece: { file: 'threads.webp', ...px(415, 430, 952, 277) }, rise: 700, hold: 4600, fall: 1400 },
+    },
+    /* a ship on the mountain top, in the editor's red circle: it says what cannot be true */
+    {
+      id: 'editor',
+      note: [0.665, 0.34],
+      u: 0.665,
+      v: 0.24,
+      w: 0.07,
+      h: 0.1,
+      swap: { piece: { file: 'editor.webp', ...px(922, 123, 199, 184) }, rise: 700, hold: 4600, fall: 1400 },
+    },
+    /* the floating island's tether glows: a thread of the plot still open */
+    {
+      id: 'tether',
+      note: [0.5, 0.31],
+      u: 0.545,
+      v: 0.2,
+      w: 0.07,
+      h: 0.1,
+      swap: { piece: { file: 'tether.webp', ...px(461, 133, 461, 338) }, rise: 700, hold: 4600, fall: 1400 },
     },
   ],
   'kana-notebook': [

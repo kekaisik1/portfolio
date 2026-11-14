@@ -302,3 +302,17 @@ main {
   pointer-events: none;
   user-select: none;
 }
+
+/* an easter egg's note: a small board chip at its place in the painting, centred on it */
+.toy-note {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  max-width: min(22rem, calc(100vw - 24px));
+  padding: 5px 10px;
+  font: 500 clamp(12px, 1.6vh, 14px) / 1.45 var(--mono);
+  color: var(--ink);
+  background: var(--board);
+  text-shadow: none;
+  pointer-events: none;
+  opacity: 0;
+}

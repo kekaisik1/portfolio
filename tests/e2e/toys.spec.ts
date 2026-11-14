@@ -274,3 +274,55 @@ test.describe('every project place is a toy', () => {
     await expect(page.locator('#states .piece')).toHaveCount(0);
   });
 });
+
+test.describe('easter eggs say what they stand for', () => {
+  test('BookForge: the ship on the mountain shows the editor’s circle and a note, read out too, then both go', async ({
+    page,
+  }) => {
+    await arrive(page, 'bookforge');
+    await pressIn(page, 'bookforge', 'editor');
+    const note = page.locator('#bookforge .toy-note');
+
+    await expect(note).toHaveText('The editor circles what can’t be true yet.');
+    await expect(page.locator('#bookforge .toy-say')).toHaveText('The editor circles what can’t be true yet.');
+    expect((await shown(page, 'editor.webp')).peak).toBe(1);
+    /* the note is inside the window and clear of the words */
+    const clear = await page.evaluate(() => {
+      const n = document.querySelector('#bookforge .toy-note')?.getBoundingClientRect();
+      const w = document.querySelector('#bookforge .block')?.getBoundingClientRect();
+      if (!n || !w) throw new Error('missing');
+      const apart = n.right <= w.left || w.right <= n.left || n.bottom <= w.top || w.bottom <= n.top;
+      return apart && n.left >= 0 && n.right <= window.innerWidth && n.top >= 0 && n.bottom <= window.innerHeight;
+    });
+    expect(clear).toBe(true);
+    /* one note at a time */
+    await pressIn(page, 'bookforge', 'tether');
+    await expect(note).toHaveCount(1);
+    await expect(note).toHaveText('A plot thread still open.');
+    await expect(note).toHaveCount(0, { timeout: 12_000 });
+  });
+
+  test('Rome: the Forum today is the whole painting; while it is in nothing else answers, and a press brings Rome back', async ({
+    page,
+  }) => {
+    await arrive(page, 'history-lens');
+    await pressIn(page, 'history-lens', 'you');
+    expect((await shown(page, 'you.webp')).peak).toBe(1);
+    await expect(page.locator('#history-lens .toy-note')).toHaveText('You play someone who was really there.');
+
+    await pressIn(page, 'history-lens', 'now');
+    const now = await shown(page, 'now.webp');
+    expect(now.peak).toBe(1);
+    expect(now.right - now.left).toBeGreaterThanOrEqual(1439);
+    await expect(page.locator('#history-lens .toy-note')).toHaveText('The same terrace, today.');
+    /* the temple does not open its doors in a ruin */
+    await pressIn(page, 'history-lens', 'temple');
+    await page.waitForTimeout(400);
+    await expect(piece(page, 'temple.webp')).toHaveCount(0);
+
+    await pressIn(page, 'history-lens', 'now');
+    await expect(piece(page, 'now.webp')).toHaveCount(0, { timeout: 6000 });
+    /* who was standing at the rail is still there */
+    await expect(piece(page, 'you.webp')).toHaveCount(1);
+  });
+});

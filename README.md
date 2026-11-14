@@ -168,6 +168,10 @@ Keep it calm (Kaisar: "motion things feel like too much, making eyes hurt"): pie
 3. Describe the toys in `src/worlds/toys.ts` (where to press, which piece fades in and for how long, what else plays, what sets what off; the rectangles copied from the script) and name each one in `src/content/toys.ts` with a plain verb ("Open the booth"). Where the thing appears only on a press (the fox, the comet), the place to press is where it will be.
 4. Look at it: every toy pressed at 1440x900 and 390x844, and the words still readable while a piece passes behind them. Buttons that would stand on the words, the tag or the switches are left out; on phones most toys are cut off by the upright crop, and that is accepted.
 
+### Easter eggs that say what the project is
+
+Two places go further. In the open book, pressing the harbour ties three small characters together with a gold thread ("It keeps track of where every character is."), pressing the highest peak puts a ship on it inside the editor's red circle, a floating island's tether glows as a plot thread still open, and the pen says it never writes the book for you. In Rome a Roman appears at the rail ("You play someone who was really there."), the legion, the doves, the temple doors and the brazier are tagged the way the app's ending tags a story (in the record, made up, your choice), and a press in the sky shows the same terrace today, in ruins, until it is pressed again. Each says its idea in one small chip beside the thing: give a toy a `note` in `src/worlds/toys.ts` and its words in `TOY_NOTES` in `src/content/toys.ts`.
+
 ## Good to know
 
 - Links point at a place: `kekaisik.dev/#kana-notebook`, `#about`, `#contact`. The address follows the place you are in. Links from older versions (`#voice-receptionist`, `#crm`, `#data-assistant`, `#sea`…) land on the place that took them over (`src/nav/routing.ts`).

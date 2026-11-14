@@ -32,12 +32,17 @@ export const TOY_LABELS: Readonly<Record<string, Readonly<Record<string, string>
     brazier: 'Stoke the brazier',
     legion: 'March the legion through the arch',
     temple: 'Open the temple doors',
+    you: 'Stand at the rail',
+    now: 'See the Forum today',
     doves: 'Send up the doves',
   },
   bookforge: {
     page: 'Paint the drawn page',
     castle: 'Set off fireworks over the castle',
     pen: 'Light the pen',
+    threads: 'Tie the characters together',
+    editor: 'Put a ship on the mountain',
+    tether: 'Light the island’s tether',
     waterfall: 'Make a rainbow over the waterfall',
   },
   'kana-notebook': {
@@ -47,6 +52,36 @@ export const TOY_LABELS: Readonly<Record<string, Readonly<Record<string, string>
     blossom: 'Shake the blossom',
   },
 };
+
+/**
+ * What an easter egg says when it is pressed: the idea of the project it stands for, in a few plain words. Shown as
+ * a small chip beside the thing and told to a screen reader. Only toys with a `note` in src/worlds/toys.ts have one.
+ */
+export const TOY_NOTES: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+  /* the three kinds of thing the app tells apart at the end of a story, and who you are in it */
+  'history-lens': {
+    legion: 'In the record: triumphs came down this road.',
+    doves: 'Made up: the doves.',
+    temple: 'Made up: what is behind the doors.',
+    brazier: 'Your choice: you stoked the fire.',
+    you: 'You play someone who was really there.',
+    now: 'The same terrace, today.',
+  },
+  bookforge: {
+    threads: 'It keeps track of where every character is.',
+    editor: 'The editor circles what can’t be true yet.',
+    tether: 'A plot thread still open.',
+    pen: 'It never writes the book for you.',
+  },
+};
+
+/** A toy's note; a toy with a place for a note and no words is a build mistake. */
+export function toyNote(world: string, toy: string): string {
+  const note = Object.hasOwn(TOY_NOTES, world) ? TOY_NOTES[world][toy] : undefined;
+  if (!note)
+    throw new Error(`No note for the toy "${toy}" of "${world}": add one to TOY_NOTES in src/content/toys.ts.`);
+  return note;
+}
 
 export const TOY_SAYS = {
   rolled: (n: number, sides: number): string => (n === sides ? `A natural ${n}.` : `You rolled ${n}.`),
