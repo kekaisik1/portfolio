@@ -151,6 +151,7 @@ describe('content rendered into the page', () => {
     expect(html).toContain('<p class="line">An AI that picks up the phone.</p>');
     expect(html).not.toContain('class="more"');
     expect(html).not.toContain('data-read');
+    /* no video and no link: nothing to do in the words, the painting is the thing to try */
     expect(html).toContain('<div class="acts"></div>');
   });
 

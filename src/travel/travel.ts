@@ -13,6 +13,7 @@ import { replaceAddress } from '../nav/address';
 import { hashOfWorld } from '../nav/routing';
 import { runCut, type Cut } from '../worlds/cut';
 import type { Photos } from '../worlds/photos';
+import { toysOf } from '../worlds/toys';
 import { showWords } from '../worlds/words';
 
 /** how long a cut waits for a photo that is still decoding before using its blurred stand-in */
@@ -73,13 +74,16 @@ export function createTravel(parts: TravelParts): Travel {
 
   const neighbours = (i: number): number[] => [i - 1, i, i + 1].filter((n) => n >= 0 && n <= LAST);
 
-  /* the photo pushes in, and the world's spot with it, so the spot stays on its object (the same box and origin) */
+  /* the photo pushes in, and the layer of things to press with it, so each stays on its object (the same box and
+     origin) */
   function pushIn(i: number): void {
     for (const a of push) a.cancel();
     push = [];
-    if (reduce.matches || !parts.smooth()) return;
-    const spots = worlds[i].querySelector<HTMLElement>('.spots');
-    push = [lens, ...(spots ? [spots] : [])].map((el) =>
+    /* a painting that is a toy holds still: the slow push-in moves it by fractions of a pixel a frame, and its
+       fine brushwork shimmers, which reads as the screen trembling while you look for things to press */
+    if (reduce.matches || !parts.smooth() || toysOf(WORLDS[i].id).length) return;
+    const presses = worlds[i].querySelector<HTMLElement>('.presses');
+    push = [lens, ...(presses ? [presses] : [])].map((el) =>
       el.animate([{ transform: 'scale(1)' }, { transform: `scale(${PUSH_SCALE})` }], {
         duration: PUSH_MS,
         easing: 'cubic-bezier(0.2, 0.6, 0.3, 1)',

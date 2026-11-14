@@ -7,7 +7,9 @@ import type { VideoManifest } from '../../scripts/video-manifest';
 import { TALL_QUERY } from '../lib/queries';
 import placeholders from '../worlds/placeholders.json';
 import { lookOf, photoUrl } from '../worlds/looks';
-import { spotOf } from '../worlds/spots';
+import { reactionOf } from '../worlds/reactions';
+import { toysOf } from '../worlds/toys';
+import { toyLabel } from './toys';
 import { WORLDS, rowNumber } from './places';
 import { MESSAGES, SITE } from './site';
 import type { Project, ProjectLink, World } from './types';
@@ -57,22 +59,35 @@ function watchButton(p: Project, videos: VideoManifest): string {
 }
 
 /**
- * The spot in the painting that opens the project's video: a dot and a small label, placed over its object by
- * src/worlds/spot-view.ts. Hidden until then (and without scripts, where the Watch button is the way in).
+ * The one thing in the painting of a place that is not a project that answers a press (src/worlds/reactions.ts): an
+ * invisible button the size of its object, placed by src/worlds/react-view.ts. Hidden until then, and without
+ * scripts.
  */
-function spotButton(p: Project, videos: VideoManifest): string {
-  const spot = spotOf(p.slug);
-  if (!spot || !p.spot || spot.opens !== 'video' || !Object.hasOwn(videos, p.slug)) return '';
-  const seconds = videos[p.slug].seconds;
-  const length = seconds === undefined ? '' : clock(seconds);
-  const name = `${MESSAGES.watch}${MESSAGES.watchLabel(p.name)} ${length}`.trim();
-  return (
-    `<div class="spots"><button class="spot ${spot.side}" type="button" data-video="${p.slug}" aria-haspopup="dialog" ` +
-    `aria-label="${esc(name)}" hidden><span class="spot-dot" aria-hidden="true"></span>` +
-    `<span class="spot-l" aria-hidden="true">${esc(p.spot)}${length ? ` <span class="len">${length}</span>` : ''}</span>` +
-    `</button></div>`
-  );
-}
+const reactButton = (w: World): string =>
+  reactionOf(w.id) && w.react
+    ? `<button class="react" type="button" aria-label="${esc(w.react)}" hidden></button>`
+    : '';
+
+/**
+ * A painting that is a toy (src/worlds/toys.ts): one invisible button per thing that answers a press, placed by
+ * src/worlds/toy-view.ts, and a line a screen reader is told after a throw of the die.
+ */
+const toyButtons = (w: World): string =>
+  toysOf(w.id).length
+    ? toysOf(w.id)
+        .filter((t) => !t.unseen)
+        .map(
+          (t) =>
+            `<button class="react toy" type="button" data-toy="${t.id}" aria-label="${esc(toyLabel(w.id, t.id))}" hidden></button>`,
+        )
+        .join('') + '<span class="sr-only toy-say" role="status"></span>'
+    : '';
+
+/**
+ * The layer over the painting of the things that answer a press (hidden until they are placed, and without scripts).
+ * Every world has one.
+ */
+const pressesLayer = (w: World): string => `<div class="presses">${reactButton(w)}${toyButtons(w)}</div>`;
 
 /** One project's world: its place, name, line, the longer text (and its Read button) if any, and what you can do there. */
 export function renderProject(w: World, i: number, videos: VideoManifest = {}): string {
@@ -91,7 +106,7 @@ export function renderProject(w: World, i: number, videos: VideoManifest = {}): 
     `<p class="line">${esc(p.line)}</p>` +
     more +
     `<div class="acts">${read}${watchButton(p, videos)}${link}</div>` +
-    `</div>${spotButton(p, videos)}</section>`
+    `</div>${pressesLayer(w)}</section>`
   );
 }
 
@@ -101,7 +116,7 @@ function hello(w: World, i: number): string {
     `<h1 class="name" id="hello-t" tabindex="-1">${esc(SITE.hero.heading)}</h1>` +
     `<p class="lede">${esc(SITE.hero.line)}</p>` +
     `<div class="acts"><button class="btn walk" type="button" data-go="1">${esc(SITE.hero.walk)}</button></div>` +
-    `</div></section>`
+    `</div>${pressesLayer(w)}</section>`
   );
 }
 
@@ -114,7 +129,7 @@ function about(w: World, i: number): string {
     `<p class="lede">${esc(first)}</p>` +
     `<div class="more">${rest.map((t) => `<p>${esc(t)}</p>`).join('')}</div>` +
     `<div class="acts">${readButton(SITE.about.heading)}</div>` +
-    `</div></section>`
+    `</div>${pressesLayer(w)}</section>`
   );
 }
 
@@ -132,7 +147,7 @@ function contact(w: World, i: number): string {
     `<button class="btn lantern-btn" id="lantern" type="button"><span class="dot" aria-hidden="true"></span>` +
     `${esc(MESSAGES.lightLantern)}</button></div>` +
     `<p class="lantern-n" id="lantern-n" aria-live="polite"></p>` +
-    `</div></section>`
+    `</div>${pressesLayer(w)}</section>`
   );
 }
 

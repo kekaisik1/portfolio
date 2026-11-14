@@ -21,7 +21,9 @@ import { createTravel } from './travel/travel';
 import { initPlayer } from './video/player';
 import { lookOf } from './worlds/looks';
 import { createPhotos } from './worlds/photos';
-import { initSpots } from './worlds/spot-view';
+import { createEffects } from './worlds/effects';
+import { initReactions } from './worlds/react-view';
+import { initToys } from './worlds/toy-view';
 
 const RESIZE_SETTLE_MS = 150;
 
@@ -54,9 +56,27 @@ function boot(): void {
     where: byId('where'),
     smooth: () => smooth && switches.motion(),
   });
-  const spots = initSpots(worlds, lens, upright);
+  const effects = createEffects(() => ({ width: lens.clientWidth, height: lens.clientHeight }), upright);
+  /* presses follow only the motion switch: a device too slow for the living painting can still show a light or
+     fade a picture in (its particles, drawn from the frame loop it has given up, are simply not there) */
+  const reactions = initReactions(worlds, lens, upright, {
+    ambient,
+    effects,
+    motion: () => switches.motion(),
+  });
+  const toys = initToys(worlds, lens, upright, {
+    ambient,
+    effects,
+    motion: () => switches.motion(),
+    random: Math.random,
+    ticker,
+  });
+  const place = (i: number): void => {
+    reactions.layout(i);
+    toys.layout(i);
+  };
   const relayout = (): void => {
-    spots.layout(travel.current());
+    place(travel.current());
     living.resize();
     ambient.resize();
     lanterns.layout();
@@ -96,7 +116,8 @@ function boot(): void {
     lanterns.show(false);
   });
   travel.onArrive((i) => {
-    spots.layout(i);
+    place(i);
+    toys.arrive(i);
     living.show(i);
     ambient.set(lookOf(WORLDS[i].id));
     lanterns.show(i === contact);
@@ -122,8 +143,8 @@ function boot(): void {
   window.addEventListener('resize', settled);
   narrow.addEventListener('change', settled);
 
-  /* the words are measured again once the typefaces are in: the spot must not stand on them */
-  void document.fonts.ready.then(() => spots.layout(travel.current()));
+  /* the words are measured again once the typefaces are in: nothing to press may stand on them */
+  void document.fonts.ready.then(() => place(travel.current()));
 
   void loadToday().then((today) => {
     if (today) footer.setToday(today.weather, today.now);

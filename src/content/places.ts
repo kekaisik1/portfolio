@@ -12,6 +12,7 @@ const HELLO: PlaceWords = {
   tz: 'Asia/Almaty',
   tzLabel: 'Tian Shan',
   alt: 'A painting of a snowy Tian Shan summit at sunrise, snow streaming off its top and footprints climbing the ridge above a sea of clouds',
+  react: 'Blow the snow off the summit',
 };
 
 /** Where each project stands, by slug. A project without an entry here fails the unit tests. */
@@ -79,6 +80,7 @@ const ABOUT: PlaceWords = {
   tz: 'Asia/Almaty',
   tzLabel: 'Kazakhstan',
   alt: 'A painting of an empty dirt road across the golden steppe towards snow mountains at dawn, a white yurt beside it',
+  react: 'Brush the grass',
 };
 
 const CONTACT: PlaceWords = {
@@ -89,6 +91,7 @@ const CONTACT: PlaceWords = {
   tz: 'Asia/Almaty',
   tzLabel: 'the steppe',
   alt: 'A painting of a campfire with four empty camp chairs and a crate with a notebook and dice, on the night steppe under the Milky Way',
+  react: 'Poke the fire',
 };
 
 function placeOf(slug: string): PlaceWords {
