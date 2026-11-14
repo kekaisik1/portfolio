@@ -78,33 +78,43 @@ test.describe("the dragon's hall is a toy", () => {
     await expect(chest).toHaveCount(0);
   });
 
-  test('the die is thrown, lands where it lay, shows a number from 1 to 20 and says it', async ({ page }) => {
+  test('the die is thrown as a real twenty-sided die, lies showing its number, says it, then the painted one is back', async ({
+    page,
+  }) => {
     await open(page);
     await press(page, 'die');
+    const die = page.locator('#states canvas.d20');
 
-    await expect(piece(page, 'die.webp')).toHaveCount(1);
+    await expect(die).toHaveCount(1);
     await expect(piece(page, 'ledge.webp')).toHaveCount(1);
-    const chip = page.locator('#emberquill .roll');
-    await expect(chip).toHaveText(/^([1-9]|1\d|20)$/, { timeout: 5000 });
-    await expect(piece(page, 'die.webp')).toHaveCount(0);
+    await expect(die).toHaveAttribute('data-rolled', /^([1-9]|1\d|20)$/, { timeout: 6000 });
+    /* something was really drawn on it */
+    const painted = await die.evaluate((c: HTMLCanvasElement) => {
+      const data = c.getContext('2d')?.getImageData(0, 0, c.width, c.height).data ?? new Uint8ClampedArray();
+      let n = 0;
+      for (let i = 3; i < data.length; i += 4) if (data[i] > 200) n++;
+      return n;
+    });
+    expect(painted).toBeGreaterThan(2000);
     await expect(page.locator('#emberquill .toy-say')).toHaveText(/^(You rolled \d+\.|A natural 20\.)$/);
-    await expect(chip).toHaveCount(0, { timeout: 6000 });
+    await expect(die).toHaveCount(0, { timeout: 8000 });
+    await expect(piece(page, 'ledge.webp')).toHaveCount(0);
   });
 
   for (const [random, shows, what] of [
     [0, 'smoke.webp', 'a 1: the dragon only snorts'],
-    [0.2, 'staff.webp', 'under 10: the staff lights'],
-    [0.6, 'chest.webp', '10 and over: the chest springs open'],
-    [0.99, 'fire.webp', 'a 20: the dragon breathes fire'],
+    [0.2, 'miss.webp', "under 10: the wizard's bolt goes wide"],
+    [0.6, 'hit.webp', '10 and over: the bolt strikes the dragon'],
+    [0.99, 'crit.webp', 'a 20: a blast throws the hoard into the air'],
   ] as const)
-    test(`a throw sets something off, ${what}`, async ({ page }) => {
+    test(`a throw sets off a painting of its own, ${what}`, async ({ page }) => {
       await page.addInitScript((r) => {
         Math.random = () => r;
       }, random);
       await open(page);
       await press(page, 'die');
 
-      await expect(page.locator('#emberquill .roll')).toHaveText(/^\d+$/, { timeout: 5000 });
+      await expect(page.locator('#states canvas.d20')).toHaveAttribute('data-rolled', /^\d+$/, { timeout: 6000 });
       await expect(piece(page, shows)).toHaveCount(1, { timeout: 4000 });
     });
 

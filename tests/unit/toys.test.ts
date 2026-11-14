@@ -8,10 +8,11 @@ import { MAX_BURST } from '../../src/worlds/reactions';
 import { outcomeOf, pictureRect, pieceUrl, rollOf, swapFrames, TOYS, toysOf, type Piece } from '../../src/worlds/toys';
 
 /** a piece is a small part of a painting: it must stay light */
-const MAX_PIECE_BYTES = 200 * 1024;
+/* the critical hit repaints most of the picture and is only fetched on a 20: it may be the heaviest */
+const MAX_PIECE_BYTES = 300 * 1024;
 
 const piecesOf = (id: string): Piece[] =>
-  toysOf(id).flatMap((t) => [t.swap?.piece, t.throw?.die, t.throw?.ledge].filter((p): p is Piece => p !== undefined));
+  toysOf(id).flatMap((t) => [t.swap?.piece, t.throw?.ledge].filter((p): p is Piece => p !== undefined));
 
 describe('the paintings that are toys', () => {
   it('are worlds with a look, and every toy has a name for a screen reader and something it does', () => {
@@ -100,9 +101,12 @@ describe('the paintings that are toys', () => {
     if (!die) throw new Error('the dragon has no die');
 
     expect(outcomeOf(die, 1)).toEqual(['snort']);
-    for (const n of [2, 5, 9]) expect(outcomeOf(die, n)).toEqual(['staff']);
-    for (const n of [10, 15, 19]) expect(outcomeOf(die, n)).toEqual(['arrow', 'loot']);
-    expect(outcomeOf(die, 20)).toEqual(['dragon']);
+    for (const n of [2, 5, 9]) expect(outcomeOf(die, n)).toEqual(['miss']);
+    for (const n of [10, 15, 19]) expect(outcomeOf(die, n)).toEqual(['hit']);
+    expect(outcomeOf(die, 20)).toEqual(['crit']);
+    /* each is a painting of its own, not one of the things you can press */
+    for (const o of die.outcomes)
+      for (const id of o.toys) expect(TOYS.emberquill.find((t) => t.id === id)?.unseen, id).toBe(true);
     /* every number a d20 can show sets something off */
     for (let n = 1; n <= die.sides; n++) expect(outcomeOf(die, n).length, String(n)).toBeGreaterThan(0);
     expect(die.outcomes.map((o) => o.upTo)).toEqual([...die.outcomes.map((o) => o.upTo)].sort((a, b) => a - b));

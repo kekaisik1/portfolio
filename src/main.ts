@@ -69,6 +69,7 @@ function boot(): void {
     effects: createEffects(() => ({ width: lens.clientWidth, height: lens.clientHeight }), upright),
     motion: () => smooth && switches.motion(),
     random: Math.random,
+    ticker,
   });
   /* the spots first: a reacting object never stands on one */
   const place = (i: number): void => {

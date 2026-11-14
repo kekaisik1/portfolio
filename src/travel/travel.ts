@@ -13,6 +13,7 @@ import { replaceAddress } from '../nav/address';
 import { hashOfWorld } from '../nav/routing';
 import { runCut, type Cut } from '../worlds/cut';
 import type { Photos } from '../worlds/photos';
+import { toysOf } from '../worlds/toys';
 import { showWords } from '../worlds/words';
 
 /** how long a cut waits for a photo that is still decoding before using its blurred stand-in */
@@ -77,7 +78,9 @@ export function createTravel(parts: TravelParts): Travel {
   function pushIn(i: number): void {
     for (const a of push) a.cancel();
     push = [];
-    if (reduce.matches || !parts.smooth()) return;
+    /* a painting that is a toy holds still: the slow push-in moves it by fractions of a pixel a frame, and its
+       fine brushwork shimmers, which reads as the screen trembling while you look for things to press */
+    if (reduce.matches || !parts.smooth() || toysOf(WORLDS[i].id).length) return;
     const spots = worlds[i].querySelector<HTMLElement>('.spots');
     push = [lens, ...(spots ? [spots] : [])].map((el) =>
       el.animate([{ transform: 'scale(1)' }, { transform: `scale(${PUSH_SCALE})` }], {

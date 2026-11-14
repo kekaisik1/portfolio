@@ -9,6 +9,8 @@ import type { Ambient } from '../ambient/ambient';
 import { WORLDS } from '../content/places';
 import { TOY_SAYS } from '../content/toys';
 import { byId, pick } from '../lib/dom';
+import type { Ticker } from '../lib/ticker';
+import { drawDie, poseAt } from './d20';
 import type { Effects } from './effects';
 import { lookOf } from './looks';
 import { reactionRect } from './reactions';
@@ -16,7 +18,6 @@ import { crowds, within, type Rect } from './spots';
 import { outcomeOf, pictureRect, pieceUrl, rollOf, swapFrames, toysOf, type Piece, type Throw, type Toy } from './toys';
 
 const GAP_PX = 8;
-const ROLL_SHOWN_MS = 2800;
 const OUTCOME_AFTER_MS = 600;
 
 export interface ToyParts {
@@ -26,6 +27,8 @@ export interface ToyParts {
   motion(): boolean;
   /** a number in 0..1 */
   random(): number;
+  /** the page's one frame loop: the die is drawn from it while it is in the air */
+  ticker: Ticker;
 }
 
 export interface ToyView {
@@ -63,9 +66,10 @@ export function initToys(
     timers.add(t);
   };
 
-  function put(img: HTMLImageElement, piece: Piece, i: number): void {
-    const r = pictureRect(piece, lookOf(WORLDS[i].id), box(), upright());
-    img.style.cssText = `left:${r.left}px;top:${r.top}px;width:${r.right - r.left}px;height:${r.bottom - r.top}px`;
+  /** Lay a rectangle of the painting over its own place: a piece, or the die's canvas. */
+  function place(el: HTMLElement, r: { u: number; v: number; w: number; h: number }, i: number): void {
+    const at = pictureRect(r, lookOf(WORLDS[i].id), box(), upright());
+    el.style.cssText = `left:${at.left}px;top:${at.top}px;width:${at.right - at.left}px;height:${at.bottom - at.top}px`;
   }
 
   /** A piece of the second state, laid over its own place on the painting, not yet seen. */
@@ -75,7 +79,7 @@ export function initToys(
     img.alt = '';
     img.decoding = 'async';
     img.src = pieceUrl(WORLDS[i].id, piece.file);
-    put(img, piece, i);
+    place(img, piece, i);
     shown.set(img, piece);
     states.append(img);
     return img;
@@ -124,70 +128,82 @@ export function initToys(
     );
   }
 
+  /**
+   * The die is thrown: the painted one gives way to a real twenty-sided die (d20.ts) on a small canvas over its
+   * place, which tumbles, lands on the thrown number and lies there showing it; what the number is sets the next
+   * thing off; then the painting's own die is back.
+   */
   function toss(i: number, t: Throw, key: string): void {
     const layer = layerOf(i);
     if (!layer) return;
     busy.add(key);
-    const die = lay(i, t.die);
     const ledge = lay(i, t.ledge);
-    die.classList.add('die');
+    const canvas = document.createElement('canvas');
+    canvas.className = 'piece d20';
+    place(canvas, t.room, i);
+    states.append(canvas);
     const n = rollOf(parts.random(), t.sides);
-    void Promise.all([die.decode(), ledge.decode()]).then(
-      () => {
-        if (!die.isConnected) return;
-        ledge.style.opacity = '1';
-        die.style.opacity = '1';
-        const up = t.lift * (ledge.height / t.ledge.h);
-        const full = t.turns * 360;
-        const a = die.animate(
-          [
-            { transform: 'translate(0, 0) rotate(0deg)', easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' },
-            {
-              transform: `translate(${-up * 0.12}px, ${-up}px) rotate(${full * 0.55}deg)`,
-              offset: 0.46,
-              easing: 'cubic-bezier(0.6, 0, 0.9, 0.5)',
-            },
-            { transform: `translate(0, 0) rotate(${full}deg)`, offset: 0.8, easing: 'ease-out' },
-            { transform: `translate(0, ${-up * 0.07}px) rotate(${full}deg)`, offset: 0.9, easing: 'ease-in' },
-            { transform: `translate(0, 0) rotate(${full}deg)` },
-          ],
-          { duration: t.ms },
-        );
-        const landed = (): void => {
-          lift(die);
-          lift(ledge);
-          busy.delete(key);
-          if (current !== i) return;
-          /* the number it shows, over the die, and said aloud */
-          const top = pictureRect(t.die, lookOf(WORLDS[i].id), box(), upright());
-          const chip = document.createElement('span');
-          chip.className = n === t.sides ? 'roll crit' : 'roll';
-          chip.textContent = String(n);
-          chip.style.cssText = `left:${(top.left + top.right) / 2}px;top:${top.top}px`;
-          layer.append(chip);
-          const say = layer.querySelector<HTMLElement>('.toy-say');
-          if (say) say.textContent = TOY_SAYS.rolled(n, t.sides);
-          const shownFor = chip.animate(
-            [
-              { opacity: 0, transform: 'translate(-50%, -110%) scale(1)' },
-              { opacity: 1, transform: 'translate(-50%, -130%) scale(1)', offset: 0.12 },
-              { opacity: 1, transform: 'translate(-50%, -130%) scale(1)', offset: 0.8 },
-              { opacity: 0, transform: 'translate(-50%, -130%) scale(1)' },
-            ],
-            { duration: ROLL_SHOWN_MS, easing: 'ease-out' },
-          );
-          shownFor.addEventListener('finish', () => chip.remove(), { once: true });
-          later(OUTCOME_AFTER_MS, () => outcomeOf(t, n).forEach((id) => press(i, id, true)));
-        };
-        a.addEventListener('finish', landed, { once: true });
-        a.addEventListener('cancel', landed, { once: true });
-      },
-      () => {
-        busy.delete(key);
-        lift(die);
-        lift(ledge);
-      },
-    );
+    /* what this number will set off is fetched while the die is in the air, so it is there when the die lands */
+    for (const id of outcomeOf(t, n)) {
+      const file = toysOf(WORLDS[i].id).find((x) => x.id === id)?.swap?.piece.file;
+      if (file) new Image().src = pieceUrl(WORLDS[i].id, file);
+    }
+    let stop: (() => void) | null = null;
+    const over = (): void => {
+      stop?.();
+      stop = null;
+      canvas.remove();
+      lift(ledge);
+      busy.delete(key);
+    };
+    void ledge.decode().then(() => {
+      const ctx = canvas.getContext('2d');
+      if (!canvas.isConnected || !ctx) return over();
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = Math.round(canvas.clientWidth * dpr);
+      canvas.height = Math.round(canvas.clientHeight * dpr);
+      /* a picture height, in the canvas's own pixels */
+      const unit = canvas.height / t.room.h;
+      const cx = ((t.at[0] - t.room.u) / t.room.w) * canvas.width;
+      const ground = (t.at[1] - t.room.v) * unit;
+      const r = t.radius * unit;
+      ledge.style.opacity = '1';
+      canvas.style.opacity = '1';
+      let ms = 0;
+      let told = false;
+      const draw = (dt: number): void => {
+        ms += dt * 1000;
+        const pose = poseAt(ms / t.ms, n, t.turns);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        /* its shadow on the ledge: smaller and fainter the higher it is */
+        ctx.fillStyle = `rgb(38 28 46 / ${0.3 - 0.16 * pose.height})`;
+        ctx.beginPath();
+        ctx.ellipse(cx, ground + r * 0.86, r * (0.95 - 0.3 * pose.height), r * 0.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        drawDie(ctx, pose.turn, cx, ground - pose.height * t.lift * unit, r);
+        if (ms >= t.ms && !told) {
+          told = true;
+          stop?.();
+          stop = null;
+          landed();
+        }
+      };
+      const landed = (): void => {
+        if (current !== i) return over();
+        const say = layer.querySelector<HTMLElement>('.toy-say');
+        if (say) say.textContent = TOY_SAYS.rolled(n, t.sides);
+        canvas.dataset.rolled = String(n);
+        later(OUTCOME_AFTER_MS, () => outcomeOf(t, n).forEach((id) => press(i, id, true)));
+        later(t.rest, () => {
+          /* the painting's own die comes back under the real one as it fades */
+          const out = canvas.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 600, easing: 'ease-in-out' });
+          ledge.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 600, easing: 'ease-in-out' });
+          out.addEventListener('finish', over, { once: true });
+          out.addEventListener('cancel', over, { once: true });
+        });
+      };
+      stop = parts.ticker.add(draw);
+    }, over);
   }
 
   /** `quiet`: set off by the die, not pressed: something already left in (the open chest) is not taken away. */
@@ -228,7 +244,7 @@ export function initToys(
       if (!within(real, screen, GAP_PX / 2) || others.some((el) => crowds(real, el.getBoundingClientRect(), GAP_PX)))
         button.hidden = true;
     }
-    for (const [img, piece] of shown) put(img, piece, i);
+    for (const [img, piece] of shown) place(img, piece, i);
   }
 
   function arrive(i: number): void {
@@ -236,6 +252,7 @@ export function initToys(
     timers.forEach((t) => window.clearTimeout(t));
     timers.clear();
     for (const img of [...shown.keys()]) lift(img);
+    states.replaceChildren();
     kept.clear();
     busy.clear();
     current = i;

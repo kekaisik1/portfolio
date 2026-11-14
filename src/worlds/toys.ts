@@ -35,16 +35,22 @@ export interface Swap {
   stays?: boolean;
 }
 
-/** The die: lifted off its ledge, thrown and landed where it lay. */
+/** The die: lifted off its ledge, thrown as a real twenty-sided die (d20.ts) and landed where it lay. */
 export interface Throw {
-  die: Piece;
-  /** the ledge under the die, shown while the die is in the air */
+  /** the ledge without the painted die, shown while the real one is out */
   ledge: Piece;
+  /** the part of the painting the die may move in: its canvas */
+  room: Omit<Piece, 'file'>;
+  /** where the painted die's middle is, and its radius in picture heights */
+  at: PicturePoint;
+  radius: number;
   /** how high it goes, in picture heights */
   lift: number;
-  /** full turns in the air */
+  /** full turns before it lies still */
   turns: number;
+  /** how long the throw takes, and how long the die then lies showing its number */
   ms: number;
+  rest: number;
   sides: number;
   /** what a throw sets off: the first entry whose `upTo` the number does not pass (in rising order) */
   outcomes: readonly { upTo: number; toys: readonly string[] }[];
@@ -137,19 +143,22 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
       w: 0.13,
       h: 0.2,
       throw: {
-        die: { file: 'die.webp', ...px(579, 785, 242, 224) },
         ledge: { file: 'ledge.webp', ...px(544, 747, 312, 277) },
-        lift: 0.14,
-        turns: 1,
-        ms: 1500,
+        room: px(430, 520, 540, 504),
+        at: [700 / 1536, 897 / 1024],
+        radius: 0.118,
+        lift: 0.17,
+        turns: 2.25,
+        ms: 1900,
+        rest: 3400,
         sides: 20,
-        /* a 1: the dragon only snorts. Under 10: the staff sputters into light. 10 and over: an arrow flies and
-           the chest springs open. A 20: the dragon breathes fire */
+        /* a 1: the dragon only snorts. Under 10: the wizard's bolt goes wide. 10 and over: it strikes the dragon.
+           A 20: a blast that throws the hoard into the air */
         outcomes: [
           { upTo: 1, toys: ['snort'] },
-          { upTo: 9, toys: ['staff'] },
-          { upTo: 19, toys: ['arrow', 'loot'] },
-          { upTo: 20, toys: ['dragon'] },
+          { upTo: 9, toys: ['miss'] },
+          { upTo: 19, toys: ['hit'] },
+          { upTo: 20, toys: ['crit'] },
         ],
       },
     },
@@ -168,15 +177,32 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
         fall: 1500,
       },
     },
-    { id: 'arrow', unseen: true, u: 0.655, v: 0.68, w: 0, h: 0, streak: { from: [0.672, 0.64], to: [0.668, 0.33] } },
     {
-      id: 'loot',
+      id: 'miss',
       unseen: true,
-      u: 0.852,
-      v: 0.61,
+      u: 0.4,
+      v: 0.4,
       w: 0,
       h: 0,
-      swap: { piece: { file: 'chest.webp', ...px(1200, 530, 210, 185) }, rise: 450, hold: 2200, fall: 900 },
+      swap: { piece: { file: 'miss.webp', ...px(280, 250, 620, 370) }, rise: 500, hold: 1500, fall: 1300 },
+    },
+    {
+      id: 'hit',
+      unseen: true,
+      u: 0.7,
+      v: 0.4,
+      w: 0,
+      h: 0,
+      swap: { piece: { file: 'hit.webp', ...px(780, 200, 640, 440) }, rise: 500, hold: 1600, fall: 1300 },
+    },
+    {
+      id: 'crit',
+      unseen: true,
+      u: 0.5,
+      v: 0.4,
+      w: 0,
+      h: 0,
+      swap: { piece: { file: 'crit.webp', ...px(0, 0, 1536, 800) }, rise: 700, hold: 1900, fall: 1600 },
     },
   ],
 };
