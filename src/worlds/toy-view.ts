@@ -13,11 +13,11 @@ import type { Effects } from './effects';
 import { lookOf } from './looks';
 import { reactionRect } from './reactions';
 import { crowds, within, type Rect } from './spots';
-import { pictureRect, pieceUrl, rollOf, swapFrames, toysOf, type Piece, type Throw, type Toy } from './toys';
+import { outcomeOf, pictureRect, pieceUrl, rollOf, swapFrames, toysOf, type Piece, type Throw, type Toy } from './toys';
 
 const GAP_PX = 8;
 const ROLL_SHOWN_MS = 2800;
-const CRIT_AFTER_MS = 700;
+const OUTCOME_AFTER_MS = 600;
 
 export interface ToyParts {
   ambient: Ambient;
@@ -53,6 +53,8 @@ export function initToys(
   let current = -1;
 
   const layerOf = (i: number): HTMLElement | null => worlds[i].querySelector<HTMLElement>('.spots');
+  /** where the pieces lie: inside the lens, so they are the painting's own layer and never shift against it */
+  const states = byId('states');
   const later = (ms: number, run: () => void): void => {
     const t = window.setTimeout(() => {
       timers.delete(t);
@@ -75,7 +77,7 @@ export function initToys(
     img.src = pieceUrl(WORLDS[i].id, piece.file);
     put(img, piece, i);
     shown.set(img, piece);
-    layerOf(i)?.prepend(img);
+    states.append(img);
     return img;
   }
   function lift(img: HTMLImageElement): void {
@@ -175,10 +177,7 @@ export function initToys(
             { duration: ROLL_SHOWN_MS, easing: 'ease-out' },
           );
           shownFor.addEventListener('finish', () => chip.remove(), { once: true });
-          if (n === t.sides && t.crit) {
-            const crit = t.crit;
-            later(CRIT_AFTER_MS, () => press(i, crit));
-          }
+          later(OUTCOME_AFTER_MS, () => outcomeOf(t, n).forEach((id) => press(i, id, true)));
         };
         a.addEventListener('finish', landed, { once: true });
         a.addEventListener('cancel', landed, { once: true });
@@ -191,12 +190,14 @@ export function initToys(
     );
   }
 
-  function press(i: number, id: string): void {
+  /** `quiet`: set off by the die, not pressed: something already left in (the open chest) is not taken away. */
+  function press(i: number, id: string, quiet = false): void {
     const toy = toysOf(WORLDS[i].id).find((t) => t.id === id);
     const layer = layerOf(i);
     const key = `${i}:${id}`;
     if (!toy || !layer || current !== i || !parts.motion() || busy.has(key)) return;
     const closing = kept.has(key);
+    if (closing && quiet) return;
     if (toy.swap) swap(i, toy, key);
     if (toy.throw) toss(i, toy.throw, key);
     if (closing) return;
@@ -218,7 +219,7 @@ export function initToys(
     for (const button of worlds[i].querySelectorAll<HTMLElement>('.toy')) {
       const toy = toys.find((t) => t.id === button.dataset.toy);
       button.hidden = true;
-      if (!toy || !parts.motion()) continue;
+      if (!toy || toy.unseen || !parts.motion()) continue;
       const rect = reactionRect({ ...toy, w: toy.w * (3 / 2) }, look, box(), upright(), GAP_PX);
       if (!rect) continue;
       button.style.cssText = `left:${rect.left}px;top:${rect.top}px;width:${rect.right - rect.left}px;height:${rect.bottom - rect.top}px`;

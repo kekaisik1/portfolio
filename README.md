@@ -176,7 +176,7 @@ Tests never use the real API: unit tests mock `fetch`, and the smoke suite build
 
 ## Make a painting a toy
 
-The dragon's hall is one: press the dragon and it breathes fire, the chest opens, the wizard's staff blazes, the archer looses an arrow, the gold throws sparks, and the red die is thrown and shows its number (a 20 wakes the dragon). No labels and no panel.
+The dragon's hall is one: press the dragon and it breathes fire, the chest opens, the wizard's staff blazes, the archer looses an arrow, the gold throws sparks, and the red die is thrown and shows its number. What the number is decides what happens next: on a 1 the dragon only snorts smoke, under 10 the staff lights, on 10 and over an arrow flies and the chest springs open, and on a 20 the dragon breathes fire. No labels and no panel.
 
 1. Paint the second state: an edit of the same painting in which only the things that change are different (the prompts used are saved beside the sources in `../reference/painted-sources/states/`). Compare it with the original before going on: everything else must be where it was.
 2. Cut the pieces: add the rectangles to `../reference/painted-sources/states/make_states.py` and run it with `public/states/<world>` as its argument. It writes one feathered WebP per piece and prints each rectangle.

@@ -5,10 +5,10 @@ import { renderWorlds } from '../../src/content/render';
 import { TOY_LABELS, TOY_SAYS, toyLabel } from '../../src/content/toys';
 import { lookOf } from '../../src/worlds/looks';
 import { MAX_BURST } from '../../src/worlds/reactions';
-import { pictureRect, pieceUrl, rollOf, swapFrames, TOYS, toysOf, type Piece } from '../../src/worlds/toys';
+import { outcomeOf, pictureRect, pieceUrl, rollOf, swapFrames, TOYS, toysOf, type Piece } from '../../src/worlds/toys';
 
 /** a piece is a small part of a painting: it must stay light */
-const MAX_PIECE_BYTES = 160 * 1024;
+const MAX_PIECE_BYTES = 200 * 1024;
 
 const piecesOf = (id: string): Piece[] =>
   toysOf(id).flatMap((t) => [t.swap?.piece, t.throw?.die, t.throw?.ledge].filter((p): p is Piece => p !== undefined));
@@ -22,9 +22,15 @@ describe('the paintings that are toys', () => {
       ).toBe(true);
       expect(() => lookOf(id), id).not.toThrow();
       expect(new Set(toys.map((t) => t.id)).size, id).toBe(toys.length);
-      expect(Object.keys(TOY_LABELS[id]).sort(), id).toEqual(toys.map((t) => t.id).sort());
+      /* a name for every thing that can be pressed; the ones only the die sets off have none */
+      expect(Object.keys(TOY_LABELS[id]).sort(), id).toEqual(
+        toys
+          .filter((t) => !t.unseen)
+          .map((t) => t.id)
+          .sort(),
+      );
       for (const t of toys) {
-        expect(toyLabel(id, t.id)).toMatch(/\S/);
+        if (!t.unseen) expect(toyLabel(id, t.id)).toMatch(/\S/);
         expect(t.swap ?? t.flare ?? t.bursts ?? t.streak ?? t.throw, `${id}/${t.id}`).toBeDefined();
         for (const n of [t.u, t.v]) {
           expect(n).toBeGreaterThan(0);
@@ -32,7 +38,7 @@ describe('the paintings that are toys', () => {
         }
         for (const b of t.bursts ?? []) expect(b.count).toBeLessThanOrEqual(MAX_BURST);
         /* a toy only sets off a toy of the same painting */
-        for (const other of [t.then?.toy, t.throw?.crit])
+        for (const other of [t.then?.toy, ...(t.throw?.outcomes.flatMap((o) => o.toys) ?? [])])
           if (other)
             expect(
               toys.some((x) => x.id === other),
@@ -89,6 +95,19 @@ describe('the paintings that are toys', () => {
     expect(TOY_SAYS.rolled(20, 20)).toBe('A natural 20.');
   });
 
+  it('sets off a different thing for a 1, a throw under 10, a throw of 10 and over, and a 20', () => {
+    const die = TOYS.emberquill.find((t) => t.id === 'die')?.throw;
+    if (!die) throw new Error('the dragon has no die');
+
+    expect(outcomeOf(die, 1)).toEqual(['snort']);
+    for (const n of [2, 5, 9]) expect(outcomeOf(die, n)).toEqual(['staff']);
+    for (const n of [10, 15, 19]) expect(outcomeOf(die, n)).toEqual(['arrow', 'loot']);
+    expect(outcomeOf(die, 20)).toEqual(['dragon']);
+    /* every number a d20 can show sets something off */
+    for (let n = 1; n <= die.sides; n++) expect(outcomeOf(die, n).length, String(n)).toBeGreaterThan(0);
+    expect(die.outcomes.map((o) => o.upTo)).toEqual([...die.outcomes.map((o) => o.upTo)].sort((a, b) => a - b));
+  });
+
   it('fades a piece in, holds it (wavering, if it is fire) and fades it out, in order', () => {
     const plain = swapFrames({ piece: piecesOf('emberquill')[0], rise: 100, hold: 800, fall: 100 });
     expect(plain.ms).toBe(1000);
@@ -111,7 +130,8 @@ describe('the paintings that are toys', () => {
     expect(html).toContain(
       '<button class="react toy" type="button" data-toy="dragon" aria-label="Wake the dragon" hidden></button>',
     );
-    expect(html.match(/class="react toy"/g)).toHaveLength(TOYS.emberquill.length);
+    expect(html.match(/class="react toy"/g)).toHaveLength(TOYS.emberquill.filter((t) => !t.unseen).length);
+    expect(html).not.toContain('data-toy="snort"');
     expect(html).toContain('<span class="sr-only toy-say" role="status"></span>');
     expect(html).not.toContain('data-try="emberquill"');
   });

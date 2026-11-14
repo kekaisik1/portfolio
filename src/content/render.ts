@@ -98,6 +98,7 @@ const reactButton = (w: World): string =>
 const toyButtons = (w: World): string =>
   toysOf(w.id).length
     ? toysOf(w.id)
+        .filter((t) => !t.unseen)
         .map(
           (t) =>
             `<button class="react toy" type="button" data-toy="${t.id}" aria-label="${esc(toyLabel(w.id, t.id))}" hidden></button>`,

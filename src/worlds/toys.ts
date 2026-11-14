@@ -46,8 +46,8 @@ export interface Throw {
   turns: number;
   ms: number;
   sides: number;
-  /** rolling the highest number sets this other toy off */
-  crit?: string;
+  /** what a throw sets off: the first entry whose `upTo` the number does not pass (in rising order) */
+  outcomes: readonly { upTo: number; toys: readonly string[] }[];
 }
 
 export interface Toy {
@@ -65,6 +65,8 @@ export interface Toy {
   throw?: Throw;
   /** this toy sets another off, after so many milliseconds */
   then?: { toy: string; after: number };
+  /** not a thing to press: only set off by another toy (a throw of the die) */
+  unseen?: true;
 }
 
 const px = (x: number, y: number, w: number, h: number): Omit<Piece, 'file'> => ({
@@ -73,6 +75,9 @@ const px = (x: number, y: number, w: number, h: number): Omit<Piece, 'file'> => 
   w: w / 1536,
   h: h / 1024,
 });
+
+/** where the smoke piece lies in the painting's pixels (printed by make_states.py) */
+const SMOKE = [500, 40, 610, 410] as const;
 
 /** In the order they are laid down: a later toy lies over an earlier one where their places overlap. */
 export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
@@ -138,8 +143,40 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
         turns: 1,
         ms: 1500,
         sides: 20,
-        crit: 'dragon',
+        /* a 1: the dragon only snorts. Under 10: the staff sputters into light. 10 and over: an arrow flies and
+           the chest springs open. A 20: the dragon breathes fire */
+        outcomes: [
+          { upTo: 1, toys: ['snort'] },
+          { upTo: 9, toys: ['staff'] },
+          { upTo: 19, toys: ['arrow', 'loot'] },
+          { upTo: 20, toys: ['dragon'] },
+        ],
       },
+    },
+    /* only the die sets these off */
+    {
+      id: 'snort',
+      unseen: true,
+      u: 0.66,
+      v: 0.3,
+      w: 0,
+      h: 0,
+      swap: {
+        piece: { file: 'smoke.webp', ...px(SMOKE[0], SMOKE[1], SMOKE[2], SMOKE[3]) },
+        rise: 700,
+        hold: 1500,
+        fall: 1500,
+      },
+    },
+    { id: 'arrow', unseen: true, u: 0.655, v: 0.68, w: 0, h: 0, streak: { from: [0.672, 0.64], to: [0.668, 0.33] } },
+    {
+      id: 'loot',
+      unseen: true,
+      u: 0.852,
+      v: 0.61,
+      w: 0,
+      h: 0,
+      swap: { piece: { file: 'chest.webp', ...px(1200, 530, 210, 185) }, rise: 450, hold: 2200, fall: 900 },
     },
   ],
 };
@@ -165,6 +202,9 @@ export function pictureRect(
   const across = (u: number): number => placeX(fit, upright ? tallU(u, look.focus) : u);
   return { left: across(r.u), top: placeY(fit, r.v), right: across(r.u + r.w), bottom: placeY(fit, r.v + r.h) };
 }
+
+/** The toys a throw of `n` sets off. */
+export const outcomeOf = (t: Throw, n: number): readonly string[] => t.outcomes.find((o) => n <= o.upTo)?.toys ?? [];
 
 /** A throw of a die with `sides` sides, from a random number in 0..1. */
 export const rollOf = (random: number, sides: number): number => Math.min(sides, Math.floor(random * sides) + 1);

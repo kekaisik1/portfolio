@@ -12,7 +12,7 @@ async function open(page: Page): Promise<void> {
 const press = (page: Page, id: string): Promise<void> =>
   page.locator(`#emberquill .toy[data-toy="${id}"]`).evaluate((b: HTMLElement) => b.click());
 
-const piece = (page: Page, file: string) => page.locator(`#emberquill .piece[src$="${file}"]`);
+const piece = (page: Page, file: string) => page.locator(`#states .piece[src$="${file}"]`);
 
 test.describe("the dragon's hall is a toy", () => {
   test('six things answer a press, each a named button, none standing on the words, the tag or the switches', async ({
@@ -56,7 +56,7 @@ test.describe("the dragon's hall is a toy", () => {
     await expect.poll(() => fire.evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(0.7);
     /* its top right corner is the painting's: the painting covers the window and the piece runs to its right edge */
     const lies = await page.evaluate(() => {
-      const img = document.querySelector<HTMLElement>('#emberquill .piece[src$="fire.webp"]');
+      const img = document.querySelector<HTMLElement>('#states .piece[src$="fire.webp"]');
       if (!img) throw new Error('no fire');
       return { right: img.offsetLeft + img.offsetWidth, ratio: img.offsetWidth / img.offsetHeight };
     });
@@ -91,6 +91,23 @@ test.describe("the dragon's hall is a toy", () => {
     await expect(chip).toHaveCount(0, { timeout: 6000 });
   });
 
+  for (const [random, shows, what] of [
+    [0, 'smoke.webp', 'a 1: the dragon only snorts'],
+    [0.2, 'staff.webp', 'under 10: the staff lights'],
+    [0.6, 'chest.webp', '10 and over: the chest springs open'],
+    [0.99, 'fire.webp', 'a 20: the dragon breathes fire'],
+  ] as const)
+    test(`a throw sets something off, ${what}`, async ({ page }) => {
+      await page.addInitScript((r) => {
+        Math.random = () => r;
+      }, random);
+      await open(page);
+      await press(page, 'die');
+
+      await expect(page.locator('#emberquill .roll')).toHaveText(/^\d+$/, { timeout: 5000 });
+      await expect(piece(page, shows)).toHaveCount(1, { timeout: 4000 });
+    });
+
   test('the archer looses an arrow and the dragon answers with fire', async ({ page }) => {
     await open(page);
     await press(page, 'archer');
@@ -106,7 +123,7 @@ test.describe("the dragon's hall is a toy", () => {
 
     await page.keyboard.press('ArrowDown');
     await expect(page.locator('#history-lens')).toHaveClass(/\bon\b/);
-    await expect(page.locator('#emberquill .piece')).toHaveCount(0);
+    await expect(page.locator('#states .piece')).toHaveCount(0);
 
     await page.keyboard.press('ArrowUp');
     await expect(page.locator('#emberquill')).toHaveClass(/\bon\b/);
