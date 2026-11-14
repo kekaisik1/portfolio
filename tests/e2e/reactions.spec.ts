@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { hasGpu } from './gpu';
 
 /* the places that are not projects: each has one reacting object (the projects' places are toys: toys.spec.ts) */
 const IDS = ['hello', 'about', 'contact'];
@@ -41,7 +42,8 @@ test.describe('the painting reacts', () => {
 
     await fire.click();
     await expect(page.locator('#contact .flare')).toHaveCount(1);
-    await expect(page.locator('#fx')).toHaveAttribute('data-live', 'on');
+    /* the sparks are drawn from the frame loop, which a device without a GPU has given up by now: only the light */
+    if (await hasGpu(page)) await expect(page.locator('#fx')).toHaveAttribute('data-live', 'on');
     /* gone after a second or two */
     await expect(page.locator('#contact .flare')).toHaveCount(0, { timeout: 4000 });
   });
@@ -54,7 +56,8 @@ test.describe('the painting reacts', () => {
     await expect(grass).toBeFocused();
     expect(await grass.evaluate((b) => getComputedStyle(b).outlineStyle)).toBe('solid');
     await page.keyboard.press('Enter');
-    await expect(page.locator('#fx')).toHaveAttribute('data-live', 'on');
+    /* the seeds are particles, drawn from the frame loop: a device without a GPU has given it up */
+    if (await hasGpu(page)) await expect(page.locator('#fx')).toHaveAttribute('data-live', 'on');
   });
 
   test('with the motion switched off there is nothing to press', async ({ page }) => {

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { hasGpu, NEEDS_GPU } from './gpu';
 
 /** The board, top to bottom: world id, the place on its row, what stands there. */
 const WORLDS = [
@@ -37,19 +38,6 @@ async function watch(page: Page, audioWarnings = false): Promise<string[]> {
   );
   return problems;
 }
-
-/**
- * Is a real GPU drawing? The living photo is WebGL; on a software renderer (a CI runner without a GPU) the page
- * rightly gives the motion up after a few seconds and shows stills, so the tests that watch it move need hardware.
- */
-const hasGpu = (page: Page): Promise<boolean> =>
-  page.evaluate(() => {
-    const gl = document.createElement('canvas').getContext('webgl2');
-    const info = gl?.getExtension('WEBGL_debug_renderer_info');
-    if (!gl || !info) return false;
-    return !/swiftshader|llvmpipe|software/i.test(String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)));
-  });
-const NEEDS_GPU = 'the living photo needs a GPU: on a software renderer the page shows stills';
 
 /** The summit with the tag already there: a #link skips the opening shot. */
 const BOARD = './#hello';

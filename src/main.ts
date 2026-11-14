@@ -57,15 +57,16 @@ function boot(): void {
     smooth: () => smooth && switches.motion(),
   });
   const effects = createEffects(() => ({ width: lens.clientWidth, height: lens.clientHeight }), upright);
+  /* presses follow only the motion switch: a device too slow for the living painting can still show a light or
+     fade a picture in (its particles, drawn from the frame loop it has given up, are simply not there) */
   const reactions = initReactions(worlds, lens, upright, {
     ambient,
     effects,
-    motion: () => smooth && switches.motion(),
+    motion: () => switches.motion(),
   });
   const toys = initToys(worlds, lens, upright, {
     ambient,
     effects,
-    /* only the switch: a device too slow for the living painting can still fade a picture in and throw a die */
     motion: () => switches.motion(),
     random: Math.random,
     ticker,

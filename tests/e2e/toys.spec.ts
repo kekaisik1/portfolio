@@ -10,8 +10,36 @@ async function open(page: Page): Promise<void> {
   await expect(page.locator('#cut > *')).toHaveCount(0);
 }
 
-/** a piece is decoded before it fades in: on a runner without a GPU, with other tests beside it, that can take seconds */
-const SLOW = { timeout: 15_000 };
+interface Shown {
+  /** the most opaque its fade ever makes it */
+  peak: number;
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+/**
+ * A piece once its fade has begun: how opaque the fade makes it at its fullest, and where it lies. Read from the
+ * fade itself in one step, not by catching the picture at the right moment: a piece is decoded before it fades in,
+ * and on a runner without a GPU, with other tests beside it, sampling its opacity now and then can miss the whole
+ * of a short fade.
+ */
+async function shown(page: Page, file: string): Promise<Shown> {
+  let got: Shown | null = null;
+  await expect(async () => {
+    got = await page.evaluate((f) => {
+      const img = document.querySelector<HTMLElement>(`#states .piece[src$="${f}"]`);
+      const fade = img?.getAnimations()[0]?.effect;
+      if (!img || !(fade instanceof KeyframeEffect)) throw new Error(`${f} is not fading yet`);
+      const r = img.getBoundingClientRect();
+      const peak = Math.max(...fade.getKeyframes().map((k) => Number(k.opacity)));
+      return { peak, left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+    }, file);
+  }).toPass({ timeout: 15_000, intervals: [50, 100, 200] });
+  if (!got) throw new Error(`${file} was never shown`);
+  return got;
+}
 
 /** Press a toy the way a key or a finger does, without waiting for the painting's slow push-in to stop. */
 const press = (page: Page, id: string): Promise<void> =>
@@ -57,17 +85,11 @@ test.describe("the dragon's hall is a toy", () => {
     await press(page, 'dragon');
     const fire = piece(page, 'fire.webp');
 
-    await expect(fire).toBeVisible();
-    await expect.poll(() => fire.evaluate((el) => Number(getComputedStyle(el).opacity)), SLOW).toBeGreaterThan(0.7);
+    const lies = await shown(page, 'fire.webp');
+    expect(lies.peak).toBe(1);
     /* its top right corner is the painting's: the painting covers the window and the piece runs to its right edge */
-    const lies = await page.evaluate(() => {
-      const img = document.querySelector<HTMLElement>('#states .piece[src$="fire.webp"]');
-      if (!img) throw new Error('no fire');
-      return { right: img.offsetLeft + img.offsetWidth, ratio: img.offsetWidth / img.offsetHeight };
-    });
-    /* offsetLeft and offsetWidth are whole pixels: a pixel of rounding either way */
     expect(Math.abs(lies.right - 1440)).toBeLessThanOrEqual(1.5);
-    expect(lies.ratio).toBeCloseTo(1496 / 500, 1);
+    expect((lies.right - lies.left) / (lies.bottom - lies.top)).toBeCloseTo(1496 / 500, 1);
     await expect(fire).toHaveCount(0, { timeout: 6000 });
   });
 
@@ -76,7 +98,7 @@ test.describe("the dragon's hall is a toy", () => {
     const chest = piece(page, 'chest.webp');
 
     await press(page, 'chest');
-    await expect.poll(() => chest.evaluate((el) => Number(getComputedStyle(el).opacity)), SLOW).toBe(1);
+    expect((await shown(page, 'chest.webp')).peak).toBe(1);
     await page.waitForTimeout(600);
     await expect(chest).toHaveCount(1);
     await press(page, 'chest');
@@ -170,9 +192,6 @@ async function arrive(page: Page, id: string): Promise<void> {
 const pressIn = (page: Page, world: string, id: string): Promise<void> =>
   page.locator(`#${world} .toy[data-toy="${id}"]`).evaluate((b: HTMLElement) => b.click());
 
-const opacityOf = (page: Page, file: string): Promise<number> =>
-  piece(page, file).evaluate((el) => Number(getComputedStyle(el).opacity));
-
 test.describe('every project place is a toy', () => {
   for (const id of PLAIN) {
     test(`${id}: each thing is a named button, none on the words, the tag or the switches, and each piece lies on the painting`, async ({
@@ -213,11 +232,10 @@ test.describe('every project place is a toy', () => {
         const file = t.swap?.piece.file;
         if (!file) continue;
         await pressIn(page, id, t.id);
-        await expect(piece(page, file)).toHaveCount(1);
-        await expect.poll(() => opacityOf(page, file), SLOW).toBeGreaterThan(0.9);
+        const r = await shown(page, file);
+        expect(r.peak, file).toBe(1);
         /* at 1440x900 the painting is 1440x960, 30 px cut off at the top and the bottom: the piece lies inside it, and
            some of it is in the window */
-        const r = await piece(page, file).evaluate((el) => el.getBoundingClientRect().toJSON() as DOMRect);
         expect(r.left, file).toBeGreaterThanOrEqual(-1);
         expect(r.right, file).toBeLessThanOrEqual(1441);
         expect(r.top, file).toBeGreaterThanOrEqual(-31);
