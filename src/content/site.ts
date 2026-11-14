@@ -5,7 +5,7 @@ export const SITE: SiteCopy = {
   mark: 'Kaisar Turysbek',
   description:
     'Projects by Kaisar Turysbek, an AI engineer in Kazakhstan: a phone-answering assistant, a finance assistant, a D&D tabletop, a history game and a few more.',
-  url: 'https://kekaisik1.github.io/portfolio/',
+  url: 'https://kekaisik.dev/',
   ogAlt: 'A painting of a snowy summit above a sea of clouds at sunrise, with the words:',
   hero: {
     heading: "Hi, I'm Kaisar.",

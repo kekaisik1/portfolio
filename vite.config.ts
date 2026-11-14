@@ -27,9 +27,9 @@ function videoManifest(): Plugin {
   };
 }
 
-export default defineConfig(({ command, isPreview }) => ({
-  /* GitHub Pages serves the site from /portfolio/ */
-  base: command === 'build' || isPreview ? '/portfolio/' : '/',
+export default defineConfig({
+  /* served from the root of kekaisik.dev (GitHub Pages with a custom domain) */
+  base: '/',
   plugins: [contentHtml(), videoManifest()],
   build: {
     target: 'es2022',
@@ -42,4 +42,4 @@ export default defineConfig(({ command, isPreview }) => ({
     environment: 'jsdom',
     include: ['tests/unit/**/*.test.ts'],
   },
-}));
+});

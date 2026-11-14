@@ -4,7 +4,7 @@
 
 The places are paintings, and they move. Quietly: nothing in them is pushed by wind, so the painting never smears. Lights breathe and flicker (the booth on the pass, the dragon's gold, the lanterns of Kyoto, the campfire), stars twinkle, water runs and shimmers (the waterfall off the open book), and the air carries snow off the summit, sparks, petals and dust. And each has a sound, synthesised in the browser (wind, a cavern, drips after rain, a far phone, a bell), off until the sound switch is pressed. The other switch stops the motion (stills only). A project with a video plays it in the picture's frame, and two places have something to open inside the painting: a small breathing dot with a label on Kyoto's big paper lantern and on the red die in the dragon's hall, which play the Kana Notebook video and a recording of a fight on the real Emberquill table. On phones the words take the lower or upper third, and the board is a sheet raised from a bar at the bottom.
 
-Live: https://kekaisik1.github.io/portfolio/
+Live: https://kekaisik.dev/
 
 ## Run it
 
@@ -15,8 +15,8 @@ npm install
 npm run dev        # http://localhost:5173, no API: the page runs on its own
 npm run check      # lint + typecheck + unit tests + build (what CI runs)
 npm run test:e2e   # browser smoke suite against the real build, and the sound check (first time: npx playwright install chromium)
-npm run build      # dist/, to be served from /portfolio/
-npm run preview    # serves dist/ at http://localhost:4173/portfolio/
+npm run build      # dist/, served from the root of kekaisik.dev
+npm run preview    # serves dist/ at http://localhost:4173/
 ```
 
 Other scripts: `lint`, `typecheck`, `test`, `format`, `worlds` (the paintings), `video` (compress a video).
@@ -148,7 +148,7 @@ Tests never use the real API: unit tests mock `fetch`, and the smoke suite build
 
 ## Good to know
 
-- Links point at a place: `…/portfolio/#kana-notebook`, `#about`, `#contact`. The address follows the place you are in. Links from older versions (`#voice-receptionist`, `#crm`, `#data-assistant`, `#sea`…) land on the place that took them over (`src/nav/routing.ts`).
+- Links point at a place: `kekaisik.dev/#kana-notebook`, `#about`, `#contact`. The address follows the place you are in. Links from older versions (`#voice-receptionist`, `#crm`, `#data-assistant`, `#sea`…) land on the place that took them over (`src/nav/routing.ts`).
 - Keys: arrows, Page Up/Down, `j`/`k`, Home and End travel; Esc closes the video, a sheet or the board.
 - The opening shot is only the first impression: any `#link` (also `#hello`) starts with the tag already there, and coming back to the summit keeps it.
 - The corner switches keep their state in `localStorage` (`kaisar.motion.v1`, `kaisar.sound.v1`: `on` / `off`). Motion starts off for visitors who ask for reduced motion; they can still turn it on.
