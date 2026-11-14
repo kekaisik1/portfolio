@@ -493,7 +493,7 @@ const PROJECT_IDS = WORLDS.slice(1, 8).map((w) => w[0]);
 const OPENS: Record<string, string[]> = Object.fromEntries(
   PROJECT_IDS.map((id) => [
     id,
-    ['numbers-room', 'emberquill', 'kana-notebook'].includes(id) ? ['try', 'video'] : ['try'],
+    id === 'emberquill' ? ['video'] : ['numbers-room', 'kana-notebook'].includes(id) ? ['try', 'video'] : ['try'],
   ]),
 );
 
@@ -527,11 +527,14 @@ test.describe('the spot in the painting', () => {
     expect(problems.filter((p) => !/video|media|ERR_/i.test(p))).toEqual([]);
   });
 
-  test("Emberquill: the die opens the real app's video", async ({ page }) => {
+  test("Emberquill: its painting is a toy, so the Watch button in the words opens the real app's video", async ({
+    page,
+  }) => {
     await open(page, './#emberquill');
     await arrived(page, 'emberquill');
 
-    await page.locator('#emberquill .spot[data-video]').click();
+    await expect(page.locator('#emberquill .spot')).toHaveCount(0);
+    await page.locator('#emberquill .acts .watch').click();
 
     await expect(page.locator('#player')).toBeVisible();
     await expect(page.locator('#p-title')).toHaveText('Emberquill');

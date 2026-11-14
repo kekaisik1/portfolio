@@ -174,6 +174,15 @@ See `.env.example`.
 
 Tests never use the real API: unit tests mock `fetch`, and the smoke suite builds with no address and fails if any request leaves the machine.
 
+## Make a painting a toy
+
+The dragon's hall is one: press the dragon and it breathes fire, the chest opens, the wizard's staff blazes, the archer looses an arrow, the gold throws sparks, and the red die is thrown and shows its number (a 20 wakes the dragon). No labels and no panel.
+
+1. Paint the second state: an edit of the same painting in which only the things that change are different (the prompts used are saved beside the sources in `../reference/painted-sources/states/`). Compare it with the original before going on: everything else must be where it was.
+2. Cut the pieces: add the rectangles to `../reference/painted-sources/states/make_states.py` and run it with `public/states/<world>` as its argument. It writes one feathered WebP per piece and prints each rectangle.
+3. Describe the toys in `src/worlds/toys.ts` (where to press, which piece fades in and for how long, which plain effects play, what sets what off) and name each one in `src/content/toys.ts`.
+4. Look at it: every toy pressed at 1440x900 and 390x844, and the words still readable while a piece passes behind them.
+
 ## Good to know
 
 - Links point at a place: `kekaisik.dev/#kana-notebook`, `#about`, `#contact`. The address follows the place you are in. Links from older versions (`#voice-receptionist`, `#crm`, `#data-assistant`, `#sea`…) land on the place that took them over (`src/nav/routing.ts`).

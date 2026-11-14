@@ -22,7 +22,9 @@ import { createTravel } from './travel/travel';
 import { initPlayer } from './video/player';
 import { lookOf } from './worlds/looks';
 import { createPhotos } from './worlds/photos';
+import { createEffects } from './worlds/effects';
 import { initReactions } from './worlds/react-view';
+import { initToys } from './worlds/toy-view';
 import { initSpots } from './worlds/spot-view';
 
 const RESIZE_SETTLE_MS = 150;
@@ -62,10 +64,17 @@ function boot(): void {
     motion: () => smooth && switches.motion(),
     spotsShown: (i) => spots.shown(i),
   });
+  const toys = initToys(worlds, lens, upright, {
+    ambient,
+    effects: createEffects(() => ({ width: lens.clientWidth, height: lens.clientHeight }), upright),
+    motion: () => smooth && switches.motion(),
+    random: Math.random,
+  });
   /* the spots first: a reacting object never stands on one */
   const place = (i: number): void => {
     spots.layout(i);
     reactions.layout(i);
+    toys.layout(i);
   };
   const relayout = (): void => {
     place(travel.current());
@@ -109,6 +118,7 @@ function boot(): void {
   });
   travel.onArrive((i) => {
     place(i);
+    toys.arrive(i);
     living.show(i);
     ambient.set(lookOf(WORLDS[i].id));
     lanterns.show(i === contact);

@@ -1,7 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
-/** The seven projects, each with its try. */
-const PROJECTS = ['front-desk', 'numbers-room', 'lowl', 'emberquill', 'history-lens', 'bookforge', 'kana-notebook'];
+/** The projects with a try to open (the dragon's hall is a toy instead: tests/e2e/toys.spec.ts). */
+const PROJECTS = ['front-desk', 'numbers-room', 'lowl', 'history-lens', 'bookforge', 'kana-notebook'];
 
 async function open(page: Page, id: string): Promise<void> {
   await page.goto(`./#${id}`);
@@ -90,22 +90,6 @@ test.describe('try it', () => {
 
     await expect(page.locator('#try-blocks')).toContainText('2 of 3.');
     await expect(page.locator('#try-end a')).toHaveAttribute('target', '_blank');
-  });
-
-  test('the dragon: the d20 lands, the sum is in words, and the orc loses its hit points until it is down', async ({
-    page,
-  }) => {
-    await open(page, 'emberquill');
-    await (await wayIn(page, 'emberquill')).click();
-    const roll = page.getByRole('button', { name: 'Roll the d20', exact: true });
-
-    await expect(roll).toBeFocused();
-    await roll.click();
-    await expect(page.locator('#try-said')).toHaveText(/^\d+ \+ 5 = \d+ vs AC 13: .+\. Orc: \d+ of 15 hit points\.$/);
-    await expect(page.locator('.try-roll')).toHaveText(/^\d+$/);
-    await finish(page);
-    await expect(page.locator('#try-blocks')).toContainText('The orc is down');
-    await expect(page.locator('.try-meter-t')).toHaveText('Orc: 0 of 15 hit points');
   });
 
   test('the pass: the example call comes line by line after picking up, and says it is an example', async ({

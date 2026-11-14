@@ -30,12 +30,6 @@ export const SPOTS: Readonly<Record<string, readonly Spot[]>> = {
   'numbers-room': [{ u: 0.655, v: 0.335, side: 'left', opens: 'try' }],
   /* the washing machine out front; the label over the dark workbench inside the door */
   lowl: [{ u: 0.663, v: 0.77, side: 'left', opens: 'try' }],
-  emberquill: [
-    /* the red twenty-sided die at the foot of the painting; the label over the grey rock right of it */
-    { u: 0.455, v: 0.84, side: 'right', opens: 'try' },
-    /* the light on the wizard's staff; the label over the gold right of it */
-    { u: 0.548, v: 0.562, side: 'right', opens: 'video' },
-  ],
   /* the marble balustrade of the terrace; the label over the balusters right of it */
   'history-lens': [{ u: 0.6, v: 0.83, side: 'right', opens: 'try' }],
   /* the fountain pen standing in the book; the label over the clouds and the city left of it */

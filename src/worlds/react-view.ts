@@ -9,14 +9,12 @@ import type { Ambient } from '../ambient/ambient';
 import { WORLDS } from '../content/places';
 import { byId, pick } from '../lib/dom';
 import { lookOf } from './looks';
-import { pictureLength, reactionOf, reactionRect, type Flare } from './reactions';
-import { crowds, spotPoint, within, type Rect } from './spots';
+import { createEffects } from './effects';
+import { reactionOf, reactionRect } from './reactions';
+import { crowds, within, type Rect } from './spots';
 
 /** the least room around a reacting object */
 const GAP_PX = 8;
-const FLARE_MS = 1500;
-const FLICKER_MS = 1300;
-const STREAK_MS = 900;
 
 export interface ReactParts {
   ambient: Ambient;
@@ -40,57 +38,7 @@ export function initReactions(
   const avoid = [byId('switches'), pick(document, '.brand'), byId('bar')];
   const box = (): { width: number; height: number } => ({ width: lens.clientWidth, height: lens.clientHeight });
 
-  /** an element of the layer, played once and then gone */
-  function play(layer: HTMLElement, el: HTMLElement, keys: Keyframe[], ms: number): void {
-    layer.prepend(el);
-    const a = el.animate(keys, { duration: ms, easing: 'ease-out' });
-    a.addEventListener('finish', () => el.remove(), { once: true });
-    a.addEventListener('cancel', () => el.remove(), { once: true });
-  }
-
-  function flare(layer: HTMLElement, i: number, f: Flare): void {
-    const look = lookOf(WORLDS[i].id);
-    const at = spotPoint({ u: f.at[0], v: f.at[1] }, look, box(), upright());
-    if (!at) return;
-    const size = pictureLength(f.size, look, box(), upright());
-    const el = document.createElement('span');
-    el.className = 'flare';
-    el.style.cssText = `--fx:${at.x}px;--fy:${at.y}px;--fs:${size}px;--frgb:${f.rgb.replaceAll(',', ' ')}`;
-    const keys: Keyframe[] = f.flicker
-      ? [0, 0.85, 0.2, 0.9, 0.35, 1, 0.6, 0].map((opacity) => ({ opacity, transform: 'scale(1)' }))
-      : [
-          { opacity: 0, transform: 'scale(0.7)' },
-          { opacity: 1, transform: 'scale(1)', offset: 0.25 },
-          { opacity: 0, transform: 'scale(1.12)' },
-        ];
-    play(layer, el, keys, f.flicker ? FLICKER_MS : FLARE_MS);
-  }
-
-  function streak(layer: HTMLElement, i: number, from: readonly [number, number], to: readonly [number, number]): void {
-    const look = lookOf(WORLDS[i].id);
-    const a = spotPoint({ u: from[0], v: from[1] }, look, box(), upright());
-    const b = spotPoint({ u: to[0], v: to[1] }, look, box(), upright());
-    if (!a || !b) return;
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    const angle = Math.atan2(dy, dx);
-    const length = Math.hypot(dx, dy);
-    const el = document.createElement('span');
-    el.className = 'streak';
-    el.style.cssText = `--fx:${a.x}px;--fy:${a.y}px;--len:${length * 0.3}px`;
-    const along = (k: number, scale: number): string =>
-      `translate(${dx * k}px, ${dy * k}px) rotate(${angle}rad) scaleX(${scale})`;
-    play(
-      layer,
-      el,
-      [
-        { opacity: 0, transform: along(0, 0.2) },
-        { opacity: 1, transform: along(0.3, 1), offset: 0.3 },
-        { opacity: 0, transform: along(0.75, 0.6) },
-      ],
-      STREAK_MS,
-    );
-  }
+  const { flare, streak } = createEffects(box, upright);
 
   function fire(i: number): void {
     const r = reactionOf(WORLDS[i].id);
@@ -102,7 +50,7 @@ export function initReactions(
   }
 
   function layout(i: number): void {
-    const button = worlds[i].querySelector<HTMLElement>('.react');
+    const button = worlds[i].querySelector<HTMLElement>('.react:not(.toy)');
     const r = reactionOf(WORLDS[i].id);
     if (!button || !r) return;
     button.hidden = true;
@@ -121,7 +69,7 @@ export function initReactions(
       button.hidden = true;
   }
 
-  worlds.forEach((w, i) => w.querySelector('.react')?.addEventListener('click', () => fire(i)));
+  worlds.forEach((w, i) => w.querySelector('.react:not(.toy)')?.addEventListener('click', () => fire(i)));
 
   return { layout };
 }

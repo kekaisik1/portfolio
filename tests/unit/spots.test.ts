@@ -6,6 +6,7 @@ import { renderProject } from '../../src/content/render';
 import { tryOf } from '../../src/content/tries';
 import { lookOf } from '../../src/worlds/looks';
 import { crowds, MAX_SPOTS, SPOTS, spotsOf, spotPoint, within, type Spot } from '../../src/worlds/spots';
+import { toysOf } from '../../src/worlds/toys';
 
 const KANA = WORLDS.findIndex((w) => w.id === 'kana-notebook');
 const EMBER = WORLDS.findIndex((w) => w.id === 'emberquill');
@@ -14,7 +15,7 @@ const videos = { 'kana-notebook': { src: 'kana-notebook.mp4', seconds: 44 }, emb
 describe('the spots in the paintings', () => {
   it('stand only in worlds with a look, a label in the content and something to open', () => {
     expect(Object.keys(SPOTS).sort()).toEqual(
-      ['bookforge', 'emberquill', 'front-desk', 'history-lens', 'kana-notebook', 'lowl', 'numbers-room'].sort(),
+      ['bookforge', 'front-desk', 'history-lens', 'kana-notebook', 'lowl', 'numbers-room'].sort(),
     );
     for (const [id, spots] of Object.entries(SPOTS)) {
       expect(() => lookOf(id), id).not.toThrow();
@@ -36,13 +37,13 @@ describe('the spots in the paintings', () => {
     expect(spotsOf('hello')).toEqual([]);
   });
 
-  it('gives every project a try, and a spot in its painting to open it', () => {
+  it('gives every project a try and a spot in its painting to open it, unless its painting is itself the toy', () => {
     for (const w of WORLDS.filter((x) => x.kind === 'project')) {
       expect(tryOf(w.id), w.id).not.toBeNull();
       expect(
         spotsOf(w.id).some((s) => s.opens === 'try'),
         w.id,
-      ).toBe(true);
+      ).toBe(toysOf(w.id).length === 0);
     }
   });
 
@@ -69,7 +70,7 @@ describe('the spots in the paintings', () => {
   it('maps into the upright crop on a phone, and is cut off where the crop leaves the object out', () => {
     const phone = { width: 390, height: 844 };
 
-    const die = spotPoint(SPOTS.emberquill[0], lookOf('emberquill'), phone, true);
+    const die = spotPoint({ u: 0.455, v: 0.84 }, lookOf('emberquill'), phone, true);
     expect(die).not.toBeNull();
     expect(die?.y).toBeCloseTo(0.84 * 844, 0);
     expect(die?.x).toBeGreaterThan(0);
@@ -114,7 +115,11 @@ describe('the spots in the paintings', () => {
       '<button class="btn try" type="button" data-try="kana-notebook" aria-haspopup="dialog" ' +
         'aria-label="Try Kana Notebook: read a card">Try it</button>',
     );
-    expect(renderProject(WORLDS[EMBER], EMBER, videos)).toContain('aria-label="Watch the Emberquill video,"');
+    /* a painting that is a toy has no spots and no Try it: the Watch button in the words is its video's way in */
+    const ember = renderProject(WORLDS[EMBER], EMBER, videos);
+    expect(ember).toContain('class="btn watch"');
+    expect(ember).not.toContain('class="spot ');
+    expect(ember).not.toContain('class="btn try"');
     /* no video, no video spot; the try's spot stays */
     expect(renderProject(WORLDS[KANA], KANA, {})).not.toContain('data-video');
     expect(renderProject(WORLDS[KANA], KANA, {})).toContain('class="spot left" type="button" data-try');

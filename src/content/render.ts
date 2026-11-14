@@ -8,6 +8,8 @@ import { TALL_QUERY } from '../lib/queries';
 import placeholders from '../worlds/placeholders.json';
 import { lookOf, photoUrl } from '../worlds/looks';
 import { reactionOf } from '../worlds/reactions';
+import { toysOf } from '../worlds/toys';
+import { toyLabel } from './toys';
 import { spotsOf, type Spot } from '../worlds/spots';
 import { WORLDS, rowNumber } from './places';
 import { MESSAGES, SITE } from './site';
@@ -85,7 +87,23 @@ function trySpot(p: Project, spot: Spot, k: number): string {
  * object, placed by src/worlds/react-view.ts. Hidden until then, and without scripts.
  */
 const reactButton = (w: World): string =>
-  reactionOf(w.id) ? `<button class="react" type="button" aria-label="${esc(w.react)}" hidden></button>` : '';
+  reactionOf(w.id) && !toysOf(w.id).length
+    ? `<button class="react" type="button" aria-label="${esc(w.react)}" hidden></button>`
+    : '';
+
+/**
+ * A painting that is a toy (src/worlds/toys.ts): one invisible button per thing that answers a press, placed by
+ * src/worlds/toy-view.ts, and a line a screen reader is told after a throw of the die.
+ */
+const toyButtons = (w: World): string =>
+  toysOf(w.id).length
+    ? toysOf(w.id)
+        .map(
+          (t) =>
+            `<button class="react toy" type="button" data-toy="${t.id}" aria-label="${esc(toyLabel(w.id, t.id))}" hidden></button>`,
+        )
+        .join('') + '<span class="sr-only toy-say" role="status"></span>'
+    : '';
 
 /**
  * The layer over the painting that pushes in with it: the world's reaction and its spots (hidden until they are
@@ -98,13 +116,14 @@ function spotsLayer(w: World, videos: VideoManifest): string {
         .map((s, k) => (s.opens === 'video' ? videoSpot(p, s, k, videos) : trySpot(p, s, k)))
         .join('')
     : '';
-  return `<div class="spots">${reactButton(w)}${spots}</div>`;
+  return `<div class="spots">${reactButton(w)}${toyButtons(w)}${spots}</div>`;
 }
 
 /** The Try it button in the words: the way in where the try's spot cannot be shown. */
 function tryButton(p: Project): string {
   const t = tryOf(p.slug);
-  if (!t) return '';
+  /* a painting that is a toy has no panel to open: the picture is the thing to try */
+  if (!t || toysOf(p.slug).length) return '';
   return (
     `<button class="btn try" type="button" data-try="${p.slug}" aria-haspopup="dialog" ` +
     `aria-label="${esc(MESSAGES.tryLabel(p.name, t.spot))}">${esc(MESSAGES.tryIt)}</button>`

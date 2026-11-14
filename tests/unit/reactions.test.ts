@@ -68,10 +68,11 @@ describe('the painting reacts', () => {
     expect(reactionRect(pen, lookOf('bookforge'), { width: 1440, height: 900 }, false)).not.toBeNull();
   });
 
-  it('renders as a real button with its name, hidden until it is placed, in every world', () => {
+  it('renders as a real button with its name, hidden until it is placed, in every world that is not a toy', () => {
     const html = renderWorlds();
 
-    expect(html.match(/<button class="react" type="button" aria-label="[^"]+" hidden><\/button>/g)).toHaveLength(10);
+    /* the dragon's hall is a toy (tests/unit/toys.test.ts): its things to press take the place of the one reaction */
+    expect(html.match(/<button class="react" type="button" aria-label="[^"]+" hidden><\/button>/g)).toHaveLength(9);
     expect(html).toContain('aria-label="Stoke the brazier"');
   });
 });
