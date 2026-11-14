@@ -197,11 +197,13 @@ export function initToys(
       const r = t.radius * unit;
       ledge.style.opacity = '1';
       canvas.style.opacity = '1';
-      let ms = 0;
+      /* the throw runs on the clock, not on counted frames: a slow device shows fewer drawings of the same throw */
+      const began = performance.now();
       let told = false;
       let last = -1;
-      const draw = (dt: number): void => {
-        ms += dt * 1000;
+      const draw = (): void => {
+        if (told) return;
+        const ms = performance.now() - began;
         /* drawn twelve times a second, like something hand-made, not smoothly: the painting is not smooth either */
         const now = Math.min(t.ms, drawnAt(ms));
         if (now === last && ms < t.ms) return;
@@ -214,7 +216,7 @@ export function initToys(
         ctx.ellipse(cx, ground + r * 0.86, r * (0.95 - 0.3 * pose.height), r * 0.2, 0, 0, Math.PI * 2);
         ctx.fill();
         drawDie(ctx, pose.turn, cx, ground - pose.height * t.lift * unit, r, swatch);
-        if (ms >= t.ms && !told) {
+        if (ms >= t.ms) {
           told = true;
           stop?.();
           stop = null;
@@ -236,6 +238,8 @@ export function initToys(
         });
       };
       stop = parts.ticker.add(draw);
+      /* the frame loop may stop under it (a device that cannot keep up, a hidden tab): the die still lands */
+      later(t.ms + 200, draw);
     }, over);
   }
 

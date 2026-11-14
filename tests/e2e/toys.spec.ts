@@ -10,6 +10,9 @@ async function open(page: Page): Promise<void> {
   await expect(page.locator('#cut > *')).toHaveCount(0);
 }
 
+/** a piece is decoded before it fades in: on a runner without a GPU, with other tests beside it, that can take seconds */
+const SLOW = { timeout: 15_000 };
+
 /** Press a toy the way a key or a finger does, without waiting for the painting's slow push-in to stop. */
 const press = (page: Page, id: string): Promise<void> =>
   page.locator(`#emberquill .toy[data-toy="${id}"]`).evaluate((b: HTMLElement) => b.click());
@@ -55,7 +58,7 @@ test.describe("the dragon's hall is a toy", () => {
     const fire = piece(page, 'fire.webp');
 
     await expect(fire).toBeVisible();
-    await expect.poll(() => fire.evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(0.7);
+    await expect.poll(() => fire.evaluate((el) => Number(getComputedStyle(el).opacity)), SLOW).toBeGreaterThan(0.7);
     /* its top right corner is the painting's: the painting covers the window and the piece runs to its right edge */
     const lies = await page.evaluate(() => {
       const img = document.querySelector<HTMLElement>('#states .piece[src$="fire.webp"]');
@@ -73,7 +76,7 @@ test.describe("the dragon's hall is a toy", () => {
     const chest = piece(page, 'chest.webp');
 
     await press(page, 'chest');
-    await expect.poll(() => chest.evaluate((el) => Number(getComputedStyle(el).opacity))).toBe(1);
+    await expect.poll(() => chest.evaluate((el) => Number(getComputedStyle(el).opacity)), SLOW).toBe(1);
     await page.waitForTimeout(600);
     await expect(chest).toHaveCount(1);
     await press(page, 'chest');
@@ -211,7 +214,7 @@ test.describe('every project place is a toy', () => {
         if (!file) continue;
         await pressIn(page, id, t.id);
         await expect(piece(page, file)).toHaveCount(1);
-        await expect.poll(() => opacityOf(page, file)).toBeGreaterThan(0.9);
+        await expect.poll(() => opacityOf(page, file), SLOW).toBeGreaterThan(0.9);
         /* at 1440x900 the painting is 1440x960, 30 px cut off at the top and the bottom: the piece lies inside it, and
            some of it is in the window */
         const r = await piece(page, file).evaluate((el) => el.getBoundingClientRect().toJSON() as DOMRect);

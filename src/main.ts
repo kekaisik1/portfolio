@@ -65,7 +65,8 @@ function boot(): void {
   const toys = initToys(worlds, lens, upright, {
     ambient,
     effects,
-    motion: () => smooth && switches.motion(),
+    /* only the switch: a device too slow for the living painting can still fade a picture in and throw a die */
+    motion: () => switches.motion(),
     random: Math.random,
     ticker,
   });
