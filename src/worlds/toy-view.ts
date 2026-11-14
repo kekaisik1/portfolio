@@ -8,14 +8,14 @@
  */
 import type { Ambient } from '../ambient/ambient';
 import { WORLDS } from '../content/places';
-import { TOY_SAYS, toyNote } from '../content/toys';
+import { TOY_SAYS } from '../content/toys';
 import { byId, pick } from '../lib/dom';
 import type { Ticker } from '../lib/ticker';
 import { drawDie, drawnAt, poseAt } from './d20';
 import type { Effects } from './effects';
 import { lookOf } from './looks';
 import { reactionRect } from './reactions';
-import { crowds, picturePoint, within, type Rect } from './picture';
+import { crowds, within, type Rect } from './picture';
 import {
   numberFor,
   outcomeOf,
@@ -31,12 +31,6 @@ import {
 
 const GAP_PX = 8;
 const OUTCOME_AFTER_MS = 600;
-/** a note comes in after the thing it is about has begun to show, and stays long enough to be read */
-const NOTE_AFTER_MS = 500;
-const NOTE_FADE_MS = 500;
-const NOTE_SHOWN_MS = 4200;
-/** a note keeps this far from the window's edges */
-const NOTE_EDGE_PX = 12;
 
 export interface ToyParts {
   ambient: Ambient;
@@ -249,41 +243,6 @@ export function initToys(
     }, over);
   }
 
-  /**
-   * The note of an easter egg: a small chip at its place in the painting, one at a time, told to a screen reader
-   * too. It fades in and out slowly and is kept inside the window.
-   */
-  function say(i: number, toy: Toy): void {
-    const layer = layerOf(i);
-    if (!toy.note || !layer) return;
-    const at = picturePoint({ u: toy.note[0], v: toy.note[1] }, lookOf(WORLDS[i].id), box(), upright());
-    if (!at) return;
-    const words = toyNote(WORLDS[i].id, toy.id);
-    layer.querySelectorAll('.toy-note').forEach((old) => old.remove());
-    const chip = document.createElement('span');
-    chip.className = 'toy-note';
-    chip.textContent = words;
-    layer.append(chip);
-    const half = chip.offsetWidth / 2;
-    const x = Math.min(window.innerWidth - NOTE_EDGE_PX - half, Math.max(NOTE_EDGE_PX + half, at.x));
-    chip.style.cssText = `left:${x}px;top:${at.y}px`;
-    const status = layer.querySelector<HTMLElement>('.toy-say');
-    if (status) status.textContent = words;
-    const total = NOTE_AFTER_MS + NOTE_FADE_MS * 2 + NOTE_SHOWN_MS;
-    const shown = chip.animate(
-      [
-        { opacity: 0, offset: 0 },
-        { opacity: 0, offset: NOTE_AFTER_MS / total },
-        { opacity: 1, offset: (NOTE_AFTER_MS + NOTE_FADE_MS) / total },
-        { opacity: 1, offset: 1 - NOTE_FADE_MS / total },
-        { opacity: 0, offset: 1 },
-      ],
-      { duration: total, easing: 'ease-in-out' },
-    );
-    shown.addEventListener('finish', () => chip.remove(), { once: true });
-    shown.addEventListener('cancel', () => chip.remove(), { once: true });
-  }
-
   /** `quiet`: set off by the die, not pressed: something already left in (the open chest) is not taken away. */
   function press(i: number, id: string, quiet = false): void {
     const toy = toysOf(WORLDS[i].id).find((t) => t.id === id);
@@ -298,7 +257,6 @@ export function initToys(
     if (toy.swap) swap(i, toy, key);
     if (toy.throw) toss(i, toy.throw, key);
     if (closing) return;
-    say(i, toy);
     if (toy.streak) parts.effects.streak(layer, i, toy.streak.from, toy.streak.to);
     toy.bursts?.forEach((b) => parts.ambient.burst(b));
     if (toy.then) {
@@ -334,7 +292,6 @@ export function initToys(
     timers.clear();
     for (const img of [...shown.keys()]) lift(img);
     states.replaceChildren();
-    document.querySelectorAll('.toy-note').forEach((note) => note.remove());
     kept.clear();
     busy.clear();
     current = i;

@@ -75,11 +75,6 @@ export interface Toy {
   then?: { toy: string; after: number };
   /** not a thing to press: only set off by another toy (a throw of the die) */
   unseen?: true;
-  /**
-   * An easter egg that says what it stands for: where its note stands in the painting (its words are in
-   * src/content/toys.ts). The note is a small board chip, the one crisp thing beside what was pressed.
-   */
-  note?: PicturePoint;
   /** its piece is the whole painting again (the same place at another time): while it is in, nothing else answers */
   whole?: true;
 }
@@ -322,47 +317,42 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
     /* the brazier's flame rises three times as tall */
     {
       id: 'brazier',
-      note: [0.86, 0.33],
       u: 0.925,
       v: 0.72,
       w: 0.11,
       h: 0.22,
       swap: { piece: { file: 'brazier.webp', ...px(1229, 379, 307, 594) }, rise: 600, hold: 3500, fall: 1400 },
     },
-    /* legionaries march along the road through the arch */
+    /* a real event: a triumph comes down the road and through the arch, the emperor's statue in a gilded chariot */
     {
-      id: 'legion',
-      note: [0.37, 0.8],
+      id: 'triumph',
       u: 0.36,
       v: 0.66,
       w: 0.14,
       h: 0.14,
-      swap: { piece: { file: 'legion.webp', ...px(415, 573, 399, 246) }, rise: 600, hold: 0, fall: 1400, stays: true },
+      swap: { piece: { file: 'triumph.webp', ...px(353, 553, 630, 317) }, rise: 700, hold: 0, fall: 1400, stays: true },
     },
     /* the temple's doors open on gold light */
     {
       id: 'temple',
-      note: [0.69, 0.68],
       u: 0.68,
       v: 0.5,
       w: 0.14,
       h: 0.22,
       swap: { piece: { file: 'temple.webp', ...px(968, 420, 184, 246) }, rise: 600, hold: 0, fall: 1400, stays: true },
     },
-    /* doves fly up over the Colosseum */
+    /* a real event: games at the Colosseum, its awning stretched over the top and pennants along the rim */
     {
-      id: 'doves',
-      note: [0.5, 0.13],
+      id: 'games',
       u: 0.47,
       v: 0.36,
       w: 0.2,
       h: 0.12,
-      swap: { piece: { file: 'doves.webp', ...px(568, 154, 369, 163) }, rise: 600, hold: 3000, fall: 1400 },
+      swap: { piece: { file: 'games.webp', ...px(492, 205, 445, 184) }, rise: 700, hold: 0, fall: 1400, stays: true },
     },
     /* easter eggs that stand for what the project is. A Roman at the rail: you play someone who was there */
     {
       id: 'you',
-      note: [0.56, 0.56],
       u: 0.56,
       v: 0.82,
       w: 0.1,
@@ -372,7 +362,6 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
     /* the whole view as it is today, in ruins: pressed in the sky, where nothing says it is there */
     {
       id: 'now',
-      note: [0.5, 0.2],
       whole: true,
       u: 0.52,
       v: 0.07,
@@ -403,7 +392,6 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
     /* the pen's nib glows */
     {
       id: 'pen',
-      note: [0.86, 0.52],
       u: 0.9,
       v: 0.3,
       w: 0.06,
@@ -428,7 +416,6 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
     /* easter eggs that stand for what the project is. Three characters tied by a gold thread: where everyone is */
     {
       id: 'threads',
-      note: [0.58, 0.71],
       u: 0.8,
       v: 0.57,
       w: 0.1,
@@ -438,7 +425,6 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
     /* a ship on the mountain top, in the editor's red circle: it says what cannot be true */
     {
       id: 'editor',
-      note: [0.665, 0.34],
       u: 0.665,
       v: 0.24,
       w: 0.07,
@@ -448,12 +434,20 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
     /* the floating island's tether glows: a thread of the plot still open */
     {
       id: 'tether',
-      note: [0.5, 0.31],
       u: 0.545,
       v: 0.2,
       w: 0.07,
       h: 0.1,
       swap: { piece: { file: 'tether.webp', ...px(461, 133, 461, 338) }, rise: 700, hold: 4600, fall: 1400 },
+    },
+    /* the hero of the manga Kaisar is planning, seen from behind on the hillside, bending electricity */
+    {
+      id: 'bender',
+      u: 0.1,
+      v: 0.72,
+      w: 0.14,
+      h: 0.34,
+      swap: { piece: { file: 'bender.webp', ...px(0, 451, 384, 532) }, rise: 700, hold: 0, fall: 1400, stays: true },
     },
   ],
   'kana-notebook': [

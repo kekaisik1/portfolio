@@ -2,7 +2,7 @@ import { existsSync, statSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { WORLDS } from '../../src/content/places';
 import { renderWorlds } from '../../src/content/render';
-import { TOY_LABELS, TOY_NOTES, TOY_SAYS, toyLabel, toyNote } from '../../src/content/toys';
+import { TOY_LABELS, TOY_SAYS, toyLabel } from '../../src/content/toys';
 import { lookOf } from '../../src/worlds/looks';
 import { MAX_BURST } from '../../src/worlds/reactions';
 import {
@@ -186,24 +186,6 @@ describe('the paintings that are toys', () => {
     const offsets = fire.frames.map((f) => f.offset);
     expect(offsets).toEqual([...offsets].sort((a, b) => a - b));
     expect(Math.min(...fire.frames.slice(1, -1).map((f) => f.opacity))).toBeGreaterThan(0.7);
-  });
-
-  it('gives every easter egg that has a place for a note its words, short and plain, and no words without a place', () => {
-    for (const [id, toys] of Object.entries(TOYS)) {
-      const noted = toys.filter((t) => t.note).map((t) => t.id);
-      expect(Object.keys(TOY_NOTES[id] ?? {}).sort(), id).toEqual([...noted].sort());
-      for (const t of toys.filter((x) => x.note)) {
-        const words = toyNote(id, t.id);
-        /* a chip beside a thing in a painting, read at a glance */
-        expect(words.length, `${id}/${t.id}`).toBeLessThanOrEqual(60);
-        expect(words, `${id}/${t.id}`).toMatch(/^[A-Z].*\.$/);
-        for (const n of t.note ?? []) {
-          expect(n).toBeGreaterThan(0);
-          expect(n).toBeLessThan(1);
-        }
-      }
-    }
-    expect(() => toyNote('bookforge', 'page')).toThrow(/TOY_NOTES/);
   });
 
   it('lets only a toy that stays be the whole painting, and has at most one in a place', () => {
