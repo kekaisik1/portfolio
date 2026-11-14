@@ -84,12 +84,8 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
       v: 0.27,
       w: 0.3,
       h: 0.34,
-      swap: { piece: { file: 'fire.webp', ...px(40, 0, 1496, 500) }, rise: 150, hold: 1900, fall: 800, wavers: true },
-      flare: { at: [0.63, 0.29], size: 0.5, rgb: '255,170,70' },
-      bursts: [
-        { at: [0.42, 0.17], style: 'drift', count: 22, spread: 0.07, rgb: '255,190,90', dir: -1 },
-        { at: [0.24, 0.09], style: 'rise', count: 8, spread: 0.06, rgb: '255,220,150' },
-      ],
+      /* a slow, steady light: a big bright piece that flashes in or wavers hurts the eyes */
+      swap: { piece: { file: 'fire.webp', ...px(40, 0, 1496, 500) }, rise: 600, hold: 1500, fall: 1300 },
     },
     /* the gold right of the party throws sparks */
     {
@@ -98,8 +94,7 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
       v: 0.62,
       w: 0.09,
       h: 0.08,
-      flare: { at: [0.72, 0.61], size: 0.24, rgb: '255,214,120' },
-      bursts: [{ at: [0.72, 0.6], style: 'rise', count: 24, spread: 0.05, rgb: '255,240,190' }],
+      bursts: [{ at: [0.72, 0.6], style: 'rise', count: 10, spread: 0.05, rgb: '255,240,190' }],
     },
     /* the chest on the hoard opens, and stays open until it is pressed again */
     {
@@ -108,8 +103,7 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
       v: 0.61,
       w: 0.1,
       h: 0.13,
-      swap: { piece: { file: 'chest.webp', ...px(1200, 530, 210, 185) }, rise: 220, hold: 0, fall: 260, stays: true },
-      bursts: [{ at: [0.852, 0.6], style: 'sparkle', count: 14, spread: 0.035, rgb: '255,244,200' }],
+      swap: { piece: { file: 'chest.webp', ...px(1200, 530, 210, 185) }, rise: 450, hold: 0, fall: 450, stays: true },
     },
     /* the archer looses an arrow at the dragon, which answers */
     {
@@ -119,7 +113,7 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
       w: 0.05,
       h: 0.14,
       streak: { from: [0.672, 0.64], to: [0.668, 0.33] },
-      then: { toy: 'dragon', after: 520 },
+      then: { toy: 'dragon', after: 700 },
     },
     /* the wizard's staff blazes */
     {
@@ -128,9 +122,7 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
       v: 0.6,
       w: 0.06,
       h: 0.2,
-      swap: { piece: { file: 'staff.webp', ...px(713, 437, 260, 260) }, rise: 120, hold: 900, fall: 700 },
-      flare: { at: [0.549, 0.553], size: 0.34, rgb: '170,205,255' },
-      bursts: [{ at: [0.549, 0.553], style: 'sparkle', count: 12, spread: 0.04, rgb: '220,235,255' }],
+      swap: { piece: { file: 'staff.webp', ...px(713, 437, 260, 260) }, rise: 450, hold: 900, fall: 1000 },
     },
     /* the red die is thrown and lands where it lay; a twenty wakes the dragon */
     {
@@ -142,9 +134,9 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
       throw: {
         die: { file: 'die.webp', ...px(579, 785, 242, 224) },
         ledge: { file: 'ledge.webp', ...px(544, 747, 312, 277) },
-        lift: 0.2,
-        turns: 2,
-        ms: 1150,
+        lift: 0.14,
+        turns: 1,
+        ms: 1500,
         sides: 20,
         crit: 'dragon',
       },

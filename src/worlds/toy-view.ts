@@ -16,11 +16,8 @@ import { crowds, within, type Rect } from './spots';
 import { pictureRect, pieceUrl, rollOf, swapFrames, toysOf, type Piece, type Throw, type Toy } from './toys';
 
 const GAP_PX = 8;
-/** the first visit: each toy glints once, one after another, so the eye learns where they are */
-const GLINT_AFTER_MS = 1100;
-const GLINT_EVERY_MS = 170;
-const ROLL_SHOWN_MS = 2400;
-const CRIT_AFTER_MS = 420;
+const ROLL_SHOWN_MS = 2800;
+const CRIT_AFTER_MS = 700;
 
 export interface ToyParts {
   ambient: Ambient;
@@ -52,7 +49,6 @@ export function initToys(
   const busy = new Set<string>();
   /** pieces left in (the open chest), by world and toy id */
   const kept = new Map<string, HTMLImageElement>();
-  const glinted = new Set<number>();
   const timers = new Set<number>();
   let current = -1;
 
@@ -110,7 +106,7 @@ export function initToys(
           return;
         }
         const { frames, ms } = swapFrames(s);
-        const a = img.animate(frames, { duration: ms });
+        const a = img.animate(frames, { duration: ms, easing: 'ease-in-out' });
         const done = (): void => {
           busy.delete(key);
           lift(img);
@@ -171,10 +167,10 @@ export function initToys(
           if (say) say.textContent = TOY_SAYS.rolled(n, t.sides);
           const shownFor = chip.animate(
             [
-              { opacity: 0, transform: 'translate(-50%, -60%) scale(0.7)' },
+              { opacity: 0, transform: 'translate(-50%, -110%) scale(1)' },
               { opacity: 1, transform: 'translate(-50%, -130%) scale(1)', offset: 0.12 },
               { opacity: 1, transform: 'translate(-50%, -130%) scale(1)', offset: 0.8 },
-              { opacity: 0, transform: 'translate(-50%, -150%) scale(1)' },
+              { opacity: 0, transform: 'translate(-50%, -130%) scale(1)' },
             ],
             { duration: ROLL_SHOWN_MS, easing: 'ease-out' },
           );
@@ -234,21 +230,6 @@ export function initToys(
     for (const [img, piece] of shown) put(img, piece, i);
   }
 
-  function glint(i: number): void {
-    if (glinted.has(i) || !parts.motion()) return;
-    glinted.add(i);
-    const layer = layerOf(i);
-    if (!layer) return;
-    const there = [...worlds[i].querySelectorAll<HTMLElement>('.toy')].filter((b) => !b.hidden);
-    there.forEach((button, k) => {
-      const toy = toysOf(WORLDS[i].id).find((t) => t.id === button.dataset.toy);
-      if (!toy) return;
-      later(GLINT_AFTER_MS + k * GLINT_EVERY_MS, () => {
-        if (current === i) parts.effects.flare(layer, i, { at: [toy.u, toy.v], size: 0.09, rgb: '255,250,235' });
-      });
-    });
-  }
-
   function arrive(i: number): void {
     /* whatever the last place was in the middle of is over */
     timers.forEach((t) => window.clearTimeout(t));
@@ -258,7 +239,6 @@ export function initToys(
     busy.clear();
     current = i;
     layout(i);
-    glint(i);
   }
 
   worlds.forEach((w, i) =>
