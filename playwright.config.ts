@@ -9,7 +9,7 @@ const GPU_ARGS = process.env.CI
   : ['--use-angle=gl', '--enable-gpu', '--ignore-gpu-blocklist'];
 
 /**
- * The smoke suite runs against the real build, served the way GitHub Pages serves it (under /portfolio/),
+ * The smoke suite runs against the real build, served the way GitHub Pages serves it (at the root of the domain),
  * with no API address: nothing is ever sent to the production API from tests.
  */
 export default defineConfig({
@@ -20,7 +20,7 @@ export default defineConfig({
   reporter: process.env.CI ? [['github'], ['list']] : 'list',
   timeout: 60_000,
   use: {
-    baseURL: `http://127.0.0.1:${PORT}/portfolio/`,
+    baseURL: `http://127.0.0.1:${PORT}/`,
     trace: 'retain-on-failure',
   },
   projects: [
@@ -36,7 +36,7 @@ export default defineConfig({
   webServer: [
     {
       command: `npm run build && npm run preview -- --host 127.0.0.1 --port ${PORT}`,
-      url: `http://127.0.0.1:${PORT}/portfolio/`,
+      url: `http://127.0.0.1:${PORT}/`,
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
       env: { VITE_API_URL: '' },
