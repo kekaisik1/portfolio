@@ -21,7 +21,6 @@ import { createTravel } from './travel/travel';
 import { initPlayer } from './video/player';
 import { lookOf } from './worlds/looks';
 import { createPhotos } from './worlds/photos';
-import { fitWords } from './worlds/words';
 
 const RESIZE_SETTLE_MS = 150;
 
@@ -32,7 +31,7 @@ function boot(): void {
   const worlds = pickAll<HTMLElement>(byId('main'), '.world');
   /** false once the device has shown it cannot keep up: the motion stops and the photo no longer pushes in */
   let smooth = true;
-  /** how many things cover the photo right now (the video, a sheet, the raised index): the motion rests under them */
+  /** how many things cover the photo right now (the video, a sheet, the open board): the motion rests under them */
   let covers = 0;
 
   const photos = createPhotos(lens);
@@ -55,7 +54,6 @@ function boot(): void {
     smooth: () => smooth && switches.motion(),
   });
   const relayout = (): void => {
-    fitWords(worlds[travel.current()]);
     living.resize();
     ambient.resize();
     lanterns.layout();
@@ -122,8 +120,6 @@ function boot(): void {
   };
   window.addEventListener('resize', settled);
   narrow.addEventListener('change', settled);
-  /* the words are measured again once the typefaces are in: a name may wrap differently */
-  void document.fonts.ready.then(() => fitWords(worlds[travel.current()]));
 
   void loadToday().then((today) => {
     if (today) footer.setToday(today.weather, today.now);

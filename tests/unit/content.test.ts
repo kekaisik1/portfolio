@@ -145,7 +145,7 @@ describe('content rendered into the page', () => {
   it('renders a project with no longer text as just its name and line: no empty .more and no Read button', () => {
     const html = renderProject(WORLDS[1], 1);
 
-    expect(html).toContain('<section class="world" id="front-desk" data-i="1" data-at="tl" data-at-m="top"');
+    expect(html).toContain('<section class="world" id="front-desk" data-i="1" data-at="bl" data-at-m="top"');
     expect(html).toContain('<span class="pl">Mountain pass</span><span class="src">something I built for work</span>');
     expect(html).toContain('<h2 class="name" id="front-desk-t" tabindex="-1">The Front Desk</h2>');
     expect(html).toContain('<p class="line">An AI that picks up the phone.</p>');

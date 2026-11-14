@@ -4,7 +4,7 @@
  */
 dialog.sheet {
   position: fixed;
-  inset: auto 0 0 var(--col);
+  inset: auto 0 0 0;
   width: auto;
   max-width: none;
   max-height: min(86dvh, 720px);

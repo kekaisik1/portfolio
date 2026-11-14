@@ -1,8 +1,8 @@
 # Portfolio
 
-"Departures": a departures board where every destination is a place, and seven of the places are projects. It opens on the summit alone, filling the window: the name, "Hi, I'm Kaisar." low in the frame, one line, a hint, and two small switches in the corner. The first step (wheel, arrow key, swipe, the hint, Tab) brings the board in from the left: a crisp mono index of ten rows (place, project, status); the rest of the screen is a painting of the place you are in, with that project's words standing in the corner the painting leaves calm. Choosing a row, turning the wheel, pressing an arrow key or swiping cuts to the next place like a board flipping: a few uneven slats close over the old picture in 300 ms and the new words are there. Summit (the greeting), Mountain pass, Observatory, Repair shop, Dragon's hall, Rome 117 AD, The open book, Kyoto, The road (about) and Campfire (write me, leave a note, light a lantern).
+"Departures": a departures board where every destination is a place, and seven of the places are projects. It opens on the summit alone, filling the window: the name, "Hi, I'm Kaisar." low in the frame, one line, a hint, and two small switches in the corner. Every other place is built the same way: its painting fills the window, and low in the corner the painting leaves calm stand a kicker, the project's name, big, one line and its buttons; the longer text is one press away, behind "Read". The first step (wheel, arrow key, swipe, the hint, Tab) brings in a small caption in the top corner, `07/09  Kyoto  LIVE  ↑ ↓ to travel`: pressing it slides the board in from the left, a crisp mono index of ten rows (place, project, status) with the place's coordinates and clock at its foot. Choosing a row, turning the wheel, pressing an arrow key or swiping cuts to the next place like a board flipping: a few uneven slats close over the old picture in 300 ms and the new words are there. Summit (the greeting), Mountain pass, Observatory, Repair shop, Dragon's hall, Rome 117 AD, The open book, Kyoto, The road (about) and Campfire (write me, leave a note, light a lantern).
 
-The places are paintings, and they move. Quietly: nothing in them is pushed by wind, so the painting never smears. Lights breathe and flicker (the booth on the pass, the dragon's gold, the lanterns of Kyoto, the campfire), stars twinkle, water runs and shimmers (the waterfall off the open book), and the air carries snow off the summit, sparks, petals and dust. And each has a sound, synthesised in the browser (wind, a cavern, drips after rain, a far phone, a bell), off until the sound switch is pressed. The other switch stops the motion (stills only). A project with a video plays it in the picture's frame. On phones the painting is the whole screen, the words take the lower or upper third, and the board is a sheet raised from a bar at the bottom.
+The places are paintings, and they move. Quietly: nothing in them is pushed by wind, so the painting never smears. Lights breathe and flicker (the booth on the pass, the dragon's gold, the lanterns of Kyoto, the campfire), stars twinkle, water runs and shimmers (the waterfall off the open book), and the air carries snow off the summit, sparks, petals and dust. And each has a sound, synthesised in the browser (wind, a cavern, drips after rain, a far phone, a bell), off until the sound switch is pressed. The other switch stops the motion (stills only). A project with a video plays it in the picture's frame. On phones the words take the lower or upper third, and the board is a sheet raised from a bar at the bottom.
 
 Live: https://kekaisik1.github.io/portfolio/
 
@@ -26,14 +26,15 @@ Other scripts: `lint`, `typecheck`, `test`, `format`, `worlds` (the paintings), 
 Vite + TypeScript (strict), no UI framework: real HTML words over paintings, moved only with transforms and opacity, so plain modules are the right size.
 
 ```
-index.html            the page shell: meta, the stage, the board, dialogs, {{slots}} the words are written into at build time
+index.html            the page shell: meta, the stage, the name and the tag, the board, dialogs, {{slots}} the words are
+                      written into at build time
 src/main.ts           start-up: wires the parts together
 src/content/          every word on the page: projects.ts, places.ts (the board's rows: place, status, coordinates),
                       site.ts (greeting, about, contact, messages) and render.ts (how it all becomes HTML)
 src/worlds/           the paintings: looks.ts (where each world's words stand, its crop, what is in its air),
                       photos.ts (at most three mounted, each decoded before it is shown), cut.ts + slats.ts (the cut),
-                      cover.ts (where a photo's pixels land on screen), words.ts (showing a world's words, folding
-                      long text behind "Read"), placeholders.json (tiny blurred stand-ins, made by `npm run worlds`)
+                      cover.ts (where a photo's pixels land on screen), words.ts (showing a world's words),
+                      placeholders.json (tiny blurred stand-ins, made by `npm run worlds`)
 src/living/           the living picture: scenes.ts (what moves in each painting: the data you author), scene.ts (its
                       shape), raster.ts (regions -> two small mask textures; pure), noise.ts (a seamless noise tile;
                       pure), shader.ts (the GLSL), living.ts (the WebGL canvas: textures, uniforms, one draw call a frame)
@@ -43,13 +44,14 @@ src/sound/            each place's ambience, synthesised: recipe.ts (the recipes
                       context), sound.ts (the page's sound: gesture, crossfade, duck, suspend), render.ts (offline
                       rendering, for the checks)
 src/switches/         the two corner switches (motion, sound) and what they remember (prefs.ts; pure)
-src/opening/          the opening shot: the summit alone until the first step
+src/opening/          the opening shot: the summit without even the tag until the first step
 src/travel/           going from world to world: travel.ts (the sequence: board, decode, cut, words, focus),
                       input.ts (wheel, keys, swipe, #links), gesture.ts (one step per gesture; pure)
-src/board/            the index rows and the phone's bar and sheet (board.ts), the footer with coordinates, a live
+src/board/            the index rows, the drawer and the tag that opens it (on phones: the bar and the sheet) (board.ts),
+                      the footer with coordinates, a live
                       clock and the API's lines (footer.ts), the status-word flourish (scramble.ts)
 src/video/            the player: the picture area becomes a modal video
-src/sheet/            "Read": the longer text as a sheet over the picture; swipe-down and press-outside closing
+src/sheet/            "Read": the longer text as a sheet over the picture (every layout); swipe-down and press-outside closing
 src/note/             the note form by the campfire: validation, a small state machine, the form itself
 src/night/            lanterns over the campfire, and the weather / "last seen working on" lines from the API
 src/nav/              what an address means (#kana-notebook, old links) and keeping the address bar in step
@@ -69,7 +71,7 @@ The words are written into `index.html` when the page is built (`vite.config.ts`
 
 In CSS only `transform` and `opacity` are animated. At most three paintings are in the page (the current one and its neighbours), and a painting is only shown once `img.decode()` has finished; a cut waits at most 400 ms for that and otherwise uses its tiny blurred stand-in. The cut is a handful of compositor animations. Nothing eases a scroll: one gesture is one step.
 
-The motion is the GPU's work. The living picture is one WebGL 2 canvas over the paintings: a single triangle whose shader samples the picture and moves its pixels, so a frame costs the main thread a few uniforms and one draw call (measured on a laptop with a discrete GPU: about 0.4 ms of main thread a frame, and every frame on time at 1440x900 and at 390x844). The canvas has at most 1.3 million pixels and 1.5 per CSS pixel, and is transparent wherever nothing moves, so the sharp `<img>` shows through and the two can never disagree. There is one frame loop for the whole page (`src/lib/ticker.ts`); it stops in a hidden tab, while the video, a sheet or the phone's index covers the picture, and when the motion switch is off, and a device that keeps dropping frames loses the motion instead of stuttering. Without WebGL 2 the paintings simply stay still.
+The motion is the GPU's work. The living picture is one WebGL 2 canvas over the paintings: a single triangle whose shader samples the picture and moves its pixels, so a frame costs the main thread a few uniforms and one draw call (measured on a laptop with a discrete GPU: about 0.4 ms of main thread a frame, and every frame on time at 1440x900 and at 390x844). The canvas has at most 1.3 million pixels and 1.5 per CSS pixel, and is transparent wherever nothing moves, so the sharp `<img>` shows through and the two can never disagree. There is one frame loop for the whole page (`src/lib/ticker.ts`); it stops in a hidden tab, while the video, a sheet or the open board covers the picture, and when the motion switch is off, and a device that keeps dropping frames loses the motion instead of stuttering. Without WebGL 2 the paintings simply stay still.
 
 Still forbidden: layered parallax, anything that follows the cursor, animated CSS filters or blend modes, scroll smoothing.
 
@@ -107,7 +109,7 @@ The pictures are paintings: one gouache/watercolour film-background look for all
 
 `npm run worlds -- <folder>` takes the ten source pictures (3:2, 1536x1024; the file-to-world table is at the top of `scripts/make-worlds.ts`: copy each source into the folder under the name that table expects) and writes, for each world, `public/worlds/<id>.webp`, an upright crop `<id>-m.webp` cut around the subject (`focus` in `src/worlds/looks.ts`) and two tiny blurred stand-ins into `src/worlds/placeholders.json`. It needs ffmpeg with libwebp. Commit what it writes; a unit test caps each file's size.
 
-Where a world's words stand is chosen by looking at its painting: `looks.ts` says which corner (`at`), how wide, which side of the picture survives a narrower window (`x`), and whether the words sit above or below the subject on a phone (`atTall`). The words must never land on the subject.
+Where a world's words stand is chosen by looking at its painting: `looks.ts` says which corner (`at`: low left by default, like the summit; top left only where the lower left holds the subject), how wide, how dark the shade behind them is (`shade`), which side of the picture survives a narrower window (`x`), and whether the words sit above or below the subject on a phone (`atTall`). The words must never land on the subject. The shade is a halo around the letters and a soft ellipse that is gone before its own edge, never a box: set `shade` as light as keeps every line at WCAG AA against what is behind it (measure the letters on a screenshot, not the whole box).
 
 ## Add a project
 
@@ -135,8 +137,8 @@ Tests never use the real API: unit tests mock `fetch`, and the smoke suite build
 ## Good to know
 
 - Links point at a place: `…/portfolio/#kana-notebook`, `#about`, `#contact`. The address follows the place you are in. Links from older versions (`#voice-receptionist`, `#crm`, `#data-assistant`, `#sea`…) land on the place that took them over (`src/nav/routing.ts`).
-- Keys: arrows, Page Up/Down, `j`/`k`, Home and End travel; Esc closes the video, a sheet or the phone's index.
-- The opening shot is only the first impression: any `#link` (also `#hello`) starts with the board already there, and coming back to the summit keeps it.
+- Keys: arrows, Page Up/Down, `j`/`k`, Home and End travel; Esc closes the video, a sheet or the board.
+- The opening shot is only the first impression: any `#link` (also `#hello`) starts with the tag already there, and coming back to the summit keeps it.
 - The corner switches keep their state in `localStorage` (`kaisar.motion.v1`, `kaisar.sound.v1`: `on` / `off`). Motion starts off for visitors who ask for reduced motion; they can still turn it on.
 - The two typefaces (Martian Mono for the board and labels, Schibsted Grotesk for names and running text; Latin part only, SIL Open Font License) are served from `public/fonts/`. To change one, replace the `.woff2` files and `src/styles/fonts.css` (the fallback faces there are scaled to the same widths, so re-measure them).
 - `public/og.jpg` is the picture shown when the link is pasted somewhere: the summit with the greeting in Schibsted Grotesk, 1200×630. Remake it if the greeting or the summit painting changes: it is the painting at 1200 wide, cropped to 630 high, with the greeting and the `00 Summit` chip set over it in the site's own faces (render that as a 1200x630 page in a browser and save it as JPEG).

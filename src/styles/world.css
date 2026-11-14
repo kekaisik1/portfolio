@@ -1,10 +1,12 @@
 /*
- * One world's words, standing on its photo. The photo is the hero: the words are a compact block in the corner the
- * photo leaves calm (data-at, from src/worlds/looks.ts), with only a local shade behind them, never a scrim.
+ * One world's words, standing on its painting. The painting is the hero and fills the window: the words are a few
+ * lines (kicker, name, one line, buttons) low in the corner the painting leaves calm (data-at, from
+ * src/worlds/looks.ts), like the summit's. Behind them only a soft, small falloff of shade and a halo around the
+ * letters themselves, never a box or a scrim. The longer text waits behind "Read".
  */
 main {
   position: fixed;
-  inset: 0 0 0 var(--col);
+  inset: 0;
   z-index: 5;
   pointer-events: none;
 }
@@ -22,46 +24,43 @@ main {
 }
 
 .block {
+  --edge-x: clamp(24px, 4.4vw, 72px);
+  --edge-y: clamp(36px, 8vh, 88px);
   position: absolute;
-  left: var(--pad);
+  left: var(--edge-x);
   width: max-content;
-  max-width: min(var(--w, 30rem), calc(100% - 2 * var(--pad)));
+  max-width: min(var(--w, 30rem), calc(100% - 2 * var(--edge-x)));
   pointer-events: auto;
   isolation: isolate;
-  text-shadow: 0 1px 2px rgb(var(--shade) / 0.55);
-}
-[data-at='tl'] .block {
-  top: var(--pad);
+  text-shadow:
+    0 1px 2px rgb(var(--shade) / 0.7),
+    0 0 6px rgb(var(--shade) / calc(var(--shade-a, 0.5) * 1.1)),
+    0 0 22px rgb(var(--shade) / calc(var(--shade-a, 0.5) * 0.8));
 }
 [data-at='bl'] .block {
-  bottom: var(--pad);
+  bottom: var(--edge-y);
+}
+/* top-left words start under the name and the tag in the top corner */
+[data-at='tl'] .block {
+  top: calc(64px + clamp(12px, 4vh, 40px));
 }
 /*
- * The local shade: even under the words (as dark as this photo needs for AA contrast, --shade-a from looks.ts),
- * gone a little past them. Never a scrim: the rest of the photo is untouched.
+ * The shade: an ellipse that is darkest under the middle of the words (as dark as this painting needs for AA
+ * contrast, --shade-a from looks.ts) and gone before its own edge, so it never reads as a rectangle.
  */
 .block::before {
   content: '';
   position: absolute;
   z-index: -1;
-  inset: calc(-1 * var(--pad)) -20% calc(-1 * var(--pad)) calc(-1 * var(--pad));
+  inset: -46% -22% -40% -26%;
   pointer-events: none;
-  background: linear-gradient(
-    to right,
-    rgb(var(--shade) / var(--shade-a, 0.7)) 0,
-    rgb(var(--shade) / var(--shade-a, 0.7)) 80%,
+  background: radial-gradient(
+    closest-side,
+    rgb(var(--shade) / calc(var(--shade-a, 0.5) * 0.62)) 0,
+    rgb(var(--shade) / calc(var(--shade-a, 0.5) * 0.48)) 50%,
+    rgb(var(--shade) / calc(var(--shade-a, 0.5) * 0.18)) 80%,
     rgb(var(--shade) / 0) 100%
   );
-}
-[data-at='tl'] .block::before {
-  bottom: -16%;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 86%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0, #000 86%, transparent 100%);
-}
-[data-at='bl'] .block::before {
-  top: -16%;
-  -webkit-mask-image: linear-gradient(to top, #000 0, #000 86%, transparent 100%);
-  mask-image: linear-gradient(to top, #000 0, #000 86%, transparent 100%);
 }
 
 .kicker {
@@ -85,23 +84,26 @@ main {
   color: var(--ink);
   font-weight: 600;
 }
+.kicker .src {
+  color: var(--ink);
+}
 
-/* the name: the one huge thing. It scales with the window's height too, so short laptops keep the whole world. */
+/* the name: the one huge thing, near the summit's scale. It scales with the window's height too, for short laptops. */
 .name {
-  font: 800 clamp(2.5rem, min(5.6vw, 10.5vh), 5.25rem) / 0.94 var(--big);
+  font: 800 clamp(2.75rem, min(7vw, 13.5vh), 7.5rem) / 0.94 var(--big);
   font-stretch: 100%;
   letter-spacing: -0.03em;
   text-wrap: balance;
   margin: 0 0 0.2em -0.04em;
 }
 .hello .name {
-  font-size: clamp(3rem, min(7.4vw, 14vh), 7.75rem);
-  margin-bottom: 0.16em;
+  font-size: clamp(3.5rem, min(8.6vw, 17vh), 9.25rem);
+  margin-bottom: 0.12em;
 }
 .line {
-  font-size: clamp(13px, 1.75vh, 15px);
-  font-weight: 500;
-  line-height: 1.5;
+  font: 500 clamp(17px, 2.5vh, 22px) / 1.4 var(--big);
+  font-stretch: 100%;
+  max-width: 34em;
   color: var(--ink);
 }
 .lede,
@@ -111,7 +113,7 @@ main {
   max-width: 34em;
 }
 .hello .lede {
-  font-size: clamp(17px, 2.5vh, 22px);
+  font-size: clamp(18px, 2.7vh, 24px);
   font-weight: 500;
 }
 .more {
@@ -138,14 +140,8 @@ main {
 .acts:empty {
   display: none;
 }
-/* "Read" only shows when the longer text is folded away: on phones, and on windows too short to hold it */
-.read {
-  display: none;
-}
-.world.compact .read {
-  display: inline-flex;
-}
-.world.compact .more {
+/* the longer text is one press away, in the Read sheet (src/sheet/read.ts): nothing longer stands on the painting */
+.block .more {
   display: none;
 }
 .watch::before {
@@ -226,4 +222,8 @@ main {
 }
 .world.in .block {
   animation: arrive 0.08s steps(2, jump-none) both;
+}
+/* buttons carry their own ground: no halo around their letters */
+.block .btn {
+  text-shadow: none;
 }

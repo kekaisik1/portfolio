@@ -12,8 +12,8 @@
   }
   .board,
   .board.open,
-  .opening.departing .board,
-  .opening.departing .bar {
+  .opening.departing .bar,
+  .opening.departing .keys {
     transition: none;
   }
 }

@@ -1,7 +1,7 @@
 /* The video: the photo area becomes the player. A real modal: the board stays in view but cannot be reached. */
 #player {
   position: fixed;
-  inset: 0 0 0 var(--col);
+  inset: 0;
   width: auto;
   height: auto;
   max-width: none;

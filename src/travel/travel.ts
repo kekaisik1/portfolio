@@ -36,7 +36,7 @@ export interface Travel {
   step(dir: 1 | -1): void;
   /** the board should change now: travel to `to` has begun (from = null on the first screen) */
   onDepart(fn: (to: number, from: number | null) => void): void;
-  /** world `to` is about to be put on screen (the cut has closed): the last moment to change the stage's shape */
+  /** world `to` is about to be put on screen (the cut has closed): the last moment to change what is under the slats */
   onLanding(fn: (to: number, from: number | null) => void): void;
   /** world `i` is on screen */
   onArrive(fn: (i: number) => void): void;
@@ -113,7 +113,7 @@ export function createTravel(parts: TravelParts): Travel {
     await Promise.race([target.ready, wait(DECODE_WAIT_MS)]);
 
     if (!reduce.matches) {
-      /* on a wide screen the slats always start at the board's edge; on a phone they follow the direction */
+      /* on a wide screen the slats always sweep from the left; on a phone they follow the direction */
       activeCut = runCut(cutLayer, target, narrow.matches && dir < 0);
       await activeCut.done;
     }

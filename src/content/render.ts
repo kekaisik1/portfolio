@@ -209,6 +209,7 @@ export function fillShell(html: string, videos: VideoManifest = {}): string {
     firstPhotoTall: photoUrl(first.id, true, '/'),
     barLabel: esc(MESSAGES.barLabel(rowNumber(0), first.place, first.title)),
     firstNumber: rowNumber(0),
+    ofCount: `/${rowNumber(WORLDS.length - 1)}`,
     firstPlace: esc(first.place),
     firstTitle: esc(first.title),
     firstStatus: esc(first.status),

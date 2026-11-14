@@ -1,5 +1,5 @@
 /**
- * "Read": the longer text of a world in a sheet over its photo, for phones and windows too short to hold it.
+ * "Read": the longer text of a world in a sheet over its painting. Only the name and one line stand on the painting.
  * A real modal dialog: Esc, the Close button, a press outside or a swipe down close it, and focus goes back.
  */
 import { WORLDS, rowNumber } from '../content/places';

@@ -51,7 +51,7 @@ const hasGpu = (page: Page): Promise<boolean> =>
   });
 const NEEDS_GPU = 'the living photo needs a GPU: on a software renderer the page shows stills';
 
-/** The summit with the board already there: a #link skips the opening shot. */
+/** The summit with the tag already there: a #link skips the opening shot. */
 const BOARD = './#hello';
 
 /** Open the page and wait until the first screen is standing: script started, typefaces in. */
@@ -253,7 +253,8 @@ test('the board is one Tab stop: Enter on a row goes there and takes focus to it
   await open(page, BOARD);
   const rows = page.locator('#rows .row');
 
-  await rows.first().focus();
+  await page.locator('#bar').click();
+  await expect(rows.first()).toBeFocused();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('ArrowDown');
   await arrived(page, 'numbers-room');
@@ -263,6 +264,94 @@ test('the board is one Tab stop: Enter on a row goes there and takes focus to it
   await rows.nth(6).click();
   await arrived(page, 'bookforge');
   await expect(page.locator('#bookforge-t')).toBeFocused();
+  await expect(page.locator('#board')).not.toBeInViewport();
+});
+
+test.describe('the board drawer', () => {
+  test('closed by default: the painting fills the window and the tag in the corner says where you are', async ({
+    page,
+  }) => {
+    await open(page, './#kana-notebook');
+    await arrived(page, 'kana-notebook');
+
+    await expect(page.locator('#board')).not.toBeInViewport();
+    expect(await page.locator('#stage').boundingBox()).toMatchObject({ x: 0, y: 0, width: 1440, height: 900 });
+    expect(await page.locator('#main').boundingBox()).toMatchObject({ x: 0, width: 1440 });
+    const tag = page.locator('#bar');
+    await expect(tag).toBeInViewport();
+    await expect(tag).toHaveAttribute('aria-expanded', 'false');
+    await expect(tag).toHaveAttribute('aria-controls', 'board');
+    await expect(tag).toHaveAccessibleName('Places. Now at 07 Kyoto, Kana Notebook');
+    await expect(tag).toContainText('07/09');
+    await expect(tag).toContainText('Kyoto');
+    await expect(tag).toContainText('LIVE');
+    /* only the kicker, the name, the line and the buttons stand on the painting */
+    await expect(page.locator('#kana-notebook .more')).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Read about Kana Notebook' })).toBeVisible();
+  });
+
+  test('the tag opens it from the left with focus on the current row; Esc closes it and focus returns', async ({
+    page,
+  }) => {
+    await open(page, './#emberquill');
+    await arrived(page, 'emberquill');
+    const tag = page.locator('#bar');
+    const board = page.locator('#board');
+
+    await tag.focus();
+    await page.keyboard.press('Enter');
+
+    await expect(tag).toHaveAttribute('aria-expanded', 'true');
+    await expect(board).toBeInViewport();
+    await expect(page.locator('#veil')).toBeVisible();
+    await expect(page.locator('#rows .row[data-i="4"]')).toBeFocused();
+    await expect.poll(async () => (await board.boundingBox())?.x).toBe(0);
+    /* the footer with the coordinates and the clock is inside the drawer */
+    await expect(page.locator('#f-pos')).toBeInViewport();
+    /* behind the drawer nothing can be reached */
+    expect(await page.evaluate(() => document.getElementById('main')?.inert)).toBe(true);
+
+    await page.keyboard.press('Escape');
+    await expect(tag).toHaveAttribute('aria-expanded', 'false');
+    await expect(board).not.toBeInViewport();
+    await expect(page.locator('#veil')).toBeHidden();
+    await expect(tag).toBeFocused();
+    expect(await page.evaluate(() => document.getElementById('board')?.inert)).toBe(true);
+  });
+
+  test('a press outside closes it; choosing a row closes it and cuts to that place', async ({ page }) => {
+    await open(page, BOARD);
+    const tag = page.locator('#bar');
+
+    await tag.click();
+    await expect(page.locator('#board')).toBeInViewport();
+    await page.mouse.click(1000, 450);
+    await expect(page.locator('#board')).not.toBeInViewport();
+    await expect(tag).toHaveAttribute('aria-expanded', 'false');
+    expect(await current(page)).toBe('hello');
+
+    await tag.click();
+    await page.locator('#rows .row[data-i="7"]').click();
+    await arrived(page, 'kana-notebook');
+    await expect(page.locator('#board')).not.toBeInViewport();
+    await expect(page.locator('#kana-notebook-t')).toBeFocused();
+    await expect(page.locator('#where')).toHaveText('Kyoto. Kana Notebook.');
+    await expect(tag).toContainText('Kyoto');
+  });
+
+  test('closed, the wheel and the keys still travel, and the tag follows', async ({ page }) => {
+    await open(page, BOARD);
+    await page.mouse.move(800, 450);
+
+    await page.mouse.wheel(0, 120);
+    await arrived(page, 'front-desk');
+    await page.keyboard.press('ArrowDown');
+    await arrived(page, 'numbers-room');
+
+    await expect(page.locator('#bar')).toContainText('02/09');
+    await expect(page.locator('#bar')).toContainText('Observatory');
+    await expect(page.locator('#board')).not.toBeInViewport();
+  });
 });
 
 test('every interactive thing on screen is at least 44 px tall', async ({ page }) => {
@@ -270,7 +359,7 @@ test('every interactive thing on screen is at least 44 px tall', async ({ page }
   await arrived(page, 'kana-notebook');
 
   const small = await page.evaluate(() =>
-    Array.from(document.querySelectorAll<HTMLElement>('.row, .world.on a, .world.on button, .mark, .sw'))
+    Array.from(document.querySelectorAll<HTMLElement>('.row, .world.on a, .world.on button, .mark, .bar, .sw'))
       .filter((el) => el.offsetParent !== null && el.getBoundingClientRect().height < 44)
       .map((el) => el.className),
   );
@@ -344,7 +433,11 @@ test.describe('the video', () => {
     await page.getByRole('button', { name: /^Watch/ }).click();
     await expect(page.locator('#player')).toBeVisible();
     /* the letterbox under the top bar, above the 16:9 picture */
-    await page.mouse.click(880, 80);
+    await expect(page.locator('#pwrap')).toHaveAttribute('data-state', /^(ready|failed)$/, { timeout: 15_000 });
+    const wrap = await page.locator('#pwrap').boundingBox();
+    const video = await page.locator('#player video').boundingBox();
+    if (!wrap || !video) throw new Error('the player has no frame to press beside');
+    await page.mouse.click(wrap.x + 40, (wrap.y + video.y) / 2);
     await expect(page.locator('#player')).toBeHidden();
     await expect(page.locator('#kana-notebook .watch')).toBeFocused();
   });
@@ -360,7 +453,7 @@ test.describe('the video', () => {
 });
 
 test.describe('the opening shot', () => {
-  test('the summit fills the window: no board, only the name, the greeting, a hint and the switches', async ({
+  test('the summit fills the window: no board or tag, only the name, the greeting, a hint and the switches', async ({
     page,
   }) => {
     const problems = await watch(page);
@@ -369,6 +462,7 @@ test.describe('the opening shot', () => {
 
     await expect(page.locator('html')).toHaveClass(/\bopening\b/);
     await expect(page.locator('#board')).not.toBeInViewport();
+    await expect(page.locator('#bar')).toHaveCSS('opacity', '0');
     expect(await page.locator('#stage').boundingBox()).toMatchObject({ x: 0, width: 1440, height: 900 });
     await expect(page.locator('.mark')).toBeInViewport();
     await expect(page.getByRole('heading', { level: 1, name: "Hi, I'm Kaisar." })).toBeInViewport();
@@ -385,22 +479,25 @@ test.describe('the opening shot', () => {
     expect(problems).toEqual([]);
   });
 
-  test('the board arrives with the first step, and stays when you come back to the summit', async ({ page }) => {
+  test('the tag arrives with the first step, the stage keeps its shape, and the tag stays on the summit', async ({
+    page,
+  }) => {
     await open(page);
 
     await page.keyboard.press('ArrowDown');
     await arrived(page, 'front-desk');
 
     await expect(page.locator('html')).not.toHaveClass(/\bopening\b/);
-    await expect(page.locator('#board')).toBeInViewport();
-    expect((await page.locator('#board').boundingBox())?.x).toBe(0);
-    expect((await page.locator('#stage').boundingBox())?.x).toBe(320);
+    await expect(page.locator('#bar')).toHaveCSS('opacity', '1');
+    await expect(page.locator('#bar')).toContainText('Mountain pass');
+    await expect(page.locator('#board')).not.toBeInViewport();
+    expect(await page.locator('#stage').boundingBox()).toMatchObject({ x: 0, width: 1440 });
     await expect(page.locator('#rows .row[aria-current]')).toContainText('Mountain pass');
 
     await page.keyboard.press('ArrowUp');
     await arrived(page, 'hello');
-    await expect(page.locator('#board')).toBeInViewport();
-    expect((await page.locator('#stage').boundingBox())?.x).toBe(320);
+    await expect(page.locator('#bar')).toHaveCSS('opacity', '1');
+    expect((await page.locator('#stage').boundingBox())?.x).toBe(0);
     expect((await blockFits(page)).fits).toBe(true);
   });
 
@@ -410,7 +507,7 @@ test.describe('the opening shot', () => {
     await page.getByRole('button', { name: 'Scroll to depart' }).click();
 
     await arrived(page, 'front-desk');
-    await expect(page.locator('#board')).toBeInViewport();
+    await expect(page.locator('#bar')).toHaveCSS('opacity', '1');
     await expect(page.locator('#front-desk-t')).toBeFocused();
   });
 
@@ -421,29 +518,34 @@ test.describe('the opening shot', () => {
     await page.mouse.wheel(0, 120);
 
     await arrived(page, 'front-desk');
-    await expect(page.locator('#board')).toBeInViewport();
+    await expect(page.locator('#bar')).toHaveCSS('opacity', '1');
   });
 
-  test('Tab reaches the board at once: focus entering it brings it in', async ({ page }) => {
+  test('Tab reaches the tag at once: focus reaching it is a first step, and Enter opens the board', async ({
+    page,
+  }) => {
     await open(page);
 
-    /* the skip link, the name, then the board's one Tab stop */
+    /* the skip link, the name, then the tag */
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
 
     await arrived(page, 'front-desk');
+    await expect(page.locator('#bar')).toBeFocused();
+    await expect(page.locator('#bar')).toHaveCSS('opacity', '1');
+    await page.keyboard.press('Enter');
     await expect(page.locator('#board')).toBeInViewport();
     await expect(page.locator('#rows .row[data-i="1"]')).toBeFocused();
   });
 
-  test('a #link skips the opening: the board is there from the start', async ({ page }) => {
+  test('a #link skips the opening: the tag is there from the start', async ({ page }) => {
     await open(page, './#kana-notebook');
     await arrived(page, 'kana-notebook');
 
     await expect(page.locator('html')).not.toHaveClass(/\bopening\b/);
-    await expect(page.locator('#board')).toBeInViewport();
-    expect((await page.locator('#stage').boundingBox())?.x).toBe(320);
+    await expect(page.locator('#bar')).toHaveCSS('opacity', '1');
+    expect((await page.locator('#stage').boundingBox())?.x).toBe(0);
   });
 });
 
@@ -750,7 +852,7 @@ for (const [width, height] of [
 test.describe('on a laptop with a short window', () => {
   test.use({ viewport: LAPTOP });
 
-  test('every place fits: the longest text folds behind Read instead of overflowing', async ({ page }) => {
+  test('every place fits: only the name, the line and the buttons stand on the painting', async ({ page }) => {
     await open(page);
 
     for (const [i, [id]] of WORLDS.entries()) {
@@ -761,11 +863,7 @@ test.describe('on a laptop with a short window', () => {
     }
   });
 
-  test('in a window too short for it, the longest text folds behind Read: a sheet, and Esc gives focus back', async ({
-    page,
-  }) => {
-    /* History Lens holds its text down to about 400 px tall: well under that it has to fold */
-    await page.setViewportSize({ width: 1280, height: 360 });
+  test('the longer text waits behind Read: a sheet, and Esc gives focus back', async ({ page }) => {
     await open(page, './#history-lens');
     await arrived(page, 'history-lens');
     const read = page.getByRole('button', { name: 'Read about History Lens' });
