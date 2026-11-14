@@ -64,6 +64,13 @@
   z-index: 3;
   pointer-events: none;
 }
+/* pieces of a painting's second state (src/worlds/toys.ts): in the lens, so they ride the painting exactly */
+#states {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
 /* the motion switch is off: stills only */
 [data-motion='off'] #live,
 [data-motion='off'] #fx {

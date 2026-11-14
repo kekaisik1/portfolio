@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { hasGpu, NEEDS_GPU } from './gpu';
 
 /** The board, top to bottom: world id, the place on its row, what stands there. */
 const WORLDS = [
@@ -37,19 +38,6 @@ async function watch(page: Page, audioWarnings = false): Promise<string[]> {
   );
   return problems;
 }
-
-/**
- * Is a real GPU drawing? The living photo is WebGL; on a software renderer (a CI runner without a GPU) the page
- * rightly gives the motion up after a few seconds and shows stills, so the tests that watch it move need hardware.
- */
-const hasGpu = (page: Page): Promise<boolean> =>
-  page.evaluate(() => {
-    const gl = document.createElement('canvas').getContext('webgl2');
-    const info = gl?.getExtension('WEBGL_debug_renderer_info');
-    if (!gl || !info) return false;
-    return !/swiftshader|llvmpipe|software/i.test(String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)));
-  });
-const NEEDS_GPU = 'the living photo needs a GPU: on a software renderer the page shows stills';
 
 /** The summit with the tag already there: a #link skips the opening shot. */
 const BOARD = './#hello';
@@ -407,9 +395,7 @@ test.describe('the video', () => {
     expect(problems.filter((p) => !/video|media|ERR_/i.test(p))).toEqual([]);
   });
 
-  test('Tab stays inside the player, and Esc closes it from anywhere, giving focus back to the spot', async ({
-    page,
-  }) => {
+  test('Tab stays inside the player, and Esc closes it from anywhere, giving focus back to Watch', async ({ page }) => {
     await openVideo(page);
 
     for (let i = 0; i < 6; i++) {
@@ -423,7 +409,7 @@ test.describe('the video', () => {
     await page.keyboard.press('Escape');
 
     await expect(page.locator('#player')).toBeHidden();
-    await expect(page.locator('#kana-notebook .spot')).toBeFocused();
+    await expect(page.locator('#kana-notebook .acts .watch')).toBeFocused();
     await expect(page.locator('#player video')).toHaveCount(0);
   });
 
@@ -441,7 +427,7 @@ test.describe('the video', () => {
     if (!wrap || !video) throw new Error('the player has no frame to press beside');
     await page.mouse.click(wrap.x + 40, (wrap.y + video.y) / 2);
     await expect(page.locator('#player')).toBeHidden();
-    await expect(page.locator('#kana-notebook .spot')).toBeFocused();
+    await expect(page.locator('#kana-notebook .acts .watch')).toBeFocused();
   });
 
   test('the arrow keys do not travel while the video is open', async ({ page }) => {
@@ -454,107 +440,36 @@ test.describe('the video', () => {
   });
 });
 
-/** Where the on-screen world's spot and the things it must not stand on are, or null when it is not shown. */
-const spotPlace = (page: Page): Promise<{ spot: DOMRect; others: Record<string, DOMRect>; watch: boolean } | null> =>
-  page.evaluate(() => {
-    const world = document.querySelector<HTMLElement>('.world.on');
-    const spot = world?.querySelector<HTMLElement>('.spot');
-    const watch = world?.querySelector<HTMLElement>('.watch');
-    const visible = (el: Element | null | undefined): boolean => !!el && (el as HTMLElement).offsetParent !== null;
-    const box = (sel: string): DOMRect => {
-      const el = document.querySelector(sel);
-      if (!el) throw new Error(`nothing at ${sel}`);
-      return el.getBoundingClientRect();
-    };
-    if (!world || !spot || spot.hidden) return null;
-    return {
-      spot: spot.getBoundingClientRect(),
-      others: {
-        words: box('.world.on .block'),
-        switches: box('#switches'),
-        mark: box('.brand .mark'),
-        tag: box('#bar'),
-      },
-      watch: visible(watch),
-    };
-  });
-const apart = (a: DOMRect, b: DOMRect): boolean =>
-  a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top;
+const PROJECT_IDS = WORLDS.slice(1, 8).map((w) => w[0]);
+const WITH_VIDEO = ['numbers-room', 'emberquill', 'kana-notebook'];
 
-test.describe('the spot in the painting', () => {
-  test('Kyoto: a dot on the lantern opens the video, and is the one way in (no Watch button beside it)', async ({
+test.describe('the way into a video', () => {
+  test("Emberquill: its painting is a toy, so the Watch button in the words opens the real app's video", async ({
     page,
   }) => {
-    const problems = await watch(page);
-    await open(page, './#kana-notebook');
-    await arrived(page, 'kana-notebook');
-    const spot = page.locator('#kana-notebook .spot');
-
-    await expect(spot).toBeVisible();
-    await expect(spot).toHaveAccessibleName('Watch the Kana Notebook video, 0:44');
-    await expect(page.locator('#kana-notebook .watch')).toBeHidden();
-    /* on the lantern: the landscape painting is 1440x960 here, 30 px cut off at the top */
-    const dot = await spot.locator('.spot-dot').boundingBox();
-    expect(dot).not.toBeNull();
-    if (dot) {
-      expect(Math.abs(dot.x + dot.width / 2 - 1260)).toBeLessThan(12);
-      expect(Math.abs(dot.y + dot.height / 2 - (0.42 * 960 - 30))).toBeLessThan(12);
-    }
-
-    await spot.focus();
-    await page.keyboard.press('Enter');
-    await expect(page.locator('#player')).toBeVisible();
-    await expect(page.locator('#p-title')).toHaveText('Kana Notebook');
-    await page.keyboard.press('Escape');
-    await expect(page.locator('#player')).toBeHidden();
-    await expect(spot).toBeFocused();
-    expect(problems.filter((p) => !/video|media|ERR_/i.test(p))).toEqual([]);
-  });
-
-  test("Emberquill: the die opens the real app's video", async ({ page }) => {
     await open(page, './#emberquill');
     await arrived(page, 'emberquill');
 
-    await page.locator('#emberquill .spot').click();
+    await page.locator('#emberquill .acts .watch').click();
 
     await expect(page.locator('#player')).toBeVisible();
     await expect(page.locator('#p-title')).toHaveText('Emberquill');
     await expect(page.locator('#pwrap')).toHaveAttribute('data-state', /^(ready|failed)$/, { timeout: 15_000 });
   });
 
-  test('the ring stands still with the motion switched off', async ({ page }) => {
-    await open(page, './#kana-notebook');
-    await arrived(page, 'kana-notebook');
-    const ring = (): Promise<string> =>
-      page.evaluate(() => {
-        const dot = document.querySelector('#kana-notebook .spot-dot');
-        return dot ? getComputedStyle(dot, '::after').animationName : 'missing';
-      });
-
-    expect(await ring()).toBe('spot-breathe');
-    await page.locator('#sw-motion').click();
-    expect(await ring()).toBe('none');
-  });
-
   for (const size of [{ width: 1440, height: 900 }, { width: 1366, height: 680 }, PHONE, SMALL_PHONE]) {
-    test(`at ${size.width}x${size.height} it never stands on the words, the switches or the tag`, async ({ page }) => {
+    test(`at ${size.width}x${size.height} every project with a video shows its Watch button, and nothing labelled stands on the painting`, async ({
+      page,
+    }) => {
       await page.setViewportSize(size);
-      for (const id of ['kana-notebook', 'emberquill']) {
+      for (const id of PROJECT_IDS) {
         await page.goto('about:blank');
         await open(page, `./#${id}`);
         await arrived(page, id);
-        const placed = await spotPlace(page);
-        if (!placed) {
-          /* cut off by this crop, or no room: the Watch button is the way in */
-          await expect(page.locator(`#${id} .watch`), id).toBeVisible();
-          continue;
-        }
-        expect(placed.watch, `${id}: the Watch button goes where the spot is`).toBe(false);
-        for (const [name, r] of Object.entries(placed.others))
-          expect(apart(placed.spot, r), `${id}: the spot stands on the ${name}`).toBe(true);
-        expect(placed.spot.left).toBeGreaterThanOrEqual(0);
-        expect(placed.spot.right).toBeLessThanOrEqual(size.width);
-        expect(placed.spot.bottom).toBeLessThanOrEqual(size.height);
+        const watch = page.locator(`#${id} .acts .watch`);
+        if (WITH_VIDEO.includes(id)) await expect(watch, id).toBeVisible();
+        else await expect(watch, id).toHaveCount(0);
+        await expect(page.locator(`#${id} .spot, #${id} .acts .try`), id).toHaveCount(0);
       }
     });
   }

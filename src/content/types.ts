@@ -21,8 +21,6 @@ export interface Project {
   /** A small aside under the text. */
   note?: string;
   link?: ProjectLink;
-  /** The label of the spot in its painting that opens its video (src/worlds/spots.ts says where it stands). */
-  spot?: string;
 }
 
 /** How a status word on the board is coloured. */
@@ -45,6 +43,11 @@ export interface Place {
   tzLabel?: string;
   /** What the painting shows, for people who cannot see it. */
   alt: string;
+  /**
+   * The name of the one thing in the painting that answers a press (src/worlds/reactions.ts says where), in the
+   * places that are not projects. A project's place is a toy instead, its names in src/content/toys.ts.
+   */
+  react?: string;
 }
 
 /** A place together with what stands in it. */
