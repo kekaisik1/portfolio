@@ -176,9 +176,9 @@ describe('Emberquill: roll to hit an orc', () => {
     const one = fightMachine(copy, queue(face(1, 20)));
 
     expect(crit.view(crit.press(crit.start(), ROLL)).said).toMatch(
-      /^20 \+ 5 = 25 vs AC 13: a natural 20: a critical hit, the damage dice twice, 8 damage/,
+      /^20 \+ 5 = 25 vs AC 13: critical hit, double dice, 8 damage/,
     );
-    expect(one.view(one.press(one.start(), ROLL)).said).toMatch(/^1 \+ 5 = 6 vs AC 13: a natural 1: a miss/);
+    expect(one.view(one.press(one.start(), ROLL)).said).toMatch(/^1 \+ 5 = 6 vs AC 13: a natural 1 always misses/);
   });
 
   it('goes on until the orc is down, then says how many rolls it took and links the live app', () => {

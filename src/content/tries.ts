@@ -103,9 +103,9 @@ export const TRIES: Readonly<Record<string, TryCopy>> = {
     roll: 'Roll the d20',
     sum: (d20, bonus, total, ac) => `${d20} + ${bonus} = ${total} vs AC ${ac}`,
     hit: (damage) => `hit, ${damage} damage`,
-    crit: (damage) => `a natural 20: a critical hit, the damage dice twice, ${damage} damage`,
+    crit: (damage) => `critical hit, double dice, ${damage} damage`,
     miss: 'miss',
-    fumble: 'a natural 1: a miss, whatever the bonus',
+    fumble: 'a natural 1 always misses',
     hpText: (hp, max) => `Orc: ${hp} of ${max} hit points`,
     down: (rolls) =>
       `The orc is down, in ${rolls} ${rolls === 1 ? 'roll' : 'rolls'}. Emberquill does this maths for every roll at the table.`,
