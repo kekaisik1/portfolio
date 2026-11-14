@@ -15,7 +15,18 @@ import type { Effects } from './effects';
 import { lookOf } from './looks';
 import { reactionRect } from './reactions';
 import { crowds, within, type Rect } from './spots';
-import { outcomeOf, pictureRect, pieceUrl, rollOf, swapFrames, toysOf, type Piece, type Throw, type Toy } from './toys';
+import {
+  numberFor,
+  outcomeOf,
+  pictureRect,
+  pieceUrl,
+  roundOf,
+  swapFrames,
+  toysOf,
+  type Piece,
+  type Throw,
+  type Toy,
+} from './toys';
 
 const GAP_PX = 8;
 const OUTCOME_AFTER_MS = 600;
@@ -53,6 +64,9 @@ export function initToys(
   /** pieces left in (the open chest), by world and toy id */
   const kept = new Map<string, HTMLImageElement>();
   const timers = new Set<number>();
+  /** what is left of each die's round of outcomes, and the one it showed last */
+  const rounds = new Map<string, number[]>();
+  const lastOutcome = new Map<string, number>();
   let current = -1;
 
   const layerOf = (i: number): HTMLElement | null => worlds[i].querySelector<HTMLElement>('.spots');
@@ -142,7 +156,13 @@ export function initToys(
     canvas.className = 'piece d20';
     place(canvas, t.room, i);
     states.append(canvas);
-    const n = rollOf(parts.random(), t.sides);
+    /* the outcomes come round in turn (shuffled), and the number is one that outcome can show */
+    let round = rounds.get(key) ?? [];
+    if (!round.length) round = roundOf(t.outcomes.length, parts.random, lastOutcome.get(key) ?? null);
+    const which = round.shift() ?? 0;
+    rounds.set(key, round);
+    lastOutcome.set(key, which);
+    const n = numberFor(t, which, parts.random());
     /* what this number will set off is fetched while the die is in the air, so it is there when the die lands */
     for (const id of outcomeOf(t, n)) {
       const file = toysOf(WORLDS[i].id).find((x) => x.id === id)?.swap?.piece.file;

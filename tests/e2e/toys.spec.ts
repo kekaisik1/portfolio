@@ -101,22 +101,30 @@ test.describe("the dragon's hall is a toy", () => {
     await expect(piece(page, 'ledge.webp')).toHaveCount(0);
   });
 
-  for (const [random, shows, what] of [
-    [0, 'burn.webp', 'a 1: the dragon breathes fire over the party'],
-    [0.2, 'miss.webp', "under 10: the wizard's bolt goes wide"],
-    [0.6, 'hit.webp', '10 and over: the bolt strikes the dragon'],
-    [0.99, 'crit.webp', 'a 20: a blast throws the hoard into the air'],
-  ] as const)
-    test(`a throw sets off a painting of its own, ${what}`, async ({ page }) => {
-      await page.addInitScript((r) => {
-        Math.random = () => r;
-      }, random);
-      await open(page);
-      await press(page, 'die');
+  test('four throws show all four outcomes, each a painting of its own: burnt, a miss, a hit, an epic hit', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await open(page);
+    const die = page.locator('#states canvas.d20');
+    const seen = new Set<string>();
+    const numbers: number[] = [];
 
-      await expect(page.locator('#states canvas.d20')).toHaveAttribute('data-rolled', /^\d+$/, { timeout: 6000 });
-      await expect(piece(page, shows)).toHaveCount(1, { timeout: 4000 });
-    });
+    for (let k = 0; k < 4; k++) {
+      await press(page, 'die');
+      await expect(die).toHaveAttribute('data-rolled', /^\d+$/, { timeout: 6000 });
+      numbers.push(Number(await die.getAttribute('data-rolled')));
+      const outcome = page.locator('#states img.piece:not([src$="ledge.webp"])');
+      await expect(outcome).toHaveCount(1, { timeout: 4000 });
+      seen.add((await outcome.getAttribute('src'))?.split('/').pop() ?? '');
+      await expect(die).toHaveCount(0, { timeout: 10_000 });
+      await expect(outcome).toHaveCount(0, { timeout: 10_000 });
+    }
+
+    expect([...seen].sort()).toEqual(['burn.webp', 'crit.webp', 'hit.webp', 'miss.webp']);
+    expect(numbers.filter((n) => n === 1)).toHaveLength(1);
+    expect(numbers.filter((n) => n === 20)).toHaveLength(1);
+  });
 
   test('the archer looses an arrow and the dragon answers with fire', async ({ page }) => {
     await open(page);

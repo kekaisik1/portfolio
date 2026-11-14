@@ -5,7 +5,18 @@ import { renderWorlds } from '../../src/content/render';
 import { TOY_LABELS, TOY_SAYS, toyLabel } from '../../src/content/toys';
 import { lookOf } from '../../src/worlds/looks';
 import { MAX_BURST } from '../../src/worlds/reactions';
-import { outcomeOf, pictureRect, pieceUrl, rollOf, swapFrames, TOYS, toysOf, type Piece } from '../../src/worlds/toys';
+import {
+  numberFor,
+  outcomeOf,
+  pictureRect,
+  pieceUrl,
+  rollOf,
+  roundOf,
+  swapFrames,
+  TOYS,
+  toysOf,
+  type Piece,
+} from '../../src/worlds/toys';
 
 /** a piece is a small part of a painting: it must stay light */
 /* the critical hit repaints most of the picture and is only fetched on a 20: it may be the heaviest */
@@ -110,6 +121,33 @@ describe('the paintings that are toys', () => {
     /* every number a d20 can show sets something off */
     for (let n = 1; n <= die.sides; n++) expect(outcomeOf(die, n).length, String(n)).toBeGreaterThan(0);
     expect(die.outcomes.map((o) => o.upTo)).toEqual([...die.outcomes.map((o) => o.upTo)].sort((a, b) => a - b));
+  });
+
+  it('shows every outcome once before any comes again, and never the same twice running', () => {
+    const die = TOYS.emberquill.find((t) => t.id === 'die')?.throw;
+    if (!die) throw new Error('the dragon has no die');
+    let seed = 7;
+    const random = (): number => {
+      seed = (seed * 16807) % 2147483647;
+      return seed / 2147483647;
+    };
+
+    let last: number | null = null;
+    for (let round = 0; round < 50; round++) {
+      const order = roundOf(die.outcomes.length, random, last);
+      expect([...order].sort()).toEqual([0, 1, 2, 3]);
+      expect(order[0]).not.toBe(last);
+      last = order[order.length - 1];
+    }
+    /* the number shown is one its outcome can show: 1, 2..9, 10..19, 20 */
+    expect(numberFor(die, 0, 0.7)).toBe(1);
+    expect(numberFor(die, 1, 0)).toBe(2);
+    expect(numberFor(die, 1, 0.999)).toBe(9);
+    expect(numberFor(die, 2, 0)).toBe(10);
+    expect(numberFor(die, 2, 1)).toBe(19);
+    expect(numberFor(die, 3, 0.3)).toBe(20);
+    for (let k = 0; k < 4; k++)
+      for (const r of [0, 0.5, 0.999]) expect(outcomeOf(die, numberFor(die, k, r))).toEqual(die.outcomes[k].toys);
   });
 
   it('fades a piece in, holds it (wavering, if it is fire) and fades it out, in order', () => {

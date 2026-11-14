@@ -227,6 +227,28 @@ export function pictureRect(
 /** The toys a throw of `n` sets off. */
 export const outcomeOf = (t: Throw, n: number): readonly string[] => t.outcomes.find((o) => n <= o.upTo)?.toys ?? [];
 
+/**
+ * The order a die's outcomes come in: every one once, shuffled, before any comes again, and never the same one
+ * twice running across two rounds. A fair die would make you throw for a long time to see a 1 or a 20; this one
+ * shows everything it can do within as many throws as it has outcomes.
+ */
+export function roundOf(count: number, random: () => number, last: number | null = null): number[] {
+  const order = Array.from({ length: count }, (_, k) => k);
+  for (let i = count - 1; i > 0; i--) {
+    const j = Math.min(i, Math.floor(random() * (i + 1)));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  if (count > 1 && order[0] === last) [order[0], order[1]] = [order[1], order[0]];
+  return order;
+}
+
+/** A number the die can show for its outcome `k`: any in that outcome's range, from a random number in 0..1. */
+export function numberFor(t: Throw, k: number, random: number): number {
+  const from = k === 0 ? 1 : t.outcomes[k - 1].upTo + 1;
+  const to = t.outcomes[k].upTo;
+  return from + Math.min(to - from, Math.floor(random * (to - from + 1)));
+}
+
 /** A throw of a die with `sides` sides, from a random number in 0..1. */
 export const rollOf = (random: number, sides: number): number => Math.min(sides, Math.floor(random * sides) + 1);
 
