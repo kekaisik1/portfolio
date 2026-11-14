@@ -3,6 +3,10 @@
  * off (src/switches/), which hides both canvases. Keep this last.
  */
 @media (prefers-reduced-motion: reduce) {
+  .spot-dot::after {
+    animation: none;
+    opacity: 0.6;
+  }
   .world.in .block,
   .js .intro .rows li,
   .js .intro .bfoot,

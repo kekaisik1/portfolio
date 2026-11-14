@@ -33,6 +33,8 @@ export interface Travel {
   /** where travel is headed: the row asked for last, if one is still on its way */
   heading(): number;
   go(to: number, opts?: GoOptions): void;
+  /** Hold the slow push-in where it is (motion switched off), or let it go on from there. */
+  holdPush(hold: boolean): void;
   step(dir: 1 | -1): void;
   /** the board should change now: travel to `to` has begun (from = null on the first screen) */
   onDepart(fn: (to: number, from: number | null) => void): void;
@@ -67,19 +69,23 @@ export function createTravel(parts: TravelParts): Travel {
   let busy = false;
   let pending: { to: number; opts: GoOptions } | null = null;
   let activeCut: Cut | null = null;
-  let push: Animation | null = null;
+  let push: Animation[] = [];
 
   const neighbours = (i: number): number[] => [i - 1, i, i + 1].filter((n) => n >= 0 && n <= LAST);
 
-  function pushIn(): void {
-    push?.cancel();
-    push = null;
+  /* the photo pushes in, and the world's spot with it, so the spot stays on its object (the same box and origin) */
+  function pushIn(i: number): void {
+    for (const a of push) a.cancel();
+    push = [];
     if (reduce.matches || !parts.smooth()) return;
-    push = lens.animate([{ transform: 'scale(1)' }, { transform: `scale(${PUSH_SCALE})` }], {
-      duration: PUSH_MS,
-      easing: 'cubic-bezier(0.2, 0.6, 0.3, 1)',
-      fill: 'forwards',
-    });
+    const spots = worlds[i].querySelector<HTMLElement>('.spots');
+    push = [lens, ...(spots ? [spots] : [])].map((el) =>
+      el.animate([{ transform: 'scale(1)' }, { transform: `scale(${PUSH_SCALE})` }], {
+        duration: PUSH_MS,
+        easing: 'cubic-bezier(0.2, 0.6, 0.3, 1)',
+        fill: 'forwards',
+      }),
+    );
   }
 
   function focusName(i: number): void {
@@ -91,7 +97,7 @@ export function createTravel(parts: TravelParts): Travel {
     for (const fn of landingFns) fn(to, from);
     photos.show(to);
     showWords(worlds, to, !reduce.matches);
-    pushIn();
+    pushIn(to);
     if (focus) focusName(to);
     for (const fn of arriveFns) fn(to);
   }
@@ -165,6 +171,12 @@ export function createTravel(parts: TravelParts): Travel {
     heading,
     go,
     step: (dir) => go(heading() + dir),
+    holdPush(hold) {
+      for (const a of push) {
+        if (hold) a.pause();
+        else if (a.playState === 'paused') a.play();
+      }
+    },
     onDepart(fn) {
       departFns.push(fn);
     },

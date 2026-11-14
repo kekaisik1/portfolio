@@ -42,6 +42,7 @@ export const PROJECTS: readonly Project[] = [
       label: "It's live. Go break something.",
       external: true,
     },
+    spot: 'watch a fight',
   },
   {
     slug: 'history-lens',
@@ -72,6 +73,7 @@ export const PROJECTS: readonly Project[] = [
       "The lessons are in English and Russian: hiragana, words, grammar and review. Students can ask for what's missing and vote on what I add next.",
     ],
     link: { href: 'https://kana-notebook-production.up.railway.app', label: "It's live. Try it.", external: true },
+    spot: 'watch the app',
   },
 ];
 

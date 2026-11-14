@@ -407,7 +407,9 @@ test.describe('the video', () => {
     expect(problems.filter((p) => !/video|media|ERR_/i.test(p))).toEqual([]);
   });
 
-  test('Tab stays inside the player, and Esc closes it from anywhere, giving focus back to Watch', async ({ page }) => {
+  test('Tab stays inside the player, and Esc closes it from anywhere, giving focus back to the spot', async ({
+    page,
+  }) => {
     await openVideo(page);
 
     for (let i = 0; i < 6; i++) {
@@ -421,7 +423,7 @@ test.describe('the video', () => {
     await page.keyboard.press('Escape');
 
     await expect(page.locator('#player')).toBeHidden();
-    await expect(page.locator('#kana-notebook .watch')).toBeFocused();
+    await expect(page.locator('#kana-notebook .spot')).toBeFocused();
     await expect(page.locator('#player video')).toHaveCount(0);
   });
 
@@ -439,7 +441,7 @@ test.describe('the video', () => {
     if (!wrap || !video) throw new Error('the player has no frame to press beside');
     await page.mouse.click(wrap.x + 40, (wrap.y + video.y) / 2);
     await expect(page.locator('#player')).toBeHidden();
-    await expect(page.locator('#kana-notebook .watch')).toBeFocused();
+    await expect(page.locator('#kana-notebook .spot')).toBeFocused();
   });
 
   test('the arrow keys do not travel while the video is open', async ({ page }) => {
@@ -450,6 +452,112 @@ test.describe('the video', () => {
 
     expect(await current(page)).toBe('kana-notebook');
   });
+});
+
+/** Where the on-screen world's spot and the things it must not stand on are, or null when it is not shown. */
+const spotPlace = (page: Page): Promise<{ spot: DOMRect; others: Record<string, DOMRect>; watch: boolean } | null> =>
+  page.evaluate(() => {
+    const world = document.querySelector<HTMLElement>('.world.on');
+    const spot = world?.querySelector<HTMLElement>('.spot');
+    const watch = world?.querySelector<HTMLElement>('.watch');
+    const visible = (el: Element | null | undefined): boolean => !!el && (el as HTMLElement).offsetParent !== null;
+    const box = (sel: string): DOMRect => {
+      const el = document.querySelector(sel);
+      if (!el) throw new Error(`nothing at ${sel}`);
+      return el.getBoundingClientRect();
+    };
+    if (!world || !spot || spot.hidden) return null;
+    return {
+      spot: spot.getBoundingClientRect(),
+      others: {
+        words: box('.world.on .block'),
+        switches: box('#switches'),
+        mark: box('.brand .mark'),
+        tag: box('#bar'),
+      },
+      watch: visible(watch),
+    };
+  });
+const apart = (a: DOMRect, b: DOMRect): boolean =>
+  a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top;
+
+test.describe('the spot in the painting', () => {
+  test('Kyoto: a dot on the lantern opens the video, and is the one way in (no Watch button beside it)', async ({
+    page,
+  }) => {
+    const problems = await watch(page);
+    await open(page, './#kana-notebook');
+    await arrived(page, 'kana-notebook');
+    const spot = page.locator('#kana-notebook .spot');
+
+    await expect(spot).toBeVisible();
+    await expect(spot).toHaveAccessibleName('Watch the Kana Notebook video, 0:44');
+    await expect(page.locator('#kana-notebook .watch')).toBeHidden();
+    /* on the lantern: the landscape painting is 1440x960 here, 30 px cut off at the top */
+    const dot = await spot.locator('.spot-dot').boundingBox();
+    expect(dot).not.toBeNull();
+    if (dot) {
+      expect(Math.abs(dot.x + dot.width / 2 - 1260)).toBeLessThan(12);
+      expect(Math.abs(dot.y + dot.height / 2 - (0.42 * 960 - 30))).toBeLessThan(12);
+    }
+
+    await spot.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#player')).toBeVisible();
+    await expect(page.locator('#p-title')).toHaveText('Kana Notebook');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#player')).toBeHidden();
+    await expect(spot).toBeFocused();
+    expect(problems.filter((p) => !/video|media|ERR_/i.test(p))).toEqual([]);
+  });
+
+  test("Emberquill: the die opens the real app's video", async ({ page }) => {
+    await open(page, './#emberquill');
+    await arrived(page, 'emberquill');
+
+    await page.locator('#emberquill .spot').click();
+
+    await expect(page.locator('#player')).toBeVisible();
+    await expect(page.locator('#p-title')).toHaveText('Emberquill');
+    await expect(page.locator('#pwrap')).toHaveAttribute('data-state', /^(ready|failed)$/, { timeout: 15_000 });
+  });
+
+  test('the ring stands still with the motion switched off', async ({ page }) => {
+    await open(page, './#kana-notebook');
+    await arrived(page, 'kana-notebook');
+    const ring = (): Promise<string> =>
+      page.evaluate(() => {
+        const dot = document.querySelector('#kana-notebook .spot-dot');
+        return dot ? getComputedStyle(dot, '::after').animationName : 'missing';
+      });
+
+    expect(await ring()).toBe('spot-breathe');
+    await page.locator('#sw-motion').click();
+    expect(await ring()).toBe('none');
+  });
+
+  for (const size of [{ width: 1440, height: 900 }, { width: 1366, height: 680 }, PHONE, SMALL_PHONE]) {
+    test(`at ${size.width}x${size.height} it never stands on the words, the switches or the tag`, async ({ page }) => {
+      await page.setViewportSize(size);
+      for (const id of ['kana-notebook', 'emberquill']) {
+        await page.goto('about:blank');
+        await open(page, `./#${id}`);
+        await arrived(page, id);
+        const placed = await spotPlace(page);
+        if (!placed) {
+          /* cut off by this crop, or no room: the Watch button is the way in */
+          await expect(page.locator(`#${id} .watch`), id).toBeVisible();
+          continue;
+        }
+        expect(placed.watch, `${id}: the Watch button goes where the spot is`).toBe(false);
+        for (const [name, r] of Object.entries(placed.others))
+          expect(apart(placed.spot, r), `${id}: the spot stands on the ${name}`).toBe(true);
+        expect(placed.spot.left).toBeGreaterThanOrEqual(0);
+        expect(placed.spot.right).toBeLessThanOrEqual(size.width);
+        expect(placed.spot.bottom).toBeLessThanOrEqual(size.height);
+      }
+    });
+  }
 });
 
 test.describe('the opening shot', () => {

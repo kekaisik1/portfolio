@@ -21,6 +21,7 @@ import { createTravel } from './travel/travel';
 import { initPlayer } from './video/player';
 import { lookOf } from './worlds/looks';
 import { createPhotos } from './worlds/photos';
+import { initSpots } from './worlds/spot-view';
 
 const RESIZE_SETTLE_MS = 150;
 
@@ -53,7 +54,9 @@ function boot(): void {
     where: byId('where'),
     smooth: () => smooth && switches.motion(),
   });
+  const spots = initSpots(worlds, lens, upright);
   const relayout = (): void => {
+    spots.layout(travel.current());
     living.resize();
     ambient.resize();
     lanterns.layout();
@@ -63,10 +66,7 @@ function boot(): void {
       ticker.hold('switch', !on);
       living.enable(on);
       /* the photo's slow push-in holds where it is, and goes on from there */
-      for (const a of lens.getAnimations()) {
-        if (!on) a.pause();
-        else if (a.playState === 'paused') a.play();
-      }
+      travel.holdPush(!on);
       /* the canvases were not laid out while they were hidden */
       if (on) relayout();
     },
@@ -96,6 +96,7 @@ function boot(): void {
     lanterns.show(false);
   });
   travel.onArrive((i) => {
+    spots.layout(i);
     living.show(i);
     ambient.set(lookOf(WORLDS[i].id));
     lanterns.show(i === contact);
@@ -120,6 +121,9 @@ function boot(): void {
   };
   window.addEventListener('resize', settled);
   narrow.addEventListener('change', settled);
+
+  /* the words are measured again once the typefaces are in: the spot must not stand on them */
+  void document.fonts.ready.then(() => spots.layout(travel.current()));
 
   void loadToday().then((today) => {
     if (today) footer.setToday(today.weather, today.now);

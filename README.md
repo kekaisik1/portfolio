@@ -2,7 +2,7 @@
 
 "Departures": a departures board where every destination is a place, and seven of the places are projects. It opens on the summit alone, filling the window: the name, "Hi, I'm Kaisar." low in the frame, one line, a hint, and two small switches in the corner. Every other place is built the same way: its painting fills the window, and low in the corner the painting leaves calm stand a kicker, the project's name, big, one line and its buttons; the longer text is one press away, behind "Read". The first step (wheel, arrow key, swipe, the hint, Tab) brings in a small caption in the top corner, `07/09  Kyoto  LIVE  ↑ ↓ to travel`: pressing it slides the board in from the left, a crisp mono index of ten rows (place, project, status) with the place's coordinates and clock at its foot. Choosing a row, turning the wheel, pressing an arrow key or swiping cuts to the next place like a board flipping: a few uneven slats close over the old picture in 300 ms and the new words are there. Summit (the greeting), Mountain pass, Observatory, Repair shop, Dragon's hall, Rome 117 AD, The open book, Kyoto, The road (about) and Campfire (write me, leave a note, light a lantern).
 
-The places are paintings, and they move. Quietly: nothing in them is pushed by wind, so the painting never smears. Lights breathe and flicker (the booth on the pass, the dragon's gold, the lanterns of Kyoto, the campfire), stars twinkle, water runs and shimmers (the waterfall off the open book), and the air carries snow off the summit, sparks, petals and dust. And each has a sound, synthesised in the browser (wind, a cavern, drips after rain, a far phone, a bell), off until the sound switch is pressed. The other switch stops the motion (stills only). A project with a video plays it in the picture's frame. On phones the words take the lower or upper third, and the board is a sheet raised from a bar at the bottom.
+The places are paintings, and they move. Quietly: nothing in them is pushed by wind, so the painting never smears. Lights breathe and flicker (the booth on the pass, the dragon's gold, the lanterns of Kyoto, the campfire), stars twinkle, water runs and shimmers (the waterfall off the open book), and the air carries snow off the summit, sparks, petals and dust. And each has a sound, synthesised in the browser (wind, a cavern, drips after rain, a far phone, a bell), off until the sound switch is pressed. The other switch stops the motion (stills only). A project with a video plays it in the picture's frame, and two places have something to open inside the painting: a small breathing dot with a label on Kyoto's big paper lantern and on the red die in the dragon's hall, which play the Kana Notebook video and a recording of a fight on the real Emberquill table. On phones the words take the lower or upper third, and the board is a sheet raised from a bar at the bottom.
 
 Live: https://kekaisik1.github.io/portfolio/
 
@@ -34,6 +34,8 @@ src/content/          every word on the page: projects.ts, places.ts (the board'
 src/worlds/           the paintings: looks.ts (where each world's words stand, its crop, what is in its air),
                       photos.ts (at most three mounted, each decoded before it is shown), cut.ts + slats.ts (the cut),
                       cover.ts (where a photo's pixels land on screen), words.ts (showing a world's words),
+                      spots.ts (the thing to open inside a painting: where it stands; pure), spot-view.ts (putting
+                      it on its object),
                       placeholders.json (tiny blurred stand-ins, made by `npm run worlds`)
 src/living/           the living picture: scenes.ts (what moves in each painting: the data you author), scene.ts (its
                       shape), raster.ts (regions -> two small mask textures; pure), noise.ts (a seamless noise tile;
@@ -124,6 +126,16 @@ The unit tests fail until every project has a place, a look, a scene, a sound an
 ## Add a video
 
 Run `npm run video -- <your file> <slug>` (needs ffmpeg). It writes `public/videos/<slug>.mp4` as H.264 + AAC at 720p and at most 2 MB, which every browser plays and a phone loads quickly; a unit test fails on a bigger file, so don't copy a raw recording in. Optional captions go beside it as `public/videos/<slug>.vtt`. Commit both. The list of videos and their running times is read at build time, so the project's "Watch 0:44" button appears by itself; a project without a video has no button. Keep it understandable with the sound off, and restart `npm run dev` after adding a file.
+
+## Add a spot
+
+A spot is one thing to open inside a painting: a dot on an object of the picture, a slow breathing ring around it and a small label beside it, all one real button. Pressing it (or Enter) opens the project's video. There is at most one per world.
+
+1. The project needs a video first (see "Add a video").
+2. Put a 10x10 grid over the source painting (as in "Make a place move") and read where the object is: `u` across and `v` down, 0..1, in the **landscape** painting.
+3. Add it to `SPOTS` in `src/worlds/spots.ts`: `u`, `v`, which `side` of the dot the label stands (where it covers the least of the object) and `opens: 'video'`.
+4. Give the project its label, `spot`, in `src/content/projects.ts` (a few words, lower case: "watch the app"; the running time is added).
+5. Look at it at 1440x900, 1366x680, 390x844 and 320x568. The page places the spot with the same cover maths as the painting (`src/worlds/cover.ts`), for the landscape picture and the upright crop, again on every resize, and the layer pushes in with the painting. Where the object is cut off, or the spot would stand on the words, the corner switches or the tag, it is not shown and the project's Watch button stays; where it is shown, the Watch button goes (one way in). The e2e suite checks this at those four sizes.
 
 ## Environment
 

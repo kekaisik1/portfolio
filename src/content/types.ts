@@ -21,6 +21,8 @@ export interface Project {
   /** A small aside under the text. */
   note?: string;
   link?: ProjectLink;
+  /** The label of the spot in its painting that opens its video (src/worlds/spots.ts says where it stands). */
+  spot?: string;
 }
 
 /** How a status word on the board is coloured. */

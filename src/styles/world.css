@@ -227,3 +227,111 @@ main {
 .block .btn {
   text-shadow: none;
 }
+
+/*
+ * The spot: one thing to open inside the painting (src/worlds/spots.ts). A small dot on the object, a slow
+ * breathing ring around it, and a small label beside it on its own dark ground. The layer is the stage's size and
+ * pushes in with the painting, so the dot stays on its object. Placed by src/worlds/spot-view.ts.
+ */
+.spots {
+  position: fixed;
+  inset: 0;
+  transform-origin: 62% 46%;
+  pointer-events: none;
+}
+.spot {
+  position: absolute;
+  left: var(--sx, 0);
+  top: var(--sy, 0);
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: -22px;
+  pointer-events: auto;
+  font: 500 var(--t-label) / 1.3 var(--mono);
+  font-stretch: 85%;
+  white-space: nowrap;
+}
+.spot.right {
+  margin-left: -22px;
+}
+/* the label on the left: the dot still sits on the point */
+.spot.left {
+  flex-direction: row-reverse;
+  transform: translateX(-100%);
+  margin-left: 22px;
+}
+.spot-dot {
+  position: relative;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+}
+.spot-dot::before,
+.spot-dot::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+}
+.spot-dot::before {
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  background: var(--ink);
+  box-shadow:
+    0 0 0 2px rgb(var(--shade) / 0.55),
+    0 0 10px rgb(var(--shade) / 0.5);
+}
+/* the ring breathes out slowly from the dot: transform and opacity only */
+.spot-dot::after {
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border: 1.5px solid var(--ink);
+  opacity: 0;
+  animation: spot-breathe 2.8s cubic-bezier(0.3, 0.5, 0.4, 1) infinite;
+}
+@keyframes spot-breathe {
+  from {
+    transform: scale(0.45);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+/* the motion switch is off: the ring stands still */
+[data-motion='off'] .spot-dot::after {
+  animation: none;
+  opacity: 0.6;
+}
+.spot-l {
+  padding: 5px 8px;
+  color: var(--ink);
+  background: rgb(var(--shade) / 0.78);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.spot-l .len {
+  font-weight: 400;
+  color: var(--soft);
+}
+.spot:hover .spot-l {
+  background: var(--ink);
+  color: var(--board);
+}
+.spot:hover .spot-l .len {
+  color: var(--board);
+}
+.spot:active .spot-l {
+  transform: translateX(2px);
+}
+.spot:focus-visible {
+  outline-offset: 0;
+}
+/* where the spot is shown, it is the way in: no separate Watch button */
+.world.spotted .acts .watch {
+  display: none;
+}
