@@ -1,17 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
-const IDS = [
-  'hello',
-  'front-desk',
-  'numbers-room',
-  'lowl',
-  'emberquill',
-  'history-lens',
-  'bookforge',
-  'kana-notebook',
-  'about',
-  'contact',
-];
+/* the places that are not projects: each has one reacting object (the projects' places are toys: toys.spec.ts) */
+const IDS = ['hello', 'about', 'contact'];
 
 async function open(page: Page, id: string): Promise<void> {
   await page.goto('about:blank');
@@ -37,60 +27,44 @@ const placed = (page: Page): Promise<{ react: DOMRect | null; others: Record<str
       mark: box(document.querySelector('.brand .mark')),
       tag: box(document.getElementById('bar')),
     };
-    world?.querySelectorAll<HTMLElement>('.spot').forEach((s, k) => {
-      if (!s.hidden) others[`spot ${k}`] = s.getBoundingClientRect();
-    });
     return { react: react && !react.hidden && react.offsetParent ? react.getBoundingClientRect() : null, others };
   });
 const apart = (a: DOMRect, b: DOMRect): boolean =>
   a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top;
 
 test.describe('the painting reacts', () => {
-  test('Rome: pressing the brazier flares it and throws sparks, then it is quiet again', async ({ page }) => {
-    await open(page, 'history-lens');
-    const brazier = page.getByRole('button', { name: 'Stoke the brazier', exact: true });
-    await expect(brazier).toBeVisible();
-    expect(await brazier.evaluate((b) => getComputedStyle(b).cursor)).toBe('pointer');
+  test('the campfire: pressing it flares it and throws sparks, then it is quiet again', async ({ page }) => {
+    await open(page, 'contact');
+    const fire = page.getByRole('button', { name: 'Poke the fire', exact: true });
+    await expect(fire).toBeVisible();
+    expect(await fire.evaluate((b) => getComputedStyle(b).cursor)).toBe('pointer');
 
-    await brazier.click();
-    await expect(page.locator('#history-lens .flare')).toHaveCount(1);
+    await fire.click();
+    await expect(page.locator('#contact .flare')).toHaveCount(1);
     await expect(page.locator('#fx')).toHaveAttribute('data-live', 'on');
     /* gone after a second or two */
-    await expect(page.locator('#history-lens .flare')).toHaveCount(0, { timeout: 4000 });
+    await expect(page.locator('#contact .flare')).toHaveCount(0, { timeout: 4000 });
   });
 
-  test('the pass has nothing in its air, but its booth light flickers, and the canvas rests again', async ({
-    page,
-  }) => {
-    await open(page, 'front-desk');
-    await expect(page.locator('#fx')).toHaveAttribute('data-live', 'off');
-    const booth = page.getByRole('button', { name: "Flick the booth's light", exact: true });
+  test('the road: the grass is reached by the keyboard and answers Enter', async ({ page }) => {
+    await open(page, 'about');
+    const grass = page.getByRole('button', { name: 'Brush the grass', exact: true });
 
-    await booth.focus();
-    await expect(booth).toBeFocused();
-    expect(await booth.evaluate((b) => getComputedStyle(b).outlineStyle)).toBe('solid');
+    await grass.focus();
+    await expect(grass).toBeFocused();
+    expect(await grass.evaluate((b) => getComputedStyle(b).outlineStyle)).toBe('solid');
     await page.keyboard.press('Enter');
-    await expect(page.locator('#front-desk .flare')).toHaveCount(1);
-    await expect(page.locator('#fx')).toHaveAttribute('data-live', 'off');
-  });
-
-  test('the observatory: a shooting star; the summit: snow off the top, on a canvas that rests after it', async ({
-    page,
-  }) => {
-    await open(page, 'numbers-room');
-    await page.getByRole('button', { name: 'Wait for a shooting star', exact: true }).click();
-    await expect(page.locator('#numbers-room .streak')).toHaveCount(1);
-    await expect(page.locator('#numbers-room .streak')).toHaveCount(0, { timeout: 3000 });
+    await expect(page.locator('#fx')).toHaveAttribute('data-live', 'on');
   });
 
   test('with the motion switched off there is nothing to press', async ({ page }) => {
-    await open(page, 'history-lens');
-    await expect(page.locator('#history-lens .react')).toBeVisible();
+    await open(page, 'contact');
+    await expect(page.locator('#contact .react')).toBeVisible();
     await page.locator('#sw-motion').click();
 
-    await expect(page.locator('#history-lens .react')).toBeHidden();
+    await expect(page.locator('#contact .react')).toBeHidden();
     await page.locator('#sw-motion').click();
-    await expect(page.locator('#history-lens .react')).toBeVisible();
+    await expect(page.locator('#contact .react')).toBeVisible();
   });
 
   for (const size of [
@@ -99,9 +73,7 @@ test.describe('the painting reacts', () => {
     { width: 390, height: 844 },
     { width: 320, height: 568 },
   ])
-    test(`at ${size.width}x${size.height} it never stands on the words, a spot, the switches or the tag`, async ({
-      page,
-    }) => {
+    test(`at ${size.width}x${size.height} it never stands on the words, the switches or the tag`, async ({ page }) => {
       test.setTimeout(90_000);
       await page.setViewportSize(size);
       let shown = 0;
@@ -115,7 +87,7 @@ test.describe('the painting reacts', () => {
         for (const [name, r] of Object.entries(others))
           expect(apart(react, r), `${id}: the reacting object stands on the ${name}`).toBe(true);
       }
-      /* most places keep theirs on a wide screen; on a phone the upright crop leaves several objects out */
-      expect(shown).toBeGreaterThanOrEqual(size.width > 1000 ? 8 : 3);
+      /* every one keeps its object on a wide screen; on a phone the upright crop or the words may leave one out */
+      expect(shown).toBeGreaterThanOrEqual(size.width > 1000 ? 3 : 1);
     });
 });

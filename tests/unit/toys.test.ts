@@ -43,7 +43,7 @@ describe('the paintings that are toys', () => {
       );
       for (const t of toys) {
         if (!t.unseen) expect(toyLabel(id, t.id)).toMatch(/\S/);
-        expect(t.swap ?? t.flare ?? t.bursts ?? t.streak ?? t.throw, `${id}/${t.id}`).toBeDefined();
+        expect(t.swap ?? t.bursts ?? t.streak ?? t.throw, `${id}/${t.id}`).toBeDefined();
         for (const n of [t.u, t.v]) {
           expect(n).toBeGreaterThan(0);
           expect(n).toBeLessThan(1);
@@ -60,6 +60,28 @@ describe('the paintings that are toys', () => {
     }
     expect(toysOf('hello')).toEqual([]);
     expect(() => toyLabel('emberquill', 'nothing')).toThrow(/src\/content\/toys\.ts/);
+  });
+
+  it("is every project's place, and nothing else", () => {
+    expect(Object.keys(TOYS).sort()).toEqual(
+      WORLDS.filter((w) => w.kind === 'project')
+        .map((w) => w.id)
+        .sort(),
+    );
+  });
+
+  it('keeps every piece calm: a slow fade in and out, and only the dragon throws anything into the air', () => {
+    for (const [id, toys] of Object.entries(TOYS))
+      for (const t of toys) {
+        const s = t.swap;
+        if (s) {
+          expect(s.rise, `${id}/${t.id}`).toBeGreaterThanOrEqual(450);
+          expect(s.fall, `${id}/${t.id}`).toBeGreaterThanOrEqual(450);
+        }
+        /* a press plays no spray of particles on top of a piece */
+        if (t.bursts) expect(s, `${id}/${t.id}`).toBeUndefined();
+        for (const b of t.bursts ?? []) expect(b.count, `${id}/${t.id}`).toBeLessThanOrEqual(14);
+      }
   });
 
   it('has every piece of the second state on disk, small, and lying inside the painting', () => {
@@ -166,15 +188,23 @@ describe('the paintings that are toys', () => {
     expect(Math.min(...fire.frames.slice(1, -1).map((f) => f.opacity))).toBeGreaterThan(0.7);
   });
 
-  it('renders each toy as a real button with its name, hidden until it is placed, and no Try it in the words', () => {
+  it('renders each toy as a real button with its name, hidden until it is placed, and nothing labelled', () => {
     const html = renderWorlds();
 
     expect(html).toContain(
       '<button class="react toy" type="button" data-toy="dragon" aria-label="Wake the dragon" hidden></button>',
     );
-    expect(html.match(/class="react toy"/g)).toHaveLength(TOYS.emberquill.filter((t) => !t.unseen).length);
     expect(html).not.toContain('data-toy="burn"');
     expect(html).toContain('<span class="sr-only toy-say" role="status"></span>');
-    expect(html).not.toContain('data-try="emberquill"');
+    expect(html).toContain('aria-label="Open the booth"');
+    expect(html).toContain('aria-label="Shake the blossom"');
+    expect(html.match(/class="react toy"/g)).toHaveLength(
+      Object.values(TOYS)
+        .flat()
+        .filter((t) => !t.unseen).length,
+    );
+    /* no labelled dots and no panels: the picture is the thing to try */
+    expect(html).not.toContain('class="spot');
+    expect(html).not.toContain('data-try');
   });
 });

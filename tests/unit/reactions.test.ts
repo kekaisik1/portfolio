@@ -3,20 +3,25 @@ import { WORLDS } from '../../src/content/places';
 import { renderWorlds } from '../../src/content/render';
 import { lookOf } from '../../src/worlds/looks';
 import { MAX_BURST, MIN_HIT_PX, REACTIONS, reactionOf, reactionRect, type Reaction } from '../../src/worlds/reactions';
-import { SPOTS } from '../../src/worlds/spots';
+import { toysOf } from '../../src/worlds/toys';
 
 const inPicture = (n: number): boolean => n > 0 && n < 1;
 
 describe('the painting reacts', () => {
-  it('in every place, with a name a screen reader can say', () => {
-    expect(Object.keys(REACTIONS).sort()).toEqual(WORLDS.map((w) => w.id).sort());
-    for (const w of WORLDS) expect(w.react.trim(), w.id).not.toBe('');
+  it('in every place that is not a project, with a name a screen reader can say; every project is a toy instead', () => {
+    const others = WORLDS.filter((w) => w.kind !== 'project');
+    expect(Object.keys(REACTIONS).sort()).toEqual(others.map((w) => w.id).sort());
+    for (const w of others) expect(w.react?.trim(), w.id).toMatch(/\S/);
+    for (const w of WORLDS.filter((x) => x.kind === 'project')) {
+      expect(w.react, w.id).toBeUndefined();
+      expect(toysOf(w.id).length, w.id).toBeGreaterThan(0);
+    }
     expect(reactionOf('nowhere')).toBeNull();
   });
 
   it('is built only from the plain effects, and stays small', () => {
     for (const [id, r] of Object.entries(REACTIONS)) {
-      expect(r.flare ?? r.burst ?? r.streak, `${id} does nothing`).toBeDefined();
+      expect(r.flare ?? r.burst, `${id} does nothing`).toBeDefined();
       for (const n of [r.u, r.v]) expect(inPicture(n), id).toBe(true);
       expect(r.w * r.h, `${id}: the place to press is the object, not half the painting`).toBeLessThan(0.05);
       if (r.burst) {
@@ -27,14 +32,6 @@ describe('the painting reacts', () => {
         expect(r.flare.size, id).toBeLessThanOrEqual(0.5);
         expect(r.flare.rgb, id).toMatch(/^\d{1,3},\d{1,3},\d{1,3}$/);
       }
-    }
-  });
-
-  it('never stands where a spot stands in the painting', () => {
-    for (const [id, spots] of Object.entries(SPOTS)) {
-      const r = REACTIONS[id];
-      for (const s of spots)
-        expect(Math.hypot((s.u - r.u) * 1.5, s.v - r.v), `${id}: the reaction is on a spot`).toBeGreaterThan(0.05);
     }
   });
 
@@ -71,8 +68,10 @@ describe('the painting reacts', () => {
   it('renders as a real button with its name, hidden until it is placed, in every world that is not a toy', () => {
     const html = renderWorlds();
 
-    /* the dragon's hall is a toy (tests/unit/toys.test.ts): its things to press take the place of the one reaction */
-    expect(html.match(/<button class="react" type="button" aria-label="[^"]+" hidden><\/button>/g)).toHaveLength(9);
-    expect(html).toContain('aria-label="Stoke the brazier"');
+    /* the project places are toys (tests/unit/toys.test.ts): their things to press take the place of the one reaction */
+    expect(html.match(/<button class="react" type="button" aria-label="[^"]+" hidden><\/button>/g)).toHaveLength(3);
+    expect(html).toContain(
+      '<div class="presses"><button class="react" type="button" aria-label="Poke the fire" hidden>',
+    );
   });
 });

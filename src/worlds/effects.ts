@@ -1,15 +1,15 @@
 /**
  * The plain effects a press can play in the layer that pushes in with the painting: a soft light (flare) and a
  * shooting line (streak). Elements animated with opacity and transform only, played once and then gone. Used by
- * the single reactions (react-view.ts) and by the toys (toy-view.ts).
+ * the reactions of the places that are not projects (react-view.ts: the flare) and by the toys (toy-view.ts: the
+ * archer's arrow).
  */
 import { WORLDS } from '../content/places';
 import { lookOf } from './looks';
 import { pictureLength, type Flare } from './reactions';
-import { spotPoint } from './spots';
+import { picturePoint } from './picture';
 
 const FLARE_MS = 1500;
-const FLICKER_MS = 1300;
 const STREAK_MS = 900;
 
 export interface Effects {
@@ -28,26 +28,24 @@ export function createEffects(box: () => { width: number; height: number }, upri
 
   function flare(layer: HTMLElement, i: number, f: Flare): void {
     const look = lookOf(WORLDS[i].id);
-    const at = spotPoint({ u: f.at[0], v: f.at[1] }, look, box(), upright());
+    const at = picturePoint({ u: f.at[0], v: f.at[1] }, look, box(), upright());
     if (!at) return;
     const size = pictureLength(f.size, look, box(), upright());
     const el = document.createElement('span');
     el.className = 'flare';
     el.style.cssText = `--fx:${at.x}px;--fy:${at.y}px;--fs:${size}px;--frgb:${f.rgb.replaceAll(',', ' ')}`;
-    const keys: Keyframe[] = f.flicker
-      ? [0, 0.85, 0.2, 0.9, 0.35, 1, 0.6, 0].map((opacity) => ({ opacity, transform: 'scale(1)' }))
-      : [
-          { opacity: 0, transform: 'scale(0.7)' },
-          { opacity: 1, transform: 'scale(1)', offset: 0.25 },
-          { opacity: 0, transform: 'scale(1.12)' },
-        ];
-    play(layer, el, keys, f.flicker ? FLICKER_MS : FLARE_MS);
+    const keys: Keyframe[] = [
+      { opacity: 0, transform: 'scale(0.7)' },
+      { opacity: 1, transform: 'scale(1)', offset: 0.25 },
+      { opacity: 0, transform: 'scale(1.12)' },
+    ];
+    play(layer, el, keys, FLARE_MS);
   }
 
   function streak(layer: HTMLElement, i: number, from: readonly [number, number], to: readonly [number, number]): void {
     const look = lookOf(WORLDS[i].id);
-    const a = spotPoint({ u: from[0], v: from[1] }, look, box(), upright());
-    const b = spotPoint({ u: to[0], v: to[1] }, look, box(), upright());
+    const a = picturePoint({ u: from[0], v: from[1] }, look, box(), upright());
+    const b = picturePoint({ u: to[0], v: to[1] }, look, box(), upright());
     if (!a || !b) return;
     const dx = b.x - a.x;
     const dy = b.y - a.y;

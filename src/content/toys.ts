@@ -11,6 +11,41 @@ export const TOY_LABELS: Readonly<Record<string, Readonly<Record<string, string>
     staff: "Light the wizard's staff",
     die: 'Throw the die',
   },
+  'front-desk': {
+    booth: 'Open the booth',
+    fox: 'Call the fox',
+    car: 'Bring a car up the road',
+    aurora: 'Light the northern lights',
+  },
+  'numbers-room': {
+    telescope: 'Turn the telescope on the stars',
+    building: 'Light the windows',
+    comet: 'Wait for a comet',
+  },
+  lowl: {
+    washer: 'Open the washing machine',
+    fridge: 'Open the fridge',
+    lamp: 'Switch on the lamp',
+    palm: 'Wake the parrots in the palm',
+  },
+  'history-lens': {
+    brazier: 'Stoke the brazier',
+    legion: 'March the legion through the arch',
+    temple: 'Open the temple doors',
+    doves: 'Send up the doves',
+  },
+  bookforge: {
+    page: 'Paint the drawn page',
+    castle: 'Set off fireworks over the castle',
+    pen: 'Light the pen',
+    waterfall: 'Make a rainbow over the waterfall',
+  },
+  'kana-notebook': {
+    lantern: 'Light the lantern',
+    pagoda: 'Light the pagoda',
+    cat: 'Call the cat',
+    blossom: 'Shake the blossom',
+  },
 };
 
 export const TOY_SAYS = {

@@ -5,7 +5,7 @@ import { initBoard } from './board/board';
 import { initFooter } from './board/footer';
 import { WORLDS } from './content/places';
 import { byId, pickAll } from './lib/dom';
-import { narrow, reduce, tall } from './lib/media';
+import { narrow, tall } from './lib/media';
 import { createTicker } from './lib/ticker';
 import { createLiving } from './living/living';
 import { worldOfHash } from './nav/routing';
@@ -17,7 +17,6 @@ import { initRead } from './sheet/read';
 import { createSound } from './sound/sound';
 import { initSwitches } from './switches/switches';
 import { initInput } from './travel/input';
-import { initTry } from './try/panel';
 import { createTravel } from './travel/travel';
 import { initPlayer } from './video/player';
 import { lookOf } from './worlds/looks';
@@ -25,7 +24,6 @@ import { createPhotos } from './worlds/photos';
 import { createEffects } from './worlds/effects';
 import { initReactions } from './worlds/react-view';
 import { initToys } from './worlds/toy-view';
-import { initSpots } from './worlds/spot-view';
 
 const RESIZE_SETTLE_MS = 150;
 
@@ -58,22 +56,20 @@ function boot(): void {
     where: byId('where'),
     smooth: () => smooth && switches.motion(),
   });
-  const spots = initSpots(worlds, lens, upright);
+  const effects = createEffects(() => ({ width: lens.clientWidth, height: lens.clientHeight }), upright);
   const reactions = initReactions(worlds, lens, upright, {
     ambient,
+    effects,
     motion: () => smooth && switches.motion(),
-    spotsShown: (i) => spots.shown(i),
   });
   const toys = initToys(worlds, lens, upright, {
     ambient,
-    effects: createEffects(() => ({ width: lens.clientWidth, height: lens.clientHeight }), upright),
+    effects,
     motion: () => smooth && switches.motion(),
     random: Math.random,
     ticker,
   });
-  /* the spots first: a reacting object never stands on one */
   const place = (i: number): void => {
-    spots.layout(i);
     reactions.layout(i);
     toys.layout(i);
   };
@@ -132,7 +128,6 @@ function boot(): void {
     sound.duck(open);
   });
   initNote(lanterns.light, covered);
-  initTry({ covered, motion: () => switches.motion() && !reduce.matches, cue: (voice) => sound.cue(voice) });
 
   const start = worldOfHash(location.hash);
   travel.start(start < 0 ? 0 : start);
@@ -146,7 +141,7 @@ function boot(): void {
   window.addEventListener('resize', settled);
   narrow.addEventListener('change', settled);
 
-  /* the words are measured again once the typefaces are in: the spot must not stand on them */
+  /* the words are measured again once the typefaces are in: nothing to press may stand on them */
   void document.fonts.ready.then(() => place(travel.current()));
 
   void loadToday().then((today) => {

@@ -1,19 +1,20 @@
 /**
- * A painting you can play with: several things in it answer a press, and some of them really change (the dragon
- * breathes fire, the chest opens, the die is thrown). No labels, no panels: the picture is the toy.
+ * A painting you can play with: every project's place is one. Several things in it answer a press, and they really
+ * change (the dragon breathes fire, the booth's door opens, a fox comes to the roadside, the die is thrown). No
+ * labels, no panels: the picture is the toy.
  *
  * A change is a "second state" of the same painting: a feathered piece of another painting of the same scene,
  * laid exactly over this one and faded in (public/states/<world>/, cut by reference/painted-sources/states/
  * make_states.py, whose rectangles are mirrored here). Only opacity and transform ever move.
  *
- * Everything is in the landscape painting's 0..1 coordinates, sizes in picture heights where noted, like spots and
- * reactions. The names a screen reader hears are in src/content/toys.ts. Pure, so it is unit-tested.
+ * Everything is in the landscape painting's 0..1 coordinates, sizes in picture heights where noted, like the
+ * reactions (picture.ts). The names a screen reader hears are in src/content/toys.ts. Pure, so it is unit-tested.
  */
 import type { Point as PicturePoint } from '../ambient/spec';
 import { placeX, placeY, tallU } from './cover';
 import type { Look } from './looks';
-import type { Burst, Flare } from './reactions';
-import { fitOf, type Rect } from './spots';
+import type { Burst } from './reactions';
+import { fitOf, type Rect } from './picture';
 
 /** A piece of a second state: its file under public/states/<world>/ and where it lies on the painting. */
 export interface Piece {
@@ -67,7 +68,6 @@ export interface Toy {
   w: number;
   h: number;
   swap?: Swap;
-  flare?: Flare;
   bursts?: readonly Burst[];
   streak?: { from: PicturePoint; to: PicturePoint };
   throw?: Throw;
@@ -198,6 +198,243 @@ export const TOYS: Readonly<Record<string, readonly Toy[]>> = {
       w: 0,
       h: 0,
       swap: { piece: { file: 'crit.webp', ...px(0, 0, 1536, 800) }, rise: 700, hold: 1900, fall: 1600 },
+    },
+  ],
+  'front-desk': [
+    /* the booth's door opens, the receiver hangs off the hook, and its light falls on the snow */
+    {
+      id: 'booth',
+      u: 0.665,
+      v: 0.62,
+      w: 0.1,
+      h: 0.26,
+      swap: { piece: { file: 'booth.webp', ...px(829, 461, 354, 450) }, rise: 600, hold: 0, fall: 1400, stays: true },
+    },
+    /* a fox comes to the roadside and looks at the booth */
+    {
+      id: 'fox',
+      u: 0.815,
+      v: 0.71,
+      w: 0.1,
+      h: 0.13,
+      swap: { piece: { file: 'fox.webp', ...px(1160, 635, 199, 179) }, rise: 600, hold: 0, fall: 1400, stays: true },
+    },
+    /* a car's headlights come round the far bend; pressed on the bend just right of it, clear of the words */
+    {
+      id: 'car',
+      u: 0.41,
+      v: 0.69,
+      w: 0.05,
+      h: 0.07,
+      swap: { piece: { file: 'car.webp', ...px(538, 660, 122, 103) }, rise: 600, hold: 4000, fall: 1400 },
+    },
+    /* the northern lights over the peaks, slower than the rest: they fill the sky */
+    {
+      id: 'aurora',
+      u: 0.66,
+      v: 0.12,
+      w: 0.22,
+      h: 0.16,
+      swap: { piece: { file: 'aurora.webp', ...px(399, 0, 1076, 307) }, rise: 1200, hold: 5000, fall: 2000 },
+    },
+  ],
+  'numbers-room': [
+    /* the telescope's beam goes out and finds a constellation */
+    {
+      id: 'telescope',
+      u: 0.66,
+      v: 0.33,
+      w: 0.1,
+      h: 0.14,
+      swap: { piece: { file: 'telescope.webp', ...px(46, 0, 1060, 389) }, rise: 600, hold: 4500, fall: 1400 },
+    },
+    /* the building's windows light up and its door opens on the steps */
+    {
+      id: 'building',
+      u: 0.83,
+      v: 0.55,
+      w: 0.22,
+      h: 0.1,
+      swap: {
+        piece: { file: 'building.webp', ...px(1060, 492, 415, 204) },
+        rise: 600,
+        hold: 0,
+        fall: 1400,
+        stays: true,
+      },
+    },
+    /* a comet crosses the upper sky */
+    {
+      id: 'comet',
+      u: 0.87,
+      v: 0.095,
+      w: 0.18,
+      h: 0.13,
+      swap: { piece: { file: 'comet.webp', ...px(1183, 10, 307, 174) }, rise: 600, hold: 3500, fall: 1400 },
+    },
+  ],
+  lowl: [
+    /* the washing machine's door opens and bubbles drift out */
+    {
+      id: 'washer',
+      u: 0.665,
+      v: 0.77,
+      w: 0.07,
+      h: 0.12,
+      swap: { piece: { file: 'washer.webp', ...px(799, 512, 292, 410) }, rise: 600, hold: 0, fall: 1400, stays: true },
+    },
+    /* the fridge's upper door opens on its shelves */
+    {
+      id: 'fridge',
+      u: 0.75,
+      v: 0.72,
+      w: 0.08,
+      h: 0.22,
+      swap: { piece: { file: 'fridge.webp', ...px(1044, 579, 216, 130) }, rise: 600, hold: 0, fall: 1400, stays: true },
+    },
+    /* the lamp over the door lights the wall */
+    {
+      id: 'lamp',
+      u: 0.76,
+      v: 0.43,
+      w: 0.07,
+      h: 0.08,
+      swap: { piece: { file: 'lamp.webp', ...px(1091, 369, 184, 215) }, rise: 600, hold: 0, fall: 1400, stays: true },
+    },
+    /* green parrots fly out of the tall palm; pressed on its right fronds, clear of the name and tag left of them */
+    {
+      id: 'palm',
+      u: 0.43,
+      v: 0.14,
+      w: 0.1,
+      h: 0.12,
+      swap: { piece: { file: 'palm.webp', ...px(584, 0, 307, 123) }, rise: 600, hold: 3000, fall: 1400 },
+    },
+  ],
+  'history-lens': [
+    /* the brazier's flame rises three times as tall */
+    {
+      id: 'brazier',
+      u: 0.925,
+      v: 0.72,
+      w: 0.11,
+      h: 0.22,
+      swap: { piece: { file: 'brazier.webp', ...px(1229, 379, 307, 594) }, rise: 600, hold: 3500, fall: 1400 },
+    },
+    /* legionaries march along the road through the arch */
+    {
+      id: 'legion',
+      u: 0.36,
+      v: 0.66,
+      w: 0.14,
+      h: 0.14,
+      swap: { piece: { file: 'legion.webp', ...px(415, 573, 399, 246) }, rise: 600, hold: 0, fall: 1400, stays: true },
+    },
+    /* the temple's doors open on gold light */
+    {
+      id: 'temple',
+      u: 0.68,
+      v: 0.5,
+      w: 0.14,
+      h: 0.22,
+      swap: { piece: { file: 'temple.webp', ...px(968, 420, 184, 246) }, rise: 600, hold: 0, fall: 1400, stays: true },
+    },
+    /* doves fly up over the Colosseum */
+    {
+      id: 'doves',
+      u: 0.47,
+      v: 0.36,
+      w: 0.2,
+      h: 0.12,
+      swap: { piece: { file: 'doves.webp', ...px(568, 154, 369, 163) }, rise: 600, hold: 3000, fall: 1400 },
+    },
+  ],
+  bookforge: [
+    /* the ink-drawn left page is painted in full colour */
+    {
+      id: 'page',
+      u: 0.4,
+      v: 0.58,
+      w: 0.28,
+      h: 0.2,
+      swap: { piece: { file: 'page.webp', ...px(307, 348, 553, 400) }, rise: 600, hold: 0, fall: 1400, stays: true },
+    },
+    /* gold fireworks over the castle */
+    {
+      id: 'castle',
+      u: 0.74,
+      v: 0.42,
+      w: 0.14,
+      h: 0.14,
+      swap: { piece: { file: 'castle.webp', ...px(998, 184, 292, 226) }, rise: 600, hold: 3000, fall: 1400 },
+    },
+    /* the pen's nib glows */
+    {
+      id: 'pen',
+      u: 0.9,
+      v: 0.3,
+      w: 0.06,
+      h: 0.4,
+      swap: { piece: { file: 'pen.webp', ...px(1306, 41, 169, 205) }, rise: 600, hold: 2500, fall: 1400 },
+    },
+    /* a rainbow over the waterfall */
+    {
+      id: 'waterfall',
+      u: 0.82,
+      v: 0.8,
+      w: 0.08,
+      h: 0.26,
+      swap: {
+        piece: { file: 'waterfall.webp', ...px(1106, 614, 353, 226) },
+        rise: 600,
+        hold: 0,
+        fall: 1400,
+        stays: true,
+      },
+    },
+  ],
+  'kana-notebook': [
+    /* the big paper lantern glows, warming the wood around it */
+    {
+      id: 'lantern',
+      u: 0.875,
+      v: 0.42,
+      w: 0.08,
+      h: 0.14,
+      swap: {
+        piece: { file: 'lantern.webp', ...px(1183, 195, 353, 409) },
+        rise: 600,
+        hold: 0,
+        fall: 1400,
+        stays: true,
+      },
+    },
+    /* the pagoda's windows light up and the moon rises beside its spire */
+    {
+      id: 'pagoda',
+      u: 0.68,
+      v: 0.38,
+      w: 0.12,
+      h: 0.3,
+      swap: { piece: { file: 'pagoda.webp', ...px(860, 133, 323, 410) }, rise: 600, hold: 0, fall: 1400, stays: true },
+    },
+    /* a cat sits on the steps and looks down the street */
+    {
+      id: 'cat',
+      u: 0.82,
+      v: 0.76,
+      w: 0.08,
+      h: 0.16,
+      swap: { piece: { file: 'cat.webp', ...px(1183, 686, 153, 184) }, rise: 600, hold: 0, fall: 1400, stays: true },
+    },
+    /* petals fall from the blossom: the one toy that is particles, a few, falling slowly */
+    {
+      id: 'blossom',
+      u: 0.55,
+      v: 0.08,
+      w: 0.3,
+      h: 0.12,
+      bursts: [{ at: [0.55, 0.1], style: 'fall', count: 14, spread: 0.07, rgb: '255,196,214' }],
     },
   ],
 };

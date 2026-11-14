@@ -1,27 +1,26 @@
 /**
- * The painting reacts (src/worlds/reactions.ts says what and where). Each world's one reacting object is an invisible
- * button the size of the object, placed with the same cover maths as the spots and hidden where it would stand on
- * the words, the switches, the tag or a spot. A press plays its effects once: a flare and a shooting star are
- * elements animated with opacity and transform only, in the layer that pushes in with the painting; a burst is
- * drawn by the canvas of things in the air (src/ambient/). With the motion switched off there is nothing to press.
+ * The painting reacts (src/worlds/reactions.ts says what and where), in the places that are not projects. Each one's
+ * reacting object is an invisible button the size of the object, placed with the painting's cover maths and hidden
+ * where it would stand on the words, the switches or the tag. A press plays its effects once: a flare is an element
+ * animated with opacity and transform only, in the layer that pushes in with the painting; a burst is drawn by the
+ * canvas of things in the air (src/ambient/). With the motion switched off there is nothing to press.
  */
 import type { Ambient } from '../ambient/ambient';
 import { WORLDS } from '../content/places';
 import { byId, pick } from '../lib/dom';
 import { lookOf } from './looks';
-import { createEffects } from './effects';
+import type { Effects } from './effects';
 import { reactionOf, reactionRect } from './reactions';
-import { crowds, within, type Rect } from './spots';
+import { crowds, within, type Rect } from './picture';
 
 /** the least room around a reacting object */
 const GAP_PX = 8;
 
 export interface ReactParts {
   ambient: Ambient;
+  effects: Effects;
   /** may things move: the motion switch is on and the device keeps up */
   motion(): boolean;
-  /** the spots of world `i` on screen now: a reacting object never stands on one */
-  spotsShown(i: number): HTMLElement[];
 }
 
 export interface ReactView {
@@ -38,14 +37,11 @@ export function initReactions(
   const avoid = [byId('switches'), pick(document, '.brand'), byId('bar')];
   const box = (): { width: number; height: number } => ({ width: lens.clientWidth, height: lens.clientHeight });
 
-  const { flare, streak } = createEffects(box, upright);
-
   function fire(i: number): void {
     const r = reactionOf(WORLDS[i].id);
-    const layer = worlds[i].querySelector<HTMLElement>('.spots');
+    const layer = worlds[i].querySelector<HTMLElement>('.presses');
     if (!r || !layer || !parts.motion()) return;
-    if (r.flare) flare(layer, i, r.flare);
-    if (r.streak) streak(layer, i, r.streak.from, r.streak.to);
+    if (r.flare) parts.effects.flare(layer, i, r.flare);
     if (r.burst) parts.ambient.burst(r.burst);
   }
 
@@ -62,7 +58,7 @@ export function initReactions(
     button.hidden = false;
     const real = button.getBoundingClientRect();
     const screen: Rect = { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight };
-    const others = [worlds[i].querySelector('.block'), ...avoid, ...parts.spotsShown(i)].filter(
+    const others = [worlds[i].querySelector('.block'), ...avoid].filter(
       (el): el is HTMLElement => el instanceof HTMLElement,
     );
     if (!within(real, screen, GAP_PX) || others.some((el) => crowds(real, el.getBoundingClientRect(), GAP_PX)))

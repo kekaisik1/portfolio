@@ -2,8 +2,9 @@
  * The painting as a toy (src/worlds/toys.ts says what answers a press, and how). Each toy is an invisible button the
  * size of its object, placed with the painting's own cover maths and left out where it would stand on the words, the
  * switches or the tag. A press fades a piece of the painting's second state in over the painting, throws the die,
- * and plays the plain effects (effects.ts, src/ambient/). Pieces are images in the layer that pushes in with the
- * painting, moved with opacity and transform only. With the motion switched off there is nothing to press.
+ * looses the archer's arrow (effects.ts) or lets a few particles fall (src/ambient/). Pieces are images in #states,
+ * inside the lens, so they are the painting's own layer; they move with opacity and transform only. With the motion
+ * switched off there is nothing to press.
  */
 import type { Ambient } from '../ambient/ambient';
 import { WORLDS } from '../content/places';
@@ -14,7 +15,7 @@ import { drawDie, drawnAt, poseAt } from './d20';
 import type { Effects } from './effects';
 import { lookOf } from './looks';
 import { reactionRect } from './reactions';
-import { crowds, within, type Rect } from './spots';
+import { crowds, within, type Rect } from './picture';
 import {
   numberFor,
   outcomeOf,
@@ -69,7 +70,7 @@ export function initToys(
   const lastOutcome = new Map<string, number>();
   let current = -1;
 
-  const layerOf = (i: number): HTMLElement | null => worlds[i].querySelector<HTMLElement>('.spots');
+  const layerOf = (i: number): HTMLElement | null => worlds[i].querySelector<HTMLElement>('.presses');
   /** where the pieces lie: inside the lens, so they are the painting's own layer and never shift against it */
   const states = byId('states');
   const later = (ms: number, run: () => void): void => {
@@ -249,7 +250,6 @@ export function initToys(
     if (toy.swap) swap(i, toy, key);
     if (toy.throw) toss(i, toy.throw, key);
     if (closing) return;
-    if (toy.flare) parts.effects.flare(layer, i, toy.flare);
     if (toy.streak) parts.effects.streak(layer, i, toy.streak.from, toy.streak.to);
     toy.bursts?.forEach((b) => parts.ambient.burst(b));
     if (toy.then) {

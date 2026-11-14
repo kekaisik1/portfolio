@@ -1,21 +1,20 @@
 /**
- * The painting reacts: in every place one object answers a press for a second or two (the booth's light flickers,
- * the brazier flares, the dragon's gold throws sparks). Unlabelled and quiet: no hover, nothing that follows the
- * cursor, nothing at all with the motion switched off. Each reaction is data built from three plain effects:
+ * The painting reacts: in the three places that are not projects (the summit, the road, the campfire) one object
+ * answers a press for a second or two: snow blown off the summit, seeds off the grass, the fire flaring. The project
+ * places are toys instead (toys.ts). Unlabelled and quiet: no hover, nothing that follows the cursor, nothing at all
+ * with the motion switched off. Each reaction is data built from two plain effects:
  *
- * - flare: a soft round light at a point, coming and going with opacity and scale only (a flicker, if asked);
- * - burst: a handful of the place's own particles from a point (src/ambient/), rising, falling, drifting or
- *   sparkling;
- * - streak: one shooting star from a point to a point (the observatory).
+ * - flare: a soft round light at a point, coming and going with opacity and scale only;
+ * - burst: a handful of the place's own particles from a point (src/ambient/), rising, falling or drifting.
  *
- * Points are in the landscape painting's 0..1 coordinates, sizes in picture heights, like spots (spots.ts). The
- * name a screen reader hears is the place's `react` in src/content/places.ts. Pure, so it is unit-tested.
+ * Points are in the landscape painting's 0..1 coordinates, sizes in picture heights (picture.ts). The name a screen
+ * reader hears is the place's `react` in src/content/places.ts. Pure, so it is unit-tested.
  */
 import type { Point as PicturePoint } from '../ambient/spec';
 import type { Look } from './looks';
-import { fitOf, spotPoint, type Rect } from './spots';
+import { fitOf, picturePoint, type Rect } from './picture';
 
-export type BurstStyle = 'rise' | 'fall' | 'drift' | 'sparkle';
+export type BurstStyle = 'rise' | 'fall' | 'drift';
 
 export interface Burst {
   at: PicturePoint;
@@ -33,8 +32,6 @@ export interface Flare {
   /** across, in picture heights */
   size: number;
   rgb: string;
-  /** a light that stutters on and off instead of swelling once */
-  flicker?: boolean;
 }
 
 export interface Reaction {
@@ -45,7 +42,6 @@ export interface Reaction {
   h: number;
   flare?: Flare;
   burst?: Burst;
-  streak?: { from: PicturePoint; to: PicturePoint };
 }
 
 /** the smallest place to press, in CSS pixels */
@@ -61,66 +57,6 @@ export const REACTIONS: Readonly<Record<string, Reaction>> = {
     w: 0.1,
     h: 0.08,
     burst: { at: [0.695, 0.325], style: 'drift', count: 26, spread: 0.025, rgb: '255,255,255', dir: -1 },
-  },
-  /* the lamp in the booth's roof flickers */
-  'front-desk': {
-    u: 0.677,
-    v: 0.538,
-    w: 0.1,
-    h: 0.06,
-    flare: { at: [0.677, 0.56], size: 0.36, rgb: '255,206,130', flicker: true },
-  },
-  /* the bright star over the dome, and a shooting star across the sky */
-  'numbers-room': {
-    u: 0.68,
-    v: 0.076,
-    w: 0.07,
-    h: 0.07,
-    flare: { at: [0.68, 0.076], size: 0.08, rgb: '255,255,255' },
-    streak: { from: [0.88, 0.04], to: [0.6, 0.2] },
-  },
-  /* the lamp hanging in the shop warms the doorway */
-  lowl: {
-    u: 0.615,
-    v: 0.56,
-    w: 0.14,
-    h: 0.1,
-    flare: { at: [0.61, 0.6], size: 0.46, rgb: '255,205,130' },
-  },
-  /* the gold right of the party throws sparks */
-  emberquill: {
-    u: 0.74,
-    v: 0.62,
-    w: 0.16,
-    h: 0.08,
-    flare: { at: [0.74, 0.61], size: 0.24, rgb: '255,214,120' },
-    burst: { at: [0.74, 0.6], style: 'rise', count: 24, spread: 0.05, rgb: '255,240,190' },
-  },
-  /* the bronze brazier flares */
-  'history-lens': {
-    u: 0.925,
-    v: 0.7,
-    w: 0.11,
-    h: 0.15,
-    flare: { at: [0.925, 0.66], size: 0.3, rgb: '255,176,90' },
-    burst: { at: [0.925, 0.64], style: 'rise', count: 18, spread: 0.02, rgb: '255,226,160' },
-  },
-  /* the waterfall off the book sparkles */
-  bookforge: {
-    u: 0.815,
-    v: 0.82,
-    w: 0.1,
-    h: 0.24,
-    burst: { at: [0.815, 0.8], style: 'sparkle', count: 26, spread: 0.08, rgb: '255,255,255' },
-  },
-  /* the small lantern down the street glows, and petals fall from the tree over it */
-  'kana-notebook': {
-    u: 0.549,
-    v: 0.66,
-    w: 0.06,
-    h: 0.08,
-    flare: { at: [0.549, 0.66], size: 0.2, rgb: '255,190,110' },
-    burst: { at: [0.55, 0.5], style: 'fall', count: 18, spread: 0.07, rgb: '255,196,214' },
   },
   /* seeds blown off the grass, the way it leans */
   about: {
@@ -156,7 +92,7 @@ export function reactionRect(
   upright: boolean,
   inset = 0,
 ): Rect | null {
-  const at = spotPoint(r, look, box, upright);
+  const at = picturePoint(r, look, box, upright);
   if (!at) return null;
   const fit = fitOf(look, box, upright);
   const w = Math.max(MIN_HIT_PX, r.w * fit.height);

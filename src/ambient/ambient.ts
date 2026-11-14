@@ -201,12 +201,6 @@ export function createAmbient(canvas: HTMLCanvasElement, opts: { upright: () => 
         p.a = rand(0.55, 0.95);
         p.life = rand(1, 2);
         break;
-      case 'sparkle':
-        p.vx = rand(-3, 3);
-        p.vy = rand(4, 14);
-        p.s = rand(1.8, 3.4);
-        p.life = rand(0.5, 1.3);
-        break;
     }
     return p;
   }
@@ -222,7 +216,7 @@ export function createAmbient(canvas: HTMLCanvasElement, opts: { upright: () => 
       const q = p.age / p.life;
       const fade = Math.max(0, q < 0.15 ? q / 0.15 : 1 - (q - 0.15) / 0.85);
       ctx.fillStyle = `rgb(${p.rgb})`;
-      ctx.globalAlpha = p.a * fade * (p.style === 'sparkle' ? 0.5 + 0.5 * Math.sin(t * 9 + p.ph) : 1);
+      ctx.globalAlpha = p.a * fade;
       if (p.style === 'drift') ctx.fillRect(p.x, p.y, p.s * 2.2, p.s);
       else if (p.style === 'fall')
         ctx.fillRect(p.x, p.y, p.s * 1.6 * (0.35 + 0.65 * Math.abs(Math.cos(t * 1.9 + p.ph))), p.s);

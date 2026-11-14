@@ -23,7 +23,6 @@ export const PROJECT_PLACES: Readonly<Record<string, PlaceWords>> = {
     tone: 'private',
     pos: 'pass road, blue hour',
     alt: 'A painting of a lit red phone booth beside a wet mountain road at blue hour, snowy pines around it, mist in the valley under the peaks',
-    react: "Flick the booth's light",
   },
   'numbers-room': {
     place: 'Observatory',
@@ -31,7 +30,6 @@ export const PROJECT_PLACES: Readonly<Record<string, PlaceWords>> = {
     tone: 'private',
     pos: 'above the clouds, twilight',
     alt: 'A painting of a white observatory on a rocky summit at twilight, its dome open on a lit telescope, a sea of clouds below',
-    react: 'Wait for a shooting star',
   },
   lowl: {
     place: 'Repair shop',
@@ -39,7 +37,6 @@ export const PROJECT_PLACES: Readonly<Record<string, PlaceWords>> = {
     tone: 'use',
     pos: 'palm street, golden hour',
     alt: 'A painting of an appliance-repair shop on a palm street at golden hour, its door rolled up, a washing machine and a fridge out front, snowy mountains behind',
-    react: "Switch on the shop's light",
   },
   emberquill: {
     place: "Dragon's hall",
@@ -47,7 +44,6 @@ export const PROJECT_PLACES: Readonly<Record<string, PlaceWords>> = {
     tone: 'live',
     pos: 'ruined hall, midday',
     alt: 'A painting of four adventurers on a rock ledge facing a huge red dragon on its gold in a ruined hall, light falling through the arches, a red twenty-sided die in front',
-    react: "Stir the dragon's gold",
   },
   'history-lens': {
     place: 'Rome, 117 AD',
@@ -57,7 +53,6 @@ export const PROJECT_PLACES: Readonly<Record<string, PlaceWords>> = {
     tz: 'Europe/Rome',
     tzLabel: 'Rome',
     alt: 'A painting of ancient Rome on a golden afternoon, seen from a marble terrace over the Forum: a triumphal arch, the Colosseum behind it, a temple hung with red eagle banners, and a bronze brazier burning by the balustrade',
-    react: 'Stoke the brazier',
   },
   bookforge: {
     place: 'The open book',
@@ -65,7 +60,6 @@ export const PROJECT_PLACES: Readonly<Record<string, PlaceWords>> = {
     tone: 'building',
     pos: 'hilltop, late afternoon',
     alt: 'A painting of a giant open book on a hilltop with a world growing out of its pages, half ink drawing and half painted city, harbour and waterfall, a fountain pen beside it and loose pages turning into birds',
-    react: 'Touch the waterfall',
   },
   'kana-notebook': {
     place: 'Kyoto',
@@ -75,7 +69,6 @@ export const PROJECT_PLACES: Readonly<Record<string, PlaceWords>> = {
     tz: 'Asia/Tokyo',
     tzLabel: 'Kyoto',
     alt: 'A painting of a Kyoto street at dusk after spring rain, cherry blossom over a pagoda, paper lanterns lit, petals on the wet stones',
-    react: 'Light the street lantern',
   },
 };
 

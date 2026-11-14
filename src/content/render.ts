@@ -10,10 +10,8 @@ import { lookOf, photoUrl } from '../worlds/looks';
 import { reactionOf } from '../worlds/reactions';
 import { toysOf } from '../worlds/toys';
 import { toyLabel } from './toys';
-import { spotsOf, type Spot } from '../worlds/spots';
 import { WORLDS, rowNumber } from './places';
 import { MESSAGES, SITE } from './site';
-import { tryOf } from './tries';
 import type { Project, ProjectLink, World } from './types';
 
 const ENTITIES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
@@ -60,34 +58,13 @@ function watchButton(p: Project, videos: VideoManifest): string {
   );
 }
 
-/** The dot and its label: one real button, placed over its object by src/worlds/spot-view.ts. */
-const spotHtml = (spot: Spot, k: number, data: string, name: string, label: string): string =>
-  `<button class="spot ${spot.side}" type="button" ${data} data-k="${k}" aria-haspopup="dialog" ` +
-  `aria-label="${esc(name)}" hidden>` +
-  `<span class="spot-dot" aria-hidden="true"></span><span class="spot-l" aria-hidden="true">${label}</span></button>`;
-
-/** A spot that opens the project's video: only where there is a label for it and a video to open. */
-function videoSpot(p: Project, spot: Spot, k: number, videos: VideoManifest): string {
-  if (!p.spot || !Object.hasOwn(videos, p.slug)) return '';
-  const seconds = videos[p.slug].seconds;
-  const length = seconds === undefined ? '' : clock(seconds);
-  const name = `${MESSAGES.watch}${MESSAGES.watchLabel(p.name)} ${length}`.trim();
-  const label = `${esc(p.spot)}${length ? ` <span class="len">${length}</span>` : ''}`;
-  return spotHtml(spot, k, `data-video="${p.slug}"`, name, label);
-}
-
-/** A spot that opens the project's try. */
-function trySpot(p: Project, spot: Spot, k: number): string {
-  const t = tryOf(p.slug);
-  return t ? spotHtml(spot, k, `data-try="${p.slug}"`, MESSAGES.tryLabel(p.name, t.spot), esc(t.spot)) : '';
-}
-
 /**
- * The one thing in the painting that answers a press (src/worlds/reactions.ts): an invisible button the size of its
- * object, placed by src/worlds/react-view.ts. Hidden until then, and without scripts.
+ * The one thing in the painting of a place that is not a project that answers a press (src/worlds/reactions.ts): an
+ * invisible button the size of its object, placed by src/worlds/react-view.ts. Hidden until then, and without
+ * scripts.
  */
 const reactButton = (w: World): string =>
-  reactionOf(w.id) && !toysOf(w.id).length
+  reactionOf(w.id) && w.react
     ? `<button class="react" type="button" aria-label="${esc(w.react)}" hidden></button>`
     : '';
 
@@ -107,29 +84,10 @@ const toyButtons = (w: World): string =>
     : '';
 
 /**
- * The layer over the painting that pushes in with it: the world's reaction and its spots (hidden until they are
- * placed, and without scripts, where the buttons in the words are the way in). Every world has one.
+ * The layer over the painting of the things that answer a press (hidden until they are placed, and without scripts).
+ * Every world has one.
  */
-function spotsLayer(w: World, videos: VideoManifest): string {
-  const p = w.project;
-  const spots = p
-    ? spotsOf(p.slug)
-        .map((s, k) => (s.opens === 'video' ? videoSpot(p, s, k, videos) : trySpot(p, s, k)))
-        .join('')
-    : '';
-  return `<div class="spots">${reactButton(w)}${toyButtons(w)}${spots}</div>`;
-}
-
-/** The Try it button in the words: the way in where the try's spot cannot be shown. */
-function tryButton(p: Project): string {
-  const t = tryOf(p.slug);
-  /* a painting that is a toy has no panel to open: the picture is the thing to try */
-  if (!t || toysOf(p.slug).length) return '';
-  return (
-    `<button class="btn try" type="button" data-try="${p.slug}" aria-haspopup="dialog" ` +
-    `aria-label="${esc(MESSAGES.tryLabel(p.name, t.spot))}">${esc(MESSAGES.tryIt)}</button>`
-  );
-}
+const pressesLayer = (w: World): string => `<div class="presses">${reactButton(w)}${toyButtons(w)}</div>`;
 
 /** One project's world: its place, name, line, the longer text (and its Read button) if any, and what you can do there. */
 export function renderProject(w: World, i: number, videos: VideoManifest = {}): string {
@@ -147,8 +105,8 @@ export function renderProject(w: World, i: number, videos: VideoManifest = {}): 
     `<h2 class="name" id="${p.slug}-t" tabindex="-1">${esc(p.name)}</h2>` +
     `<p class="line">${esc(p.line)}</p>` +
     more +
-    `<div class="acts">${read}${tryButton(p)}${watchButton(p, videos)}${link}</div>` +
-    `</div>${spotsLayer(w, videos)}</section>`
+    `<div class="acts">${read}${watchButton(p, videos)}${link}</div>` +
+    `</div>${pressesLayer(w)}</section>`
   );
 }
 
@@ -158,7 +116,7 @@ function hello(w: World, i: number): string {
     `<h1 class="name" id="hello-t" tabindex="-1">${esc(SITE.hero.heading)}</h1>` +
     `<p class="lede">${esc(SITE.hero.line)}</p>` +
     `<div class="acts"><button class="btn walk" type="button" data-go="1">${esc(SITE.hero.walk)}</button></div>` +
-    `</div>${spotsLayer(w, {})}</section>`
+    `</div>${pressesLayer(w)}</section>`
   );
 }
 
@@ -171,7 +129,7 @@ function about(w: World, i: number): string {
     `<p class="lede">${esc(first)}</p>` +
     `<div class="more">${rest.map((t) => `<p>${esc(t)}</p>`).join('')}</div>` +
     `<div class="acts">${readButton(SITE.about.heading)}</div>` +
-    `</div>${spotsLayer(w, {})}</section>`
+    `</div>${pressesLayer(w)}</section>`
   );
 }
 
@@ -189,7 +147,7 @@ function contact(w: World, i: number): string {
     `<button class="btn lantern-btn" id="lantern" type="button"><span class="dot" aria-hidden="true"></span>` +
     `${esc(MESSAGES.lightLantern)}</button></div>` +
     `<p class="lantern-n" id="lantern-n" aria-live="polite"></p>` +
-    `</div>${spotsLayer(w, {})}</section>`
+    `</div>${pressesLayer(w)}</section>`
   );
 }
 

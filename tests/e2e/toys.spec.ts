@@ -1,4 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
+import { TOY_LABELS } from '../../src/content/toys';
+import { TOYS } from '../../src/worlds/toys';
 
 async function open(page: Page): Promise<void> {
   await page.goto('./#emberquill');
@@ -147,5 +149,107 @@ test.describe("the dragon's hall is a toy", () => {
     await expect(page.locator('#emberquill')).toHaveClass(/\bon\b/);
     await page.locator('#sw-motion').click();
     await expect(page.locator('#emberquill .toy:visible')).toHaveCount(0);
+  });
+});
+
+/* every project place but the dragon's hall: plain pieces that fade in on a press, and petals in Kyoto */
+const PLAIN = Object.keys(TOYS).filter((id) => id !== 'emberquill');
+
+async function arrive(page: Page, id: string): Promise<void> {
+  await page.goto('about:blank');
+  await page.goto(`./#${id}`);
+  await expect(page.locator('html')).toHaveClass(/\bready\b/, { timeout: 15_000 });
+  await page.evaluate(() => document.fonts.ready);
+  await expect(page.locator(`#${id}`)).toHaveClass(/\bon\b/);
+  await expect(page.locator('#cut > *')).toHaveCount(0);
+}
+
+const pressIn = (page: Page, world: string, id: string): Promise<void> =>
+  page.locator(`#${world} .toy[data-toy="${id}"]`).evaluate((b: HTMLElement) => b.click());
+
+const opacityOf = (page: Page, file: string): Promise<number> =>
+  piece(page, file).evaluate((el) => Number(getComputedStyle(el).opacity));
+
+test.describe('every project place is a toy', () => {
+  for (const id of PLAIN) {
+    test(`${id}: each thing is a named button, none on the words, the tag or the switches, and each piece lies on the painting`, async ({
+      page,
+    }) => {
+      test.setTimeout(90_000);
+      await arrive(page, id);
+      const toys = TOYS[id].filter((t) => !t.unseen);
+
+      await expect(page.locator(`#${id} .toy`)).toHaveCount(toys.length);
+      /* most of them are pressable at 1440x900; the ones that would stand on the words are left out */
+      expect(await page.locator(`#${id} .toy:not([hidden])`).count()).toBeGreaterThanOrEqual(toys.length - 1);
+      await expect(page.getByRole('button', { name: TOY_LABELS[id][toys[0].id], exact: true })).toBeVisible();
+      for (const t of toys)
+        /* the name is there even where the button is left out (cut off, or on the words) */
+        await expect(page.locator(`#${id} .toy[data-toy="${t.id}"]`)).toHaveAttribute(
+          'aria-label',
+          TOY_LABELS[id][t.id],
+        );
+      const crowded = await page.evaluate((world) => {
+        const others = [`#${world} .block`, '#switches', '#bar'].map((sel) => {
+          const el = document.querySelector(sel);
+          if (!el) throw new Error(`missing ${sel}`);
+          return el.getBoundingClientRect();
+        });
+        return [...document.querySelectorAll<HTMLElement>(`#${world} .toy:not([hidden])`)]
+          .filter((t) => {
+            const r = t.getBoundingClientRect();
+            return others.some((o) => r.left < o.right && o.left < r.right && r.top < o.bottom && o.top < r.bottom);
+          })
+          .map((t) => t.dataset.toy);
+      }, id);
+      expect(crowded).toEqual([]);
+      /* no labelled spots and no panel: the picture is the thing to try */
+      await expect(page.locator(`#${id} .spot, #${id} .acts .try`)).toHaveCount(0);
+
+      for (const t of toys) {
+        const file = t.swap?.piece.file;
+        if (!file) continue;
+        await pressIn(page, id, t.id);
+        await expect(piece(page, file)).toHaveCount(1);
+        await expect.poll(() => opacityOf(page, file)).toBeGreaterThan(0.9);
+        /* at 1440x900 the painting is 1440x960, 30 px cut off at the top and the bottom: the piece lies inside it, and
+           some of it is in the window */
+        const r = await piece(page, file).evaluate((el) => el.getBoundingClientRect().toJSON() as DOMRect);
+        expect(r.left, file).toBeGreaterThanOrEqual(-1);
+        expect(r.right, file).toBeLessThanOrEqual(1441);
+        expect(r.top, file).toBeGreaterThanOrEqual(-31);
+        expect(r.bottom, file).toBeLessThanOrEqual(931);
+        expect(r.right > 0 && r.left < 1440 && r.bottom > 0 && r.top < 900, file).toBe(true);
+        if (t.swap?.stays) {
+          /* it stays until it is pressed again */
+          await page.waitForTimeout(600);
+          await expect(piece(page, file)).toHaveCount(1);
+          await pressIn(page, id, t.id);
+          await expect(piece(page, file)).toHaveCount(0, { timeout: 4000 });
+        } else await expect(piece(page, file)).toHaveCount(0, { timeout: 12_000 });
+      }
+    });
+  }
+
+  test('Kyoto: the blossom lets a few petals fall and adds nothing to the painting', async ({ page }) => {
+    await arrive(page, 'kana-notebook');
+    await pressIn(page, 'kana-notebook', 'blossom');
+
+    await expect(page.locator('#fx')).toHaveAttribute('data-live', 'on');
+    await expect(page.locator('#states .piece')).toHaveCount(0);
+  });
+
+  test('leaving a place takes away what was left in, so the next visit starts from the painting', async ({ page }) => {
+    await arrive(page, 'kana-notebook');
+    await pressIn(page, 'kana-notebook', 'lantern');
+    await pressIn(page, 'kana-notebook', 'pagoda');
+    await expect(page.locator('#states .piece')).toHaveCount(2);
+
+    await page.keyboard.press('ArrowUp');
+    await expect(page.locator('#bookforge')).toHaveClass(/\bon\b/);
+    await expect(page.locator('#states .piece')).toHaveCount(0);
+    await page.keyboard.press('ArrowDown');
+    await expect(page.locator('#kana-notebook')).toHaveClass(/\bon\b/);
+    await expect(page.locator('#states .piece')).toHaveCount(0);
   });
 });
