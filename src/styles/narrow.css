@@ -5,7 +5,6 @@
  */
 @media (max-width: 820px), (max-width: 1100px) and (orientation: portrait) {
   :root {
-    --col: 0px;
     --pad: 20px;
     --t-body: 16px;
   }
@@ -29,6 +28,7 @@
     bottom: calc(var(--bar) + env(safe-area-inset-bottom));
   }
   .block {
+    --edge-x: 0px;
     left: 0;
     right: 0;
     width: auto;
@@ -96,7 +96,7 @@
     line-height: 1.42;
   }
   .line {
-    font-size: 13px;
+    font-size: 16px;
   }
   /* the longer text is one tap away, in a sheet: nothing scrolls inside the photo */
   .more {
@@ -131,6 +131,11 @@
   /* the bar: where you are, and the way to the index */
   .bar {
     display: grid;
+    gap: 0;
+    min-height: 0;
+    font-size: var(--t-row);
+    white-space: normal;
+    text-shadow: none;
     grid-template-columns: 28px minmax(0, 1fr) auto 14px;
     column-gap: 12px;
     align-items: center;
@@ -156,16 +161,22 @@
     background: var(--signal);
   }
   .bar .n {
+    padding: 3px 0;
     font-weight: 700;
     background: var(--signal);
     color: var(--board);
   }
   .bar .pj {
+    display: block;
     color: var(--soft);
+  }
+  .bar .of {
+    display: none;
   }
   .bar .ch {
     width: 0;
     height: 0;
+    border-top: 0;
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
     border-bottom: 8px solid var(--ink);
@@ -255,18 +266,19 @@
     transition: none;
   }
   .opening .bar {
+    opacity: 1;
     transform: translateY(100%);
   }
   .opening.departing .bar {
     transform: none;
     transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
-  .opening .world.hello .block {
+  .world.hello .block {
     left: 0;
     bottom: calc(20px + env(safe-area-inset-bottom));
     max-width: none;
   }
-  .opening .world.hello .block::before {
+  .world.hello .block::before {
     inset: -96px 0 calc(-20px - env(safe-area-inset-bottom));
     -webkit-mask-image: none;
     mask-image: none;
@@ -278,11 +290,8 @@
       rgb(var(--shade) / 0) 100%
     );
   }
-  .opening .hello .name {
+  .hello .name {
     font-size: clamp(2.6rem, 14vw, 4.75rem);
-  }
-  .opening .hello .lede {
-    font-size: 17px;
   }
 }
 

@@ -6,7 +6,7 @@
 #stage,
 #cut {
   position: fixed;
-  inset: 0 0 0 var(--col);
+  inset: 0;
   overflow: hidden;
 }
 #stage {

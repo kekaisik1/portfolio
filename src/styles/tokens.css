@@ -23,8 +23,8 @@
   --mono: 'Martian Mono', 'Martian Mono Fallback', ui-monospace, monospace;
   --big: 'Schibsted Grotesk', 'Schibsted Fallback', sans-serif;
 
-  /* the board's width, the gap between a photo's edge and its words, the phone's bottom bar */
-  --col: 320px;
+  /* the board drawer's width, the gap between the window's edge and its words, the phone's bottom bar */
+  --drawer: 320px;
   --pad: clamp(24px, 3.6vw, 56px);
   --bar: 56px;
 

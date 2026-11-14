@@ -45,8 +45,8 @@
       fetchpriority="high"
     />
     <script>
-      /* with scripts the page is a board and one world at a time. It opens on the summit alone (the board arrives
-         with the first step); a #link starts at its place (which may not be the summit), with the board there */
+      /* with scripts the page is one world at a time, the board in a drawer. It opens on the summit with almost no
+         interface (the tag that opens the board comes with the first step); a #link starts at its place */
       document.documentElement.classList.add('js');
       if (location.hash.length < 2) document.documentElement.classList.add('opening');
       else if (location.hash !== '#hello') document.documentElement.classList.add('deep');
@@ -68,12 +68,23 @@
     </div>
     <div id="cut" aria-hidden="true"></div>
 
+    <!-- the name, and the tag that says where you are: it opens the board (on phones it is the bar at the bottom) -->
     <header class="brand">
       <a class="mark" href="#hello">{{mark}}</a>
+      <button class="bar" id="bar" type="button" aria-expanded="false" aria-controls="board" aria-label="{{barLabel}}">
+        <span class="n" aria-hidden="true"
+          ><span id="bar-n">{{firstNumber}}</span><span class="of">{{ofCount}}</span></span
+        >
+        <span class="pl" aria-hidden="true"
+          ><span id="bar-pl">{{firstPlace}}</span><span class="pj" id="bar-pj">{{firstTitle}}</span></span
+        >
+        <span class="st {{firstTone}}" id="bar-st" aria-hidden="true">{{firstStatus}}</span>
+        <span class="ch" aria-hidden="true"></span>
+      </button>
       <span class="keys" aria-hidden="true">{{travelKeys}}</span>
     </header>
 
-    <!-- the board: every row is written in from src/content/ when the page is built -->
+    <!-- the board, in a drawer: every row is written in from src/content/ when the page is built -->
     <nav class="board intro" id="board" aria-label="{{boardLabel}}" aria-describedby="travel-hint">
       <p id="travel-hint" class="sr-only">{{travelHint}}</p>
       <ol class="rows" id="rows">
@@ -93,14 +104,6 @@
     </main>
 
     <div class="veil" id="veil" hidden></div>
-    <button class="bar" id="bar" type="button" aria-expanded="false" aria-controls="board" aria-label="{{barLabel}}">
-      <span class="n" id="bar-n" aria-hidden="true">{{firstNumber}}</span>
-      <span class="pl" aria-hidden="true"
-        ><span id="bar-pl">{{firstPlace}}</span><span class="pj" id="bar-pj">{{firstTitle}}</span></span
-      >
-      <span class="st {{firstTone}}" id="bar-st" aria-hidden="true">{{firstStatus}}</span>
-      <span class="ch" aria-hidden="true"></span>
-    </button>
     <p class="sr-only" id="where" aria-live="polite"></p>
 
     <!-- the corner switches: the places move (or stay still), and each has a sound (off until asked for) -->

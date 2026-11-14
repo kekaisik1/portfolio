@@ -1,63 +1,31 @@
 /*
- * The opening shot: on first load the summit is the whole window. No board, no index: the name, the greeting large
- * and low, one line, a quiet hint, and the corner switches. The board slides in with the first step (one
- * transform) while the cut closes; the stage takes its place beside the board when the cut lands, under the slats
- * (src/opening/opening.ts). A #link skips all this. Phones: see narrow.css.
+ * The opening shot: on first load the summit has almost no interface. The name, the greeting large and low, one
+ * line, a quiet hint, and the corner switches; the tag that opens the board is not shown yet (it is still a Tab
+ * stop: focus reaching it is a first step). It appears with the first step (src/opening/opening.ts). Every place
+ * is laid out like the summit, so nothing else changes shape. A #link skips all this. Phones: see narrow.css.
  */
-.opening #stage,
-.opening main {
-  left: 0;
-}
-.opening .board {
-  transform: translateX(-100%);
-}
-.opening.departing .board {
-  transform: none;
-  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
-}
+.opening .bar,
 .opening .keys {
-  visibility: hidden;
+  opacity: 0;
 }
+.opening.departing .bar,
 .opening.departing .keys {
-  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.3s ease-out;
 }
-.opening .mark {
-  text-shadow: 0 1px 3px rgb(var(--shade) / 0.6);
+.opening .bar:focus-visible {
+  opacity: 1;
 }
 
-.opening .world.hello .block {
-  top: auto;
-  bottom: clamp(36px, 8vh, 88px);
-  left: clamp(24px, 4.4vw, 72px);
-  max-width: min(60rem, calc(100% - 2 * var(--pad)));
-}
-.opening .world.hello .block::before {
-  inset: -22% -12% calc(-1 * clamp(36px, 8vh, 88px)) calc(-1 * clamp(24px, 4.4vw, 72px));
-  background: linear-gradient(
-    to right,
-    rgb(var(--shade) / 0.5) 0,
-    rgb(var(--shade) / 0.5) 62%,
-    rgb(var(--shade) / 0) 100%
-  );
-  -webkit-mask-image: linear-gradient(to top, #000 0, #000 58%, transparent 100%);
-  mask-image: linear-gradient(to top, #000 0, #000 58%, transparent 100%);
-}
-.opening .hello .name {
-  font-size: clamp(3.5rem, min(8.6vw, 17vh), 9.25rem);
-  margin-bottom: 0.12em;
-}
-.opening .hello .lede {
-  font-size: clamp(18px, 2.7vh, 24px);
-}
 /* the hint: words and an arrow, no box; still a button, 44 px tall, with the focus bracket */
-.opening .walk {
+.walk {
   padding: 8px 2px;
   background: none;
   box-shadow: none;
   font-weight: 500;
   color: var(--ink);
 }
-.opening .walk:hover {
+.walk:hover {
   background: none;
   color: var(--signal);
 }

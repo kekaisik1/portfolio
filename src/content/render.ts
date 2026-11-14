@@ -7,6 +7,7 @@ import type { VideoManifest } from '../../scripts/video-manifest';
 import { TALL_QUERY } from '../lib/queries';
 import placeholders from '../worlds/placeholders.json';
 import { lookOf, photoUrl } from '../worlds/looks';
+import { spotOf } from '../worlds/spots';
 import { WORLDS, rowNumber } from './places';
 import { MESSAGES, SITE } from './site';
 import type { Project, ProjectLink, World } from './types';
@@ -55,6 +56,24 @@ function watchButton(p: Project, videos: VideoManifest): string {
   );
 }
 
+/**
+ * The spot in the painting that opens the project's video: a dot and a small label, placed over its object by
+ * src/worlds/spot-view.ts. Hidden until then (and without scripts, where the Watch button is the way in).
+ */
+function spotButton(p: Project, videos: VideoManifest): string {
+  const spot = spotOf(p.slug);
+  if (!spot || !p.spot || spot.opens !== 'video' || !Object.hasOwn(videos, p.slug)) return '';
+  const seconds = videos[p.slug].seconds;
+  const length = seconds === undefined ? '' : clock(seconds);
+  const name = `${MESSAGES.watch}${MESSAGES.watchLabel(p.name)} ${length}`.trim();
+  return (
+    `<div class="spots"><button class="spot ${spot.side}" type="button" data-video="${p.slug}" aria-haspopup="dialog" ` +
+    `aria-label="${esc(name)}" hidden><span class="spot-dot" aria-hidden="true"></span>` +
+    `<span class="spot-l" aria-hidden="true">${esc(p.spot)}${length ? ` <span class="len">${length}</span>` : ''}</span>` +
+    `</button></div>`
+  );
+}
+
 /** One project's world: its place, name, line, the longer text (and its Read button) if any, and what you can do there. */
 export function renderProject(w: World, i: number, videos: VideoManifest = {}): string {
   const p = w.project;
@@ -72,7 +91,7 @@ export function renderProject(w: World, i: number, videos: VideoManifest = {}): 
     `<p class="line">${esc(p.line)}</p>` +
     more +
     `<div class="acts">${read}${watchButton(p, videos)}${link}</div>` +
-    `</div></section>`
+    `</div>${spotButton(p, videos)}</section>`
   );
 }
 
@@ -209,6 +228,7 @@ export function fillShell(html: string, videos: VideoManifest = {}): string {
     firstPhotoTall: photoUrl(first.id, true, '/'),
     barLabel: esc(MESSAGES.barLabel(rowNumber(0), first.place, first.title)),
     firstNumber: rowNumber(0),
+    ofCount: `/${rowNumber(WORLDS.length - 1)}`,
     firstPlace: esc(first.place),
     firstTitle: esc(first.title),
     firstStatus: esc(first.status),

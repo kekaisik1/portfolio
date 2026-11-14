@@ -1,11 +1,12 @@
 /**
  * The board: one row per world. The current row carries the signal bar, its status word cycles and locks, and it is
- * the board's one Tab stop (the arrow keys travel, and focus follows). On phones the board is a sheet raised from
- * the bottom bar, which says where you are.
+ * the board's one Tab stop (the arrow keys travel, and focus follows). It is kept in a drawer: on a wide screen it
+ * slides in from the left when the tag in the top corner is pressed, on phones it is a sheet raised from the bottom
+ * bar. The tag and the bar are one button, which says where you are. Closed, the board cannot be reached.
  */
 import { WORLDS, rowNumber } from '../content/places';
 import { MESSAGES } from '../content/site';
-import { byId, pickAll } from '../lib/dom';
+import { byId, pick, pickAll } from '../lib/dom';
 import { narrow, reduce } from '../lib/media';
 import { closeOnSwipeDown } from '../sheet/swipe';
 import type { Travel } from '../travel/travel';
@@ -31,6 +32,7 @@ export function initBoard(travel: Travel, onSheet: (open: boolean) => void): Boa
   const barSt = byId('bar-st');
   const main = byId('main');
   const switches = byId('switches');
+  const mark = pick(document, '.brand .mark');
   let open = false;
   let intro = true;
 
@@ -41,18 +43,12 @@ export function initBoard(travel: Travel, onSheet: (open: boolean) => void): Boa
   }
   window.setTimeout(endIntro, INTRO_MS);
 
-  /** On phones the lowered board must not be reachable; raised, the world and the switches behind it must not be. */
+  /** The closed board must not be reachable; open, the world, the switches and the name behind it must not be. */
   function sync(): void {
-    if (!narrow.matches && open) {
-      open = false;
-      board.classList.remove('open');
-      veil.hidden = true;
-      bar.setAttribute('aria-expanded', 'false');
-      onSheet(false);
-    }
-    board.inert = narrow.matches && !open;
+    board.inert = !open;
     main.inert = open;
     switches.inert = open;
+    mark.inert = open;
   }
   function openSheet(): void {
     endIntro();
@@ -102,10 +98,10 @@ export function initBoard(travel: Travel, onSheet: (open: boolean) => void): Boa
     row.addEventListener('click', (e) => {
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       e.preventDefault();
-      /* from the raised index focus goes back to the bar; from the board it goes to the world's name */
-      const fromSheet = open;
-      closeSheet(true);
-      travel.go(i, { focus: !fromSheet });
+      /* on a phone focus goes back to the bar; on a wide screen it goes on to the new world's name */
+      const toName = !narrow.matches;
+      closeSheet(!toName);
+      travel.go(i, { focus: toName });
     }),
   );
   bar.addEventListener('click', () => (open ? closeSheet(true) : openSheet()));
@@ -116,7 +112,6 @@ export function initBoard(travel: Travel, onSheet: (open: boolean) => void): Boa
     closeSheet(true);
   });
   closeOnSwipeDown(board, () => closeSheet(true));
-  narrow.addEventListener('change', sync);
   sync();
 
   return { endIntro };
