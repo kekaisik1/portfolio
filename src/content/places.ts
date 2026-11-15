@@ -11,39 +11,38 @@ const HELLO: PlaceWords = {
   pos: '43.0°N 76.9°E',
   tz: 'Asia/Almaty',
   tzLabel: 'Tian Shan',
-  alt: 'A painting of a snowy Tian Shan summit at sunrise, snow streaming off its top and footprints climbing the ridge above a sea of clouds',
-  react: 'Blow the snow off the summit',
+  alt: 'A painting of a tuxedo cat sitting on a summit cairn at sunrise, prayer flags on a pole beside it, a red backpack and an ice axe leaning on the stones, a sea of clouds and snow peaks beyond',
 };
 
 /** Where each project stands, by slug. A project without an entry here fails the unit tests. */
 export const PROJECT_PLACES: Readonly<Record<string, PlaceWords>> = {
   'front-desk': {
-    place: 'Mountain pass',
+    place: 'Dispatch desk',
     status: 'PRIVATE',
     tone: 'private',
-    pos: 'pass road, blue hour',
-    alt: 'A painting of a lit red phone booth beside a wet mountain road at blue hour, snowy pines around it, mist in the valley under the peaks',
+    pos: 'town office, blue hour',
+    alt: 'A painting of a desk at blue hour: a town map with pins, threads and three tiny white vans under a brass lamp, a telephone, a headset, an appointment book and a row of job cards, the lit windows of the town outside',
   },
   'numbers-room': {
     place: 'Observatory',
     status: 'PRIVATE',
     tone: 'private',
-    pos: 'above the clouds, twilight',
-    alt: 'A painting of a white observatory on a rocky summit at twilight, its dome open on a lit telescope, a sea of clouds below',
+    pos: 'under the dome, night',
+    alt: 'A painting of the inside of an observatory at night: one long hand-drawn chart of a year pinned around the wall, ledgers on the shelf above, a desk with a lit lamp and an open ledger, and a brass telescope under the open dome full of stars',
   },
   lowl: {
     place: 'Repair shop',
     status: 'IN USE',
     tone: 'use',
-    pos: 'palm street, golden hour',
-    alt: 'A painting of an appliance-repair shop on a palm street at golden hour, its door rolled up, a washing machine and a fridge out front, snowy mountains behind',
+    pos: 'shop door, morning',
+    alt: 'A painting of a repair shop on a sunny morning, its door rolled up on a workbench, tools on the wall and a counter with a brass bell, and outside a washing machine left with a tag tied to its door',
   },
   emberquill: {
-    place: "Dragon's hall",
+    place: 'Cave mouth',
     status: 'LIVE',
     tone: 'live',
-    pos: 'ruined hall, midday',
-    alt: 'A painting of four adventurers on a rock ledge facing a huge red dragon on its gold in a ruined hall, light falling through the arches, a red twenty-sided die in front',
+    pos: 'mountain cave, night',
+    alt: 'A painting of four adventurers on a rock ledge at the mouth of a mountain cave at night, looking in at a red glow and the huge shadow of a dragon on the cave wall, a shaft of moonlight behind them',
   },
   'history-lens': {
     place: 'Rome, 117 AD',
@@ -52,14 +51,14 @@ export const PROJECT_PLACES: Readonly<Record<string, PlaceWords>> = {
     pos: '41.9°N 12.5°E',
     tz: 'Europe/Rome',
     tzLabel: 'Rome',
-    alt: 'A painting of ancient Rome on a golden afternoon, seen from a marble terrace over the Forum: a triumphal arch, the Colosseum behind it, a temple hung with red eagle banners, and a bronze brazier burning by the balustrade',
+    alt: 'A painting of a Roman wall where a fresco of a triumph is being painted: the general in his chariot and his guards finished in colour, the horses, soldiers and an elephant still red line drawing, and on the scaffold bowls of pigment, brushes and a small oil lamp burning',
   },
   bookforge: {
-    place: 'The open book',
+    place: 'The story wall',
     status: 'BUILDING',
     tone: 'building',
-    pos: 'hilltop, late afternoon',
-    alt: 'A painting of a giant open book on a hilltop with a world growing out of its pages, half ink drawing and half painted city, harbour and waterfall, a fountain pen beside it and loose pages turning into birds',
+    pos: 'writing room, blue dusk',
+    alt: 'A painting of a wall covered in pinned sketches, maps, portraits and notes joined by red threads at blue dusk; a young man seen from behind pins up one more page, and a tuxedo cat sits on the lamplit desk looking up at the wall',
   },
   'kana-notebook': {
     place: 'Kyoto',
@@ -68,30 +67,28 @@ export const PROJECT_PLACES: Readonly<Record<string, PlaceWords>> = {
     pos: '35.0°N 135.8°E',
     tz: 'Asia/Tokyo',
     tzLabel: 'Kyoto',
-    alt: 'A painting of a Kyoto street at dusk after spring rain, cherry blossom over a pagoda, paper lanterns lit, petals on the wet stones',
+    alt: 'A painting of a low calligraphy desk on tatami in morning sun, sheets brushed with the kana あ, か, さ and な, an inkstone, a brush and a cup of green tea, and a tuxedo cat asleep on the veranda edge before a moss garden with a stone lantern',
   },
 };
 
 const ABOUT: PlaceWords = {
-  place: 'The road',
+  place: 'Airport window',
   status: 'about',
   tone: 'plain',
   pos: '43.2°N 76.9°E',
   tz: 'Asia/Almaty',
   tzLabel: 'Kazakhstan',
-  alt: 'A painting of an empty dirt road across the golden steppe towards snow mountains at dawn, a white yurt beside it',
-  react: 'Brush the grass',
+  alt: 'A painting of a young man with a backpack, seen from behind, at a tall airport window in morning sun, watching a plane climb over snow mountains; a tuxedo cat sits on the seat beside him',
 };
 
 const CONTACT: PlaceWords = {
-  place: 'Campfire',
+  place: 'Lake shore',
   status: 'write me',
   tone: 'plain',
-  pos: '48.0°N 68.0°E',
+  pos: 'lake shore, dawn',
   tz: 'Asia/Almaty',
-  tzLabel: 'the steppe',
-  alt: 'A painting of a campfire with four empty camp chairs and a crate with a notebook and dice, on the night steppe under the Milky Way',
-  react: 'Poke the fire',
+  tzLabel: 'the lake',
+  alt: 'A painting of a corked bottle with a rolled letter inside, washed up on the pebbles of a mountain lake at dawn, the sun rising through mist over the water',
 };
 
 function placeOf(slug: string): PlaceWords {

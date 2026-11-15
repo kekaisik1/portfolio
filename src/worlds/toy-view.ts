@@ -2,7 +2,7 @@
  * The painting as a toy (src/worlds/toys.ts says what answers a press, and how). Each toy is an invisible button the
  * size of its object, placed with the painting's own cover maths and left out where it would stand on the words, the
  * switches or the tag. A press fades a piece of the painting's second state in over the painting, throws the die,
- * looses the archer's arrow (effects.ts) or lets a few particles fall (src/ambient/). Pieces are images in #states,
+ * looses an arrow (effects.ts) or lets a few particles fall (src/ambient/). Pieces are images in #states,
  * inside the lens, so they are the painting's own layer; they move with opacity and transform only. With the motion
  * switched off there is nothing to press.
  */
@@ -62,7 +62,7 @@ export function initToys(
   const shown = new Map<HTMLImageElement, Piece>();
   /** toys in the middle of something, by world and id */
   const busy = new Set<string>();
-  /** pieces left in (the open chest), by world and toy id */
+  /** pieces left in (an open door), by world and toy id */
   const kept = new Map<string, HTMLImageElement>();
   const timers = new Set<number>();
   /** what is left of each die's round of outcomes, and the one it showed last */
@@ -243,7 +243,7 @@ export function initToys(
     }, over);
   }
 
-  /** `quiet`: set off by the die, not pressed: something already left in (the open chest) is not taken away. */
+  /** `quiet`: set off by the die, not pressed: something already left in (an open door) is not taken away. */
   function press(i: number, id: string, quiet = false): void {
     const toy = toysOf(WORLDS[i].id).find((t) => t.id === id);
     const layer = layerOf(i);

@@ -97,15 +97,15 @@ describe('the board', () => {
   it('names the ten places', () => {
     expect(WORLDS.map((w) => w.place)).toEqual([
       'Summit',
-      'Mountain pass',
+      'Dispatch desk',
       'Observatory',
       'Repair shop',
-      "Dragon's hall",
+      'Cave mouth',
       'Rome, 117 AD',
-      'The open book',
+      'The story wall',
       'Kyoto',
-      'The road',
-      'Campfire',
+      'Airport window',
+      'Lake shore',
     ]);
   });
 
@@ -146,7 +146,7 @@ describe('content rendered into the page', () => {
     const html = renderProject(WORLDS[1], 1);
 
     expect(html).toContain('<section class="world" id="front-desk" data-i="1" data-at="bl" data-at-m="top"');
-    expect(html).toContain('<span class="pl">Mountain pass</span><span class="src">something I built for work</span>');
+    expect(html).toContain('<span class="pl">Dispatch desk</span><span class="src">something I built for work</span>');
     expect(html).toContain('<h2 class="name" id="front-desk-t" tabindex="-1">The Front Desk</h2>');
     expect(html).toContain('<p class="line">An AI that picks up the phone.</p>');
     expect(html).not.toContain('class="more"');
@@ -197,6 +197,15 @@ describe('content rendered into the page', () => {
     expect(kana).toContain('Watch<span class="sr-only"> the Kana Notebook video,</span> <span class="len">0:44</span>');
     expect(renderProject(WORLDS[7], 7)).not.toContain('data-video');
     expect(renderProject(WORLDS[3], 3, videos)).not.toContain('data-video');
+  });
+
+  it("moves a world's words off the left edge and shrinks its name only where its look asks for it", () => {
+    const html = renderWorlds();
+
+    expect(html).toContain(
+      'id="kana-notebook" data-i="7" data-at="bl" data-at-m="top" style="--w:22rem;--shade-a:0.8;--left:70%;--name:0.68"',
+    );
+    expect(html).toContain('id="front-desk" data-i="1" data-at="bl" data-at-m="top" style="--w:30rem;--shade-a:0.7"');
   });
 
   it('renders all ten worlds in board order, with the greeting, about and contact', () => {

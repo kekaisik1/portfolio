@@ -27,9 +27,11 @@ main {
   --edge-x: clamp(24px, 4.4vw, 72px);
   --edge-y: clamp(36px, 8vh, 88px);
   position: absolute;
-  left: var(--edge-x);
+  /* --left (looks.ts `left`, a percent of the window) moves the words off the left edge; they still stop short of
+     the right edge margin. narrow.css sets its own left and max-width, so it has no effect there */
+  left: var(--left, var(--edge-x));
   width: max-content;
-  max-width: min(var(--w, 30rem), calc(100% - 2 * var(--edge-x)));
+  max-width: min(var(--w, 30rem), calc(100% - var(--left, var(--edge-x)) - var(--edge-x)));
   pointer-events: auto;
   isolation: isolate;
   text-shadow:
@@ -88,9 +90,10 @@ main {
   color: var(--ink);
 }
 
-/* the name: the one huge thing, near the summit's scale. It scales with the window's height too, for short laptops. */
+/* the name: the one huge thing, near the summit's scale. It scales with the window's height too, for short laptops.
+   --name (looks.ts `name`) makes it smaller where the painting's calm part is narrow; narrow.css sets its own size. */
 .name {
-  font: 800 clamp(2.75rem, min(7vw, 13.5vh), 7.5rem) / 0.94 var(--big);
+  font: 800 calc(clamp(2.75rem, min(7vw, 13.5vh), 7.5rem) * var(--name, 1)) / 0.94 var(--big);
   font-stretch: 100%;
   letter-spacing: -0.03em;
   text-wrap: balance;
@@ -242,7 +245,7 @@ main {
 /*
  * A thing in the painting that answers a press (src/worlds/reactions.ts, toys.ts): an invisible button the size of
  * its object. No hover: only the pointer says it can be pressed, and a ring when the keyboard reaches it. Its effects
- * (a soft light, the archer's arrow) are elements in the same layer, moved with opacity and transform only.
+ * (a soft light, a shooting line) are elements in the same layer, moved with opacity and transform only.
  */
 .react {
   position: absolute;

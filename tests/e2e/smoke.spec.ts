@@ -4,15 +4,15 @@ import { hasGpu, NEEDS_GPU } from './gpu';
 /** The board, top to bottom: world id, the place on its row, what stands there. */
 const WORLDS = [
   ['hello', 'Summit', 'Kaisar Turysbek'],
-  ['front-desk', 'Mountain pass', 'The Front Desk'],
+  ['front-desk', 'Dispatch desk', 'The Front Desk'],
   ['numbers-room', 'Observatory', 'AI Finance Bot Assistant'],
   ['lowl', 'Repair shop', 'LOWL'],
-  ['emberquill', "Dragon's hall", 'Emberquill'],
+  ['emberquill', 'Cave mouth', 'Emberquill'],
   ['history-lens', 'Rome, 117 AD', 'History Lens'],
-  ['bookforge', 'The open book', 'BookForge'],
+  ['bookforge', 'The story wall', 'BookForge'],
   ['kana-notebook', 'Kyoto', 'Kana Notebook'],
-  ['about', 'The road', 'About'],
-  ['contact', 'Campfire', 'Write me'],
+  ['about', 'Airport window', 'About'],
+  ['contact', 'Lake shore', 'Write me'],
 ] as const;
 const PHONE = { width: 390, height: 844 };
 const SMALL_PHONE = { width: 320, height: 568 };
@@ -106,7 +106,7 @@ test('the page loads with no console errors and sends nothing off the machine', 
   await page.waitForTimeout(600);
 
   await expect(page.getByRole('heading', { level: 1, name: "Hi, I'm Kaisar." })).toBeVisible();
-  await expect(page.locator('.frame.on img')).toHaveAttribute('alt', /summit at sunrise/);
+  await expect(page.locator('.frame.on img')).toHaveAttribute('alt', /summit cairn at sunrise/);
   expect(problems).toEqual([]);
 });
 
@@ -440,13 +440,38 @@ test.describe('the video', () => {
   });
 });
 
+for (const size of [{ width: 1440, height: 900 }, PHONE]) {
+  test(`at ${size.width}x${size.height} every place loads its own painting and shows its name, with nothing to press on it`, async ({
+    page,
+  }) => {
+    const problems = await watch(page);
+    const upright = size.width < size.height;
+    await page.setViewportSize(size);
+    await open(page, BOARD);
+    for (const [i, [id, place]] of WORLDS.entries()) {
+      if (i > 0) await page.keyboard.press('ArrowDown');
+      await arrived(page, id);
+      const img = await page
+        .locator(`.frame[data-i="${i}"] img`)
+        .evaluate((el: HTMLImageElement) => ({ src: el.currentSrc, width: el.naturalWidth }));
+      expect(img.width, id).toBeGreaterThan(0);
+      expect(img.src, id).toMatch(new RegExp(`/worlds/${id}${upright ? '-m' : ''}\\.webp$`));
+      /* the summit's name is the greeting; every other place says its name in the kicker over its words */
+      const name = page.locator(id === 'hello' ? '#hello .name' : `#${id} .kicker .pl`);
+      await expect(name, id).toBeVisible();
+      if (id !== 'hello') await expect(name, id).toHaveText(place);
+      /* the toys and reactions of the old paintings are gone: a world without any has no buttons on its painting */
+      await expect(page.locator(`#${id} .react`), id).toHaveCount(0);
+    }
+    expect(problems).toEqual([]);
+  });
+}
+
 const PROJECT_IDS = WORLDS.slice(1, 8).map((w) => w[0]);
 const WITH_VIDEO = ['numbers-room', 'emberquill', 'kana-notebook'];
 
 test.describe('the way into a video', () => {
-  test("Emberquill: its painting is a toy, so the Watch button in the words opens the real app's video", async ({
-    page,
-  }) => {
+  test("Emberquill: the Watch button in the words opens the real app's video", async ({ page }) => {
     await open(page, './#emberquill');
     await arrived(page, 'emberquill');
 
@@ -494,9 +519,9 @@ test.describe('the opening shot', () => {
     /* the greeting stands low in the frame */
     const name = await page.locator('#hello-t').boundingBox();
     expect(name?.y).toBeGreaterThan(450);
-    /* the snow is already blowing off the top; the painting itself stays still, so its canvas draws nothing */
+    /* the summit is wholly still: nothing in the painting moves and nothing is in its air, so neither canvas draws */
     if (await hasGpu(page)) {
-      await expect(page.locator('#fx')).toHaveAttribute('data-live', 'on');
+      await expect(page.locator('#fx')).toHaveAttribute('data-live', 'off');
       await expect(page.locator('#live')).toHaveAttribute('data-live', 'off');
     }
     expect(problems).toEqual([]);
@@ -512,10 +537,10 @@ test.describe('the opening shot', () => {
 
     await expect(page.locator('html')).not.toHaveClass(/\bopening\b/);
     await expect(page.locator('#bar')).toHaveCSS('opacity', '1');
-    await expect(page.locator('#bar')).toContainText('Mountain pass');
+    await expect(page.locator('#bar')).toContainText('Dispatch desk');
     await expect(page.locator('#board')).not.toBeInViewport();
     expect(await page.locator('#stage').boundingBox()).toMatchObject({ x: 0, width: 1440 });
-    await expect(page.locator('#rows .row[aria-current]')).toContainText('Mountain pass');
+    await expect(page.locator('#rows .row[aria-current]')).toContainText('Dispatch desk');
 
     await page.keyboard.press('ArrowUp');
     await arrived(page, 'hello');
@@ -573,35 +598,36 @@ test.describe('the opening shot', () => {
 });
 
 test.describe('the places move', () => {
-  test('Kyoto has lanterns, wet stones and petals; the road has only seeds in the air; the pass only its light', async ({
+  test('the observatory has its stars and lamp; the repair shop only dust in the air; the cave mouth both', async ({
     page,
   }) => {
-    await open(page, './#kana-notebook');
+    await open(page, './#numbers-room');
     test.skip(!(await hasGpu(page)), NEEDS_GPU);
-    await arrived(page, 'kana-notebook');
+    await arrived(page, 'numbers-room');
     await expect(page.locator('#live')).toHaveAttribute('data-live', 'on');
-    await expect(page.locator('#fx')).toHaveAttribute('data-live', 'on');
+    await expect(page.locator('#fx')).toHaveAttribute('data-live', 'off');
 
     await page.keyboard.press('ArrowDown');
-    await arrived(page, 'about');
-    /* nothing moves inside the road's painting, so its canvas is not drawn at all */
+    await arrived(page, 'lowl');
+    /* nothing moves inside the repair shop's painting, so its canvas is not drawn at all */
     await expect(page.locator('#live')).toHaveAttribute('data-live', 'off');
     await expect(page.locator('#fx')).toHaveAttribute('data-live', 'on');
 
-    await page.goto('./#front-desk');
-    await arrived(page, 'front-desk');
+    await page.keyboard.press('ArrowDown');
+    await arrived(page, 'emberquill');
     await expect(page.locator('#live')).toHaveAttribute('data-live', 'on');
-    await expect(page.locator('#fx')).toHaveAttribute('data-live', 'off');
+    await expect(page.locator('#fx')).toHaveAttribute('data-live', 'on');
   });
 
   test('the living canvas lines up with the painting: where nothing moves it is transparent', async ({ page }) => {
-    await open(page, './#kana-notebook');
+    await open(page, './#contact');
     test.skip(!(await hasGpu(page)), NEEDS_GPU);
-    await arrived(page, 'kana-notebook');
+    await arrived(page, 'contact');
     await expect(page.locator('#live')).toHaveAttribute('data-live', 'on');
     await page.waitForTimeout(400);
 
-    /* the dusk sky (top left) is still, the wet street (bottom middle) shimmers: read the canvas's own pixels */
+    /* the sky over the mountains (top middle) is still, the sun's path on the water (left) shimmers: read the
+       canvas's own pixels */
     const alpha = await page.evaluate(() => {
       const live = document.querySelector<HTMLCanvasElement>('#live');
       const copy = document.createElement('canvas');
@@ -610,19 +636,20 @@ test.describe('the places move', () => {
       copy.height = live.height;
       const g = copy.getContext('2d');
       if (!g) return null;
-      return new Promise<{ sky: number; street: number }>((resolve) =>
+      return new Promise<{ sky: number; water: number }>((resolve) =>
         requestAnimationFrame(() => {
           /* straight after a frame the canvas still holds what it drew */
           g.drawImage(live, 0, 0);
           const at = (x: number, y: number): number =>
             g.getImageData(Math.round(x * copy.width), Math.round(y * copy.height), 1, 1).data[3];
-          resolve({ sky: at(0.1, 0.1), street: at(0.645, 0.95) });
+          /* 1440x900 shows the painting 1440x960, 30 px cut off at the top: v 0.62 is 0.628 of the canvas */
+          resolve({ sky: at(0.5, 0.1), water: at(0.18, 0.628) });
         }),
       );
     });
 
     expect(alpha?.sky).toBe(0);
-    expect(alpha?.street).toBe(255);
+    expect(alpha?.water).toBe(255);
   });
 });
 
@@ -656,9 +683,9 @@ test.describe('the corner switches', () => {
   test('motion is on by default; switched off, nothing is drawn, and the choice is remembered', async ({ page }) => {
     const problems = await watch(page);
     await instrument(page);
-    await open(page, './#kana-notebook');
+    await open(page, './#numbers-room');
     test.skip(!(await hasGpu(page)), NEEDS_GPU);
-    await arrived(page, 'kana-notebook');
+    await arrived(page, 'numbers-room');
     await expect(motion(page)).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('#live')).toHaveAttribute('data-live', 'on');
     const before = await drawn(page);
@@ -677,21 +704,21 @@ test.describe('the corner switches', () => {
     expect(await drawn(page)).toBe(stopped);
     /* travelling does not start it again */
     await page.keyboard.press('ArrowDown');
-    await arrived(page, 'about');
+    await arrived(page, 'lowl');
     await page.waitForTimeout(300);
     expect(await drawn(page)).toBe(stopped);
 
     await page.reload();
-    await arrived(page, 'about');
+    await arrived(page, 'lowl');
     await expect(motion(page)).toHaveAttribute('aria-pressed', 'false');
     await expect(page.locator('#live')).toHaveAttribute('data-live', 'off');
 
     await motion(page).click();
     await expect(motion(page)).toHaveAttribute('aria-pressed', 'true');
-    /* the road's painting is still: switched back on, only its air moves */
+    /* the repair shop's painting is still: switched back on, only its air moves */
     await expect(page.locator('#fx')).toHaveAttribute('data-live', 'on');
     await page.keyboard.press('ArrowUp');
-    await arrived(page, 'kana-notebook');
+    await arrived(page, 'numbers-room');
     await expect(page.locator('#live')).toHaveAttribute('data-live', 'on');
     expect(problems).toEqual([]);
   });
@@ -757,7 +784,7 @@ test.describe('the corner switches', () => {
 });
 
 test.describe('lanterns', () => {
-  test('one lit by the campfire rises into the sky, is counted, and is kept in this browser', async ({ page }) => {
+  test('one lit by the lake rises into the sky, is counted, and is kept in this browser', async ({ page }) => {
     const problems = await watch(page);
     await open(page, './#contact');
     await arrived(page, 'contact');
@@ -775,7 +802,7 @@ test.describe('lanterns', () => {
     await expect(page.locator('#lanterns .lit')).toHaveCount(1);
     await expect(page.locator('#lantern-n')).toHaveText('1 lantern lit.');
 
-    /* lanterns belong to the campfire: none are drawn anywhere else */
+    /* lanterns belong to the lake shore: none are drawn anywhere else */
     await page.keyboard.press('ArrowUp');
     await arrived(page, 'about');
     await expect(page.locator('#lanterns')).toBeHidden();
@@ -938,7 +965,7 @@ test.describe('on a phone', () => {
 
     await arrived(page, 'front-desk');
     await expect(page.locator('#bar')).toBeInViewport();
-    await expect(page.locator('#bar')).toContainText('Mountain pass');
+    await expect(page.locator('#bar')).toContainText('Dispatch desk');
     /* the switches keep clear of the name mark and of the words */
     const sw = await page.locator('#switches').boundingBox();
     const mark = await page.locator('.mark').boundingBox();

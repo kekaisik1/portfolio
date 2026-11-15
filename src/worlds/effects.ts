@@ -2,7 +2,7 @@
  * The plain effects a press can play in the layer that pushes in with the painting: a soft light (flare) and a
  * shooting line (streak). Elements animated with opacity and transform only, played once and then gone. Used by
  * the reactions of the places that are not projects (react-view.ts: the flare) and by the toys (toy-view.ts: the
- * archer's arrow).
+ * streak, an arrow loosed at something).
  */
 import { WORLDS } from '../content/places';
 import { lookOf } from './looks';

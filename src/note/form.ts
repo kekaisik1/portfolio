@@ -1,5 +1,5 @@
 /**
- * Leave a note, by the campfire: it goes to Kaisar through the API (with no API it says so and gives the email),
+ * Leave a note, by the lake: it goes to Kaisar through the API (with no API it says so and gives the email),
  * and a note that was sent goes up as a lantern.
  */
 import { api } from '../api';

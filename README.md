@@ -1,10 +1,10 @@
 # Portfolio
 
-"Departures": a departures board where every destination is a place, and seven of the places are projects. It opens on the summit alone, filling the window: the name, "Hi, I'm Kaisar." low in the frame, one line, a hint, and two small switches in the corner. Every other place is built the same way: its painting fills the window, and low in the corner the painting leaves calm stand a kicker, the project's name, big, one line and its buttons; the longer text is one press away, behind "Read". The first step (wheel, arrow key, swipe, the hint, Tab) brings in a small caption in the top corner, `07/09  Kyoto  LIVE  ↑ ↓ to travel`: pressing it slides the board in from the left, a crisp mono index of ten rows (place, project, status) with the place's coordinates and clock at its foot. Choosing a row, turning the wheel, pressing an arrow key or swiping cuts to the next place like a board flipping: a few uneven slats close over the old picture in 300 ms and the new words are there. Summit (the greeting), Mountain pass, Observatory, Repair shop, Dragon's hall, Rome 117 AD, The open book, Kyoto, The road (about) and Campfire (write me, leave a note, light a lantern).
+"Departures": a departures board where every destination is a place, and seven of the places are projects. It opens on the summit alone, filling the window: the name, "Hi, I'm Kaisar." low in the frame, one line, a hint, and two small switches in the corner. Every other place is built the same way: its painting fills the window, and low in the corner the painting leaves calm stand a kicker, the project's name, big, one line and its buttons; the longer text is one press away, behind "Read". The first step (wheel, arrow key, swipe, the hint, Tab) brings in a small caption in the top corner, `07/09  Kyoto  LIVE  ↑ ↓ to travel`: pressing it slides the board in from the left, a crisp mono index of ten rows (place, project, status) with the place's coordinates and clock at its foot. Choosing a row, turning the wheel, pressing an arrow key or swiping cuts to the next place like a board flipping: a few uneven slats close over the old picture in 300 ms and the new words are there. Summit (the greeting), Dispatch desk, Observatory, Repair shop, Cave mouth, Rome 117 AD, The story wall, Kyoto, Airport window (about) and Lake shore (write me, leave a note, light a lantern).
 
-The places are paintings, and they move. Quietly: nothing in them is pushed by wind, so the painting never smears. Lights breathe and flicker (the booth on the pass, the dragon's gold, the lanterns of Kyoto, the campfire), stars twinkle, water runs and shimmers (the waterfall off the open book), and the air carries snow off the summit, sparks, petals and dust. And each has a sound, synthesised in the browser (wind, a cavern, drips after rain, a far phone, a bell), off until the sound switch is pressed. The other switch stops the motion (stills only). A project with a video plays it in the picture's frame from the Watch button in its words.
+The places are paintings, and some of them move, very quietly: nothing in them is pushed by wind, so the painting never smears, and several hold still. Lamps breathe (the dispatch desk, the observatory, the story wall), the oil lamp on the Roman scaffold flickers, the red glow in the dragon's cave breathes slowly, stars twinkle in the observatory's open dome, the sun's path on the lake shimmers, and the air carries sparks off the cave floor and dust in the sunlight. And each has a sound, synthesised in the browser (wind, a cavern, a far phone, a bell), off until the sound switch is pressed. The other switch stops the motion (stills only). A project with a video plays it in the picture's frame from the Watch button in its words.
 
-Every project's painting is a toy: things in it answer a press, without a label, and really change, each a piece of a second painting of the same scene fading in over its own place. On the pass the booth's door opens and the receiver hangs off the hook, a fox comes to the roadside, a car's headlights come round the far bend and the northern lights rise over the peaks; at the observatory the telescope's beam finds a constellation, the building lights up and a comet crosses the sky; at the repair shop the washing machine opens on its bubbles, the fridge on its shelves, the lamp lights the wall and parrots fly out of the palm; in Rome the brazier flames up, legionaries march through the arch, the temple's doors open on gold and doves rise over the Colosseum; in the open book the drawn page is painted in colour, fireworks burst over the castle, the pen's nib glows and a rainbow stands over the waterfall; in Kyoto the big lantern glows, the pagoda's windows light under a rising moon, a cat sits on the steps and petals fall from the blossom. In the dragon's hall the dragon breathes fire, the chest opens, the archer looses an arrow and the red die is thrown. In the three other places one object answers a press: snow blows off the summit, seeds off the grass, the campfire spits. On phones the words take the lower or upper third, and the board is a sheet raised from a bar at the bottom.
+The ten paintings were replaced on 2026-11-15 ("paintings first, toys later"): the toys, the thrown die and the three reactions of the old pictures went with them, and nothing in a painting answers a press for now. The machinery is kept, so new ones are data only (see "Make a painting a toy" and "Add a reaction"). On phones the words take the lower or upper third, and the board is a sheet raised from a bar at the bottom.
 
 Live: https://kekaisik.dev/
 
@@ -38,9 +38,9 @@ src/worlds/           the paintings: looks.ts (where each world's words stand, i
                       photos.ts (at most three mounted, each decoded before it is shown), cut.ts + slats.ts (the cut),
                       cover.ts (where a photo's pixels land on screen), picture.ts (where a point of a painting lands,
                       and what crowds what; pure), words.ts (showing a world's words),
-                      toys.ts (each project's painting as a toy: what answers a press, which piece of its second
-                      state fades in; pure), toy-view.ts (placing the toys, playing them), d20.ts (the thrown die),
-                      reactions.ts (the one object in each of the other places that answers a press; pure),
+                      toys.ts (a project's painting as a toy: what answers a press, which piece of its second
+                      state fades in; pure; no toys for now), toy-view.ts (placing the toys, playing them), d20.ts (the thrown die),
+                      reactions.ts (the one object in another place that answers a press; pure; none for now),
                       react-view.ts (placing it), effects.ts (a soft light, an arrow),
                       placeholders.json (tiny blurred stand-ins, made by `npm run worlds`)
 src/living/           the living picture: scenes.ts (what moves in each painting: the data you author), scene.ts (its
@@ -60,8 +60,8 @@ src/board/            the index rows, the drawer and the tag that opens it (on p
                       clock and the API's lines (footer.ts), the status-word flourish (scramble.ts)
 src/video/            the player: the picture area becomes a modal video
 src/sheet/            "Read": the longer text as a sheet over the picture (every layout); swipe-down and press-outside closing
-src/note/             the note form by the campfire: validation, a small state machine, the form itself
-src/night/            lanterns over the campfire, and the weather / "last seen working on" lines from the API
+src/note/             the note form by the lake: validation, a small state machine, the form itself
+src/night/            lanterns over the lake, and the weather / "last seen working on" lines from the API
 src/nav/              what an address means (#kana-notebook, old links) and keeping the address bar in step
 src/api/              typed client for the optional API; every response is checked with Zod
 src/lib/              DOM lookups that fail loudly, the layout media queries, the page's one frame loop (ticker.ts),
@@ -69,7 +69,7 @@ src/lib/              DOM lookups that fail loudly, the layout media queries, th
 src/styles/           CSS by concern; palette and type are custom properties in tokens.css; narrow.css is phones
                       and upright tablets; plain.css is the page without JavaScript and on paper
 scripts/              build helpers: the video manifest (with running times), make-worlds.ts, compress-video.sh
-public/               fonts, og.jpg, videos, worlds/ (the paintings), states/ (the pieces of their second states)
+public/               fonts, og.jpg, videos, worlds/ (the paintings); states/ (the pieces of second states) when there are toys
 tests/unit  tests/e2e  tests/pages (a page only the dev server serves: the sound check)
 ```
 
@@ -87,13 +87,13 @@ Still forbidden: layered parallax, anything that follows the cursor, animated CS
 
 Three things can happen inside a painting, each inside soft-edged regions drawn over it (`src/living/scenes.ts`):
 
-- **flow**: pixels are carried along a direction, as two copies of the picture that fade into each other half a cycle apart, so the loop has no seam. Running water only (the waterfall): cloud, grass or fog carried this way reads as the painting being dragged, so wind moves nothing;
-- **shimmer**: a small restless ripple (water, and its reflections on wet stone);
-- **lights and stars**: the painting's own light gets brighter and darker (a brazier, a booth, a wizard's staff), and pixels brighter than their surroundings twinkle (stars, the dragon's gold).
+- **flow**: pixels are carried along a direction, as two copies of the picture that fade into each other half a cycle apart, so the loop has no seam. Running water only (none of the paintings has any now): cloud, grass or fog carried this way reads as the painting being dragged, so wind moves nothing;
+- **shimmer**: a small restless ripple (water, like the sun's path on the lake);
+- **lights and stars**: the painting's own light gets brighter and darker (a desk lamp, an oil lamp, a wizard's staff, the glow in a cave), and pixels brighter than their surroundings twinkle (the stars in the observatory's dome).
 
-A painting where none of these happen is fine (the summit, the repair shop, the road): its canvas is not drawn at all, and only its air moves.
+A painting where none of these happen is fine (the summit, the repair shop, Kyoto, the airport window): its canvas is not drawn at all, and only its air moves, if anything is in it.
 
-On top of that the 2D canvas of `src/ambient/` draws what is in the air: snow blown off the summit, sparks, blossom petals, dust.
+On top of that the 2D canvas of `src/ambient/` draws what is in the air: sparks off the cave floor, dust in the sunlight of the repair shop and over the Roman scaffold (it can also do snow blown off a ridge and blossom petals).
 
 A world starts from the exact still and comes alive over a second and a half, so a cut never jumps: the slats carry the still picture, and the old world keeps moving under them until the new one lands.
 
@@ -113,11 +113,11 @@ Nobody can listen from a test, so `tests/e2e/sound.spec.ts` renders each place's
 
 ### The paintings
 
-The pictures are paintings: one gouache/watercolour film-background look for all ten, a place per project rather than a piece of one. The sources are not in this repo: they are 1536x1024 PNGs in `../reference/painted-sources/`, made by `gen.sh` there (one prompt per place, generated with Codex's image tool). To change a place, change its prompt there, make the picture again, and run the script below.
+The pictures are paintings: one gouache/watercolour film-background look for all ten, a place per project rather than a piece of one. The sources are not in this repo: they are 1536x1024 PNGs in `../reference/painted-sources/`. The current ten (since 2026-11-15) are design-lab winners: `SOURCES-2026-11-15.md` there says which is which and where their prompts are (the summit and the repair shop are mirrored left-right there, so their calm side is on the left; `gen.sh` still holds the prompts of the old paintings, which are kept in `old/`). To change a place, put the new picture there under the same name and run the script below.
 
 `npm run worlds -- <folder>` takes the ten source pictures (3:2, 1536x1024; the file-to-world table is at the top of `scripts/make-worlds.ts`: copy each source into the folder under the name that table expects) and writes, for each world, `public/worlds/<id>.webp`, an upright crop `<id>-m.webp` cut around the subject (`focus` in `src/worlds/looks.ts`) and two tiny blurred stand-ins into `src/worlds/placeholders.json`. It needs ffmpeg with libwebp. Commit what it writes; a unit test caps each file's size.
 
-Where a world's words stand is chosen by looking at its painting: `looks.ts` says which corner (`at`: low left by default, like the summit; top left only where the lower left holds the subject), how wide, how dark the shade behind them is (`shade`), which side of the picture survives a narrower window (`x`), and whether the words sit above or below the subject on a phone (`atTall`). The words must never land on the subject. The shade is a halo around the letters and a soft ellipse that is gone before its own edge, never a box: set `shade` as light as keeps every line at WCAG AA against what is behind it (measure the letters on a screenshot, not the whole box).
+Where a world's words stand is chosen by looking at its painting: `looks.ts` says which corner (`at`: low left by default, like the summit; top left only where the lower left holds the subject), optionally where across the window they start on a wide screen (`left`, in percent of its width, for a painting whose calm part is not at its left edge, like Kyoto's tatami or the sky by the airport window; it does nothing on phones), how wide, how dark the shade behind them is (`shade`), which side of the picture survives a narrower window (`x`), and whether the words sit above or below the subject on a phone (`atTall`). The words must never land on the subject. The shade is a halo around the letters and a soft ellipse that is gone before its own edge, never a box: set `shade` as light as keeps every line at WCAG AA against what is behind it (measure the letters on a screenshot, not the whole box).
 
 ## Add a project
 
@@ -125,10 +125,10 @@ Where a world's words stand is chosen by looking at its painting: `looks.ts` say
 2. Give it a place in `src/content/places.ts` (`PROJECT_PLACES`: the row's place name, status word, footer line, alt text).
 3. Give it a look in `src/worlds/looks.ts` and a source picture in the table in `scripts/make-worlds.ts`, then run `npm run worlds -- <folder>`.
 4. Say what moves in its painting (`src/living/scenes.ts`, see "Make a place move") and what it sounds like (`src/sound/recipe.ts`).
-5. Make its painting a toy (see "Make a painting a toy").
+5. If it should answer presses, make its painting a toy (see "Make a painting a toy").
 6. Look at it at 1440x900, 1366x680, 390x844 and 320x568.
 
-The unit tests fail until every project has a place, a look, a scene, a sound, both crops of its painting and its toys. Slugs are public: they are `#links`, picture and video file names and the keys of the API's growth numbers.
+The unit tests fail until every project has a place, a look, a scene, a sound and both crops of its painting. Slugs are public: they are `#links`, picture and video file names and the keys of the API's growth numbers.
 
 ## Add a video
 
@@ -136,15 +136,15 @@ Run `npm run video -- <your file> <slug>` (needs ffmpeg). It writes `public/vide
 
 ## Add a reaction
 
-In the three places that are not projects (the summit, the road, the campfire) one object of the painting answers a press for a second or two: snow blows off the summit, seeds off the grass, the campfire flares and spits. A project's place is a toy instead (see "Make a painting a toy"). Unlabelled and quiet; nothing on hover, nothing follows the cursor, and with the motion switched off there is nothing to press. A reaction is data in `REACTIONS` in `src/worlds/reactions.ts`, built from two plain effects:
+In a place that is not a project (the summit, the airport window, the lake shore) one object of the painting can answer a press for a second or two, the way snow blew off the old summit painting or its campfire flared and spat. There are none now: they went with the old paintings, and `REACTIONS` is empty. A project's place is a toy instead (see "Make a painting a toy"). Unlabelled and quiet; nothing on hover, nothing follows the cursor, and with the motion switched off there is nothing to press. A reaction is data in `REACTIONS` in `src/worlds/reactions.ts`, built from two plain effects:
 
 - `flare`: a soft round light at a point, `size` across in picture heights, in the place's own colour. An element animated with opacity and transform only.
 - `burst`: a handful of particles from a point, drawn by the canvas of things in the air (`src/ambient/`): `rise` (sparks), `fall` (petals) or `drift` (snow or seeds on the wind, `dir` says which way). At most 30.
 
 1. Read the object off a grid over the painting (as in "Make a place move"): its middle `u`, `v` and the size of the place to press, `w` and `h` in picture heights. Keep it the object, not half the picture; it is never under 44 px.
 2. Pick one or two effects and put their points on the object (the top of a fire).
-3. Give the place its `react` in `src/content/places.ts`: what a screen reader hears, a few words that say what pressing does ("Poke the fire").
-4. Look at it at 1440x900, 1366x680, 390x844 and 320x568: a frame before the press and one a third of a second after. `src/worlds/react-view.ts` places it with the painting's cover maths (`src/worlds/picture.ts`), cuts it back to the screen, and leaves it out where the object is off the crop or it would stand on the words, the switches or the tag. The e2e suite checks this at those four sizes.
+3. Give the place its `react` in `src/content/places.ts`: what a screen reader hears, a few words that say what pressing does ("Ring the bell").
+4. Look at it at 1440x900, 1366x680, 390x844 and 320x568: a frame before the press and one a third of a second after. `src/worlds/react-view.ts` places it with the painting's cover maths (`src/worlds/picture.ts`), cuts it back to the screen, and leaves it out where the object is off the crop or it would stand on the words, the switches or the tag. Add an e2e test that checks this at those four sizes (the old one is `tests/e2e/reactions.spec.ts` in git history).
 
 ## Environment
 
@@ -157,16 +157,16 @@ Tests never use the real API: unit tests mock `fetch`, and the smoke suite build
 
 ## Make a painting a toy
 
-Every project's place is one (`src/worlds/toys.ts`). Several unlabelled things in the painting answer a press, each an invisible button the size of its object; most fade in a piece of a "second state", another painting of the same scene, laid exactly over its own place on the painting (`public/states/<world>/`): the booth's door opens, a fox comes to the roadside, the pagoda's windows light under a rising moon. Some stay until they are pressed again (`stays`), the rest fade out after a few seconds. A piece is cut so that only what really changed shows: fading a whole region between two paintings that differ a little everywhere makes the picture seem to tremble. A painting that is a toy holds still: it has no slow push-in. No labels and no panel; the Watch button in the words is its video's way in.
+A project's place can be one (`src/worlds/toys.ts`); none is now, since the toys of the old paintings went with them on 2026-11-15, but the machinery is kept (`toy-view.ts`, `d20.ts`, `effects.ts`), so a toy is data only. Several unlabelled things in the painting answer a press, each an invisible button the size of its object; most fade in a piece of a "second state", another painting of the same scene, laid exactly over its own place on the painting (`public/states/<world>/`). Some stay until they are pressed again (`stays`), the rest fade out after a few seconds. A piece is cut so that only what really changed shows: fading a whole region between two paintings that differ a little everywhere makes the picture seem to tremble. A project's painting holds still: it has no slow push-in. No labels and no panel; the Watch button in the words is its video's way in.
 
-The dragon's hall goes furthest: the dragon breathes fire, the chest opens, the wizard's staff blazes, the archer looses an arrow, the gold throws sparks, and the red die is thrown: a real twenty-sided die with a number on every face (`src/worlds/d20.ts`, drawn on a small canvas) tumbles, lands on the thrown number and lies there showing it. It is painted with a patch of the painted die's own brushwork and redrawn twelve times a second, so it moves like something hand-made beside the painting, not like a smooth 3D render. What the number is decides what happens next, each with a painting of its own: on a 1 the dragon breathes fire over the party, under 10 the wizard's bolt goes wide and bursts on a pillar, on 10 and over it strikes the dragon, and on a 20 a blast throws the hoard into the air.
+A toy can also be a thrown die (`throw`): a real twenty-sided die with a number on every face (`src/worlds/d20.ts`, drawn on a small canvas) tumbles, lands on the thrown number and lies there showing it. It is painted with a patch of the painted die's own brushwork and redrawn twelve times a second, so it moves like something hand-made beside the painting, not like a smooth 3D render. What the number is decides what happens next (`outcomes`: a 1, under 10, 10 and over, a 20, each setting off a toy marked `unseen` with a painting of its own).
 
-Keep it calm (Kaisar: "motion things feel like too much, making eyes hurt"): pieces fade in and out slowly (half a second or more), never flash, flicker or waver, and a press plays no spray of particles on top of a piece (Kyoto's blossom is only petals, a few of them).
+Keep it calm (Kaisar: "motion things feel like too much, making eyes hurt"): pieces fade in and out slowly (half a second or more), never flash, flicker or waver, and a press plays no spray of particles on top of a piece (a toy that is particles is only a few of them).
 
-1. Paint the second state: an edit of the same painting in which only the things that change are different (the prompts used are saved beside the sources in `../reference/painted-sources/states/`, as `<world>-<state>.png`). Compare it with the original before going on: everything else must be where it was. Some edits redraw a neighbour slightly (the repair shop's fridge came out narrower): cut around that.
+1. Paint the second state: an edit of the same painting in which only the things that change are different (the old paintings' ones are in `../reference/painted-sources/states/`, as `<world>-<state>.png`; they do not fit the new paintings). Compare it with the original before going on: everything else must be where it was. Some edits redraw a neighbour slightly: cut around that.
 2. Cut the pieces: add the world and its rectangles to `CUTS` in `../reference/painted-sources/states/make_states.py` and run `make_states.py public/states <world>`. It writes one WebP per piece into `public/states/<world>/`, whose alpha is the difference from the painting (`changed()`) times a feather at the rectangle's edges, and prints each rectangle in pixels. Look at each piece laid over the original: the whole change inside it, nothing unrelated, no box edge or doubled object.
-3. Describe the toys in `src/worlds/toys.ts` (where to press, which piece fades in and for how long, what else plays, what sets what off; the rectangles copied from the script) and name each one in `src/content/toys.ts` with a plain verb ("Open the booth"). Where the thing appears only on a press (the fox, the comet), the place to press is where it will be.
-4. Look at it: every toy pressed at 1440x900 and 390x844, and the words still readable while a piece passes behind them. Buttons that would stand on the words, the tag or the switches are left out; on phones most toys are cut off by the upright crop, and that is accepted.
+3. Describe the toys in `src/worlds/toys.ts` (where to press, which piece fades in and for how long, what else plays, what sets what off; the rectangles copied from the script, `px()` turns them into fractions) and name each one in `src/content/toys.ts` with a plain verb ("Open the door"). Where the thing appears only on a press (a fox, a comet), the place to press is where it will be.
+4. Look at it: every toy pressed at 1440x900 and 390x844, and the words still readable while a piece passes behind them. Buttons that would stand on the words, the tag or the switches are left out; on phones most toys are cut off by the upright crop, and that is accepted. Add e2e tests for them (the old ones were in `tests/e2e/toys.spec.ts` and `reactions.spec.ts`, in git history), and run the suite once with `CI=1`.
 
 ## Good to know
 

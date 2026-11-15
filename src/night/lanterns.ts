@@ -1,7 +1,7 @@
 /**
- * Lanterns: light one by the campfire and it rises from the fire into the sky and stays there. Your own are kept in
- * this browser (at most five); with the API they are also everyone's: other people's hang fainter and further off,
- * and the count says how many have been lit. Without the API nothing is sent and the count is your own.
+ * Lanterns: light one by the lake and it rises from the shore by the bottle into the sky and stays there. Your own
+ * are kept in this browser (at most five); with the API they are also everyone's: other people's hang fainter and
+ * further off, and the count says how many have been lit. Without the API nothing is sent and the count is your own.
  */
 import { api } from '../api';
 import type { LanternDto } from '../api/schemas';
@@ -13,17 +13,19 @@ import { lookOf } from '../worlds/looks';
 import { MAX_OWN, MAX_SHARED, parseStored, skyPlace } from './lantern-math';
 
 const STORAGE_KEY = 'kaisar.lanterns.v1';
-/** the world the lanterns belong to, and its fire and sky in the landscape photo (0..1 each way) */
+/** the world the lanterns belong to, where they rise from and the sky they hang in, in the landscape photo (0..1) */
 const WORLD = 'contact';
-const FIRE: readonly [number, number] = [0.63, 0.6];
-/** the sky the lanterns hang in: wide screens have the Milky Way's half; upright phones the band above the horizon */
-const SKY_WIDE = { u0: 0.4, u1: 0.99, v0: 0.05, v: 0.85 } as const;
-const SKY_TALL = { u0: 0.42, u1: 0.84, v0: 0.4, v: 0.26 } as const;
+/* the shore just above the bottle */
+const FROM: readonly [number, number] = [0.62, 0.62];
+/* the sky they hang in: wide screens have the open sky over the mountains, between the sun and the tree; upright
+   phones what of it the crop leaves left of the tree */
+const SKY_WIDE = { u0: 0.24, u1: 0.56, v0: 0.02, v: 0.4 } as const;
+const SKY_TALL = { u0: 0.42, u1: 0.6, v0: 0.02, v: 0.3 } as const;
 
 export interface Lanterns {
   /** Light one: from the button, or from a note that was just sent. */
   light(): void;
-  /** The campfire has come on screen or gone: lanterns are only drawn there. */
+  /** The lake shore has come on screen or gone: lanterns are only drawn there. */
   show(on: boolean): void;
   /** The stage changed size. */
   layout(): void;
@@ -59,7 +61,7 @@ export function initLanterns(): Lanterns {
   let shared: LanternDto[] = [];
   let total: number | null = null;
   let visible = false;
-  /** the lantern lit a moment ago rises from the fire; the rest simply hang */
+  /** the lantern lit a moment ago rises from the shore; the rest simply hang */
   let rising = false;
 
   function fit(): { fit: Fit; upright: boolean } {
@@ -110,8 +112,8 @@ export function initLanterns(): Lanterns {
       const el = dot('lit', p.x, p.y, 0.8 + p.scale, 1);
       if (rising && i === own.length - 1 && !reduce.matches) {
         el.classList.add('rise');
-        el.style.setProperty('--fx', `${placeX(f, u(FIRE[0])).toFixed(1)}px`);
-        el.style.setProperty('--fy', `${placeY(f, FIRE[1]).toFixed(1)}px`);
+        el.style.setProperty('--fx', `${placeX(f, u(FROM[0])).toFixed(1)}px`);
+        el.style.setProperty('--fy', `${placeY(f, FROM[1]).toFixed(1)}px`);
       }
       dots.push(el);
     });
