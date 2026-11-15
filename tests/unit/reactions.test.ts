@@ -3,19 +3,19 @@ import { WORLDS } from '../../src/content/places';
 import { renderWorlds } from '../../src/content/render';
 import { lookOf } from '../../src/worlds/looks';
 import { MAX_BURST, MIN_HIT_PX, REACTIONS, reactionOf, reactionRect, type Reaction } from '../../src/worlds/reactions';
-import { toysOf } from '../../src/worlds/toys';
 
 const inPicture = (n: number): boolean => n > 0 && n < 1;
 
 describe('the painting reacts', () => {
-  it('in every place that is not a project, with a name a screen reader can say; every project is a toy instead', () => {
-    const others = WORLDS.filter((w) => w.kind !== 'project');
-    expect(Object.keys(REACTIONS).sort()).toEqual(others.map((w) => w.id).sort());
-    for (const w of others) expect(w.react?.trim(), w.id).toMatch(/\S/);
-    for (const w of WORLDS.filter((x) => x.kind === 'project')) {
-      expect(w.react, w.id).toBeUndefined();
-      expect(toysOf(w.id).length, w.id).toBeGreaterThan(0);
+  it('whatever reactions there are: in a place that is not a project, with a name a screen reader can say', () => {
+    for (const id of Object.keys(REACTIONS)) {
+      const w = WORLDS.find((x) => x.id === id);
+      expect(w?.kind, id).not.toBe('project');
+      expect(w?.react?.trim(), id).toMatch(/\S/);
     }
+    /* a name without its reaction would be a button that does nothing; a project's place is a toy instead */
+    for (const w of WORLDS) if (w.react !== undefined) expect(reactionOf(w.id), w.id).not.toBeNull();
+    for (const w of WORLDS.filter((x) => x.kind === 'project')) expect(w.react, w.id).toBeUndefined();
     expect(reactionOf('nowhere')).toBeNull();
   });
 
@@ -58,20 +58,19 @@ describe('the painting reacts', () => {
     ).toBeNull();
   });
 
-  it('is left out where the object is cut off: the pen is outside the upright crop', () => {
-    const pen: Reaction = { u: 0.95, v: 0.3, w: 0.05, h: 0.05 };
+  it('is left out where the object is cut off: the far right of the story wall is outside the upright crop', () => {
+    const far: Reaction = { u: 0.95, v: 0.3, w: 0.05, h: 0.05 };
 
-    expect(reactionRect(pen, lookOf('bookforge'), { width: 390, height: 844 }, true)).toBeNull();
-    expect(reactionRect(pen, lookOf('bookforge'), { width: 1440, height: 900 }, false)).not.toBeNull();
+    expect(reactionRect(far, lookOf('bookforge'), { width: 390, height: 844 }, true)).toBeNull();
+    expect(reactionRect(far, lookOf('bookforge'), { width: 1440, height: 900 }, false)).not.toBeNull();
   });
 
-  it('renders as a real button with its name, hidden until it is placed, in every world that is not a toy', () => {
+  it('renders as a real button with its name, hidden until it is placed, and only where there is a reaction', () => {
     const html = renderWorlds();
+    const named = WORLDS.filter((w) => reactionOf(w.id) && w.react);
 
-    /* the project places are toys (tests/unit/toys.test.ts): their things to press take the place of the one reaction */
-    expect(html.match(/<button class="react" type="button" aria-label="[^"]+" hidden><\/button>/g)).toHaveLength(3);
-    expect(html).toContain(
-      '<div class="presses"><button class="react" type="button" aria-label="Poke the fire" hidden>',
-    );
+    for (const w of named)
+      expect(html).toContain(`<button class="react" type="button" aria-label="${w.react ?? ''}" hidden></button>`);
+    expect(html.match(/<button class="react" type="button"/g) ?? []).toHaveLength(named.length);
   });
 });

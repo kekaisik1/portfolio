@@ -1,5 +1,5 @@
 /**
- * The small things in a world's air, on one shared 2D canvas over the picture: snow carried off the summit, sparks,
+ * The small things in a world's air, on one shared 2D canvas over the picture: snow carried off a ridge, sparks,
  * blossom petals, dust in the light. (What moves inside the painting itself is src/living/.) The canvas is half
  * the stage's size, draws about thirty times a second from the page's one frame loop (src/lib/ticker.ts), and is
  * off the loop whenever its world has nothing in the air. It says whether it is drawing in data-live (on / off).

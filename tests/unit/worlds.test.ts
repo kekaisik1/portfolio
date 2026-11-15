@@ -29,6 +29,14 @@ describe('how each world looks', () => {
       expect(look.focus, id).toBeGreaterThan(0);
       expect(look.focus, id).toBeLessThan(1);
       expect(look.width, id).toBeGreaterThanOrEqual(20);
+      if (look.left !== undefined) {
+        expect(look.left, id).toBeGreaterThanOrEqual(0);
+        expect(look.left, id).toBeLessThan(100);
+      }
+      if (look.name !== undefined) {
+        expect(look.name, id).toBeGreaterThanOrEqual(0.5);
+        expect(look.name, id).toBeLessThanOrEqual(1);
+      }
     }
   });
 
@@ -45,9 +53,9 @@ describe('how each world looks', () => {
         expect(spec.box[1], id).toBeLessThan(spec.box[3]);
       }
     }
-    expect(lookOf('hello').ambient?.kind).toBe('spindrift');
-    expect(lookOf('kana-notebook').ambient?.kind).toBe('petals');
-    expect(lookOf('contact').ambient?.kind).toBe('embers');
+    expect(lookOf('emberquill').ambient?.kind).toBe('embers');
+    expect(lookOf('lowl').ambient?.kind).toBe('motes');
+    expect(lookOf('hello').ambient).toBeNull();
   });
 
   it('builds photo addresses under the base the site is served from', () => {

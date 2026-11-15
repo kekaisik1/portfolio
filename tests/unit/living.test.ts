@@ -30,19 +30,20 @@ describe('what moves in each world', () => {
     expect(() => sceneOf('nowhere')).toThrow(/No scene/);
   });
 
-  it('moves something in every place: inside the painting, or in its air', () => {
-    for (const id of IDS) expect(!isStill(sceneOf(id)) || lookOf(id).ambient !== null, id).toBe(true);
+  it('lets a place be wholly still: then nothing is drawn for it, not even its air', () => {
+    /* the owner asked for quiet paintings ("motion things feel like too much"): a still place is allowed */
+    const still = IDS.filter((id) => isStill(sceneOf(id)) && lookOf(id).ambient === null);
+    expect(still.sort()).toEqual(['about', 'hello', 'kana-notebook']);
     expect(isStill({})).toBe(true);
     expect(
       isStill({ lights: [{ at: [0.5, 0.5], radius: 0.1, amount: 0.1, speed: 1, seed: 0, kind: 'breathe' }] }),
     ).toBe(false);
   });
 
-  it('carries only running water: the waterfall, nothing pushed by wind', () => {
+  it('carries only running water, and none of the paintings has any: nothing pushed by wind', () => {
     const flowing = IDS.filter((id) => sceneOf(id).flow);
 
-    expect(flowing).toEqual(['bookforge']);
-    for (const id of flowing) expect(sceneOf(id).flow?.cycle, id).toBeGreaterThan(1);
+    expect(flowing).toEqual([]);
   });
 
   it('keeps every move small and slow: quiet beats busy', () => {
@@ -156,8 +157,8 @@ describe('the mask texture', () => {
       const m = rasterScene(sceneOf(id));
 
       expect(Number.isFinite(m.flowScale), id).toBe(true);
-      /* outside the waterfall the open book's painting is never carried along */
-      if (id === 'bookforge') expect(byteVec(at(m.data, 0.2, 0.2, 0))).toBe(0);
+      /* no painting has running water: nothing is ever carried along */
+      expect(byteVec(at(m.data, 0.2, 0.2, 0)), id).toBe(0);
     }
   });
 });

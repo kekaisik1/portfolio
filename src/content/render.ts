@@ -41,7 +41,9 @@ function kicker(w: World, i: number): string {
 /** How the world's words are placed: read by the stylesheets, from src/worlds/looks.ts. */
 function placing(w: World, i: number): string {
   const look = lookOf(w.id);
-  return `data-i="${i}" data-at="${look.at}" data-at-m="${look.atTall}" style="--w:${look.width}rem;--shade-a:${look.shade}"`;
+  const left = look.left === undefined ? '' : `;--left:${look.left}%`;
+  const name = look.name === undefined ? '' : `;--name:${look.name}`;
+  return `data-i="${i}" data-at="${look.at}" data-at-m="${look.atTall}" style="--w:${look.width}rem;--shade-a:${look.shade}${left}${name}"`;
 }
 
 const readButton = (name: string): string =>

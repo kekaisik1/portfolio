@@ -1,8 +1,8 @@
 /**
- * The painting reacts: in the three places that are not projects (the summit, the road, the campfire) one object
- * answers a press for a second or two: snow blown off the summit, seeds off the grass, the fire flaring. The project
- * places are toys instead (toys.ts). Unlabelled and quiet: no hover, nothing that follows the cursor, nothing at all
- * with the motion switched off. Each reaction is data built from two plain effects:
+ * The painting reacts: in a place that is not a project, one object can answer a press for a second or two (snow
+ * blown off a ridge, a fire flaring). A project's place is a toy instead (toys.ts). Unlabelled and quiet: no hover,
+ * nothing that follows the cursor, nothing at all with the motion switched off. Each reaction is data built from two
+ * plain effects:
  *
  * - flare: a soft round light at a point, coming and going with opacity and scale only;
  * - burst: a handful of the place's own particles from a point (src/ambient/), rising, falling or drifting.
@@ -49,33 +49,11 @@ export const MIN_HIT_PX = 44;
 /** never more particles from one press than this */
 export const MAX_BURST = 30;
 
-export const REACTIONS: Readonly<Record<string, Reaction>> = {
-  /* the summit: snow blown off the top, the way the painted plume goes (to the left) */
-  hello: {
-    u: 0.695,
-    v: 0.34,
-    w: 0.1,
-    h: 0.08,
-    burst: { at: [0.695, 0.325], style: 'drift', count: 26, spread: 0.025, rgb: '255,255,255', dir: -1 },
-  },
-  /* seeds blown off the grass, the way it leans */
-  about: {
-    u: 0.8,
-    v: 0.72,
-    w: 0.2,
-    h: 0.12,
-    burst: { at: [0.8, 0.68], style: 'drift', count: 22, spread: 0.06, rgb: '255,238,196', dir: 1 },
-  },
-  /* the campfire flares and throws sparks */
-  contact: {
-    u: 0.585,
-    v: 0.69,
-    w: 0.1,
-    h: 0.1,
-    flare: { at: [0.585, 0.67], size: 0.34, rgb: '255,170,80' },
-    burst: { at: [0.585, 0.65], style: 'rise', count: 24, spread: 0.02, rgb: '255,190,110' },
-  },
-};
+/**
+ * Each place's reaction, by world id. Empty for now: the paintings were replaced on 2026-11-15 and the reactions of
+ * the old ones went with them. A world without one renders no button.
+ */
+export const REACTIONS: Readonly<Record<string, Reaction>> = {};
 
 /** A world's reaction, or null when it has none. */
 export const reactionOf = (id: string): Reaction | null => (Object.hasOwn(REACTIONS, id) ? REACTIONS[id] : null);

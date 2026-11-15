@@ -3,12 +3,12 @@ import { lookOf } from '../../src/worlds/looks';
 import { crowds, picturePoint, within } from '../../src/worlds/picture';
 
 describe('where a point of the painting lands on screen', () => {
-  it('lands on the object in the landscape painting: the big lantern right of the Kyoto street at 1440x900', () => {
+  it('lands on the object in the landscape painting: the cat asleep on the veranda in Kyoto at 1440x900', () => {
     /* 1440x900 is wider than 3:2: the painting is 1440x960, 30 px cut off at the top and the bottom */
-    const at = picturePoint({ u: 0.875, v: 0.42 }, lookOf('kana-notebook'), { width: 1440, height: 900 }, false);
+    const at = picturePoint({ u: 0.75, v: 0.39 }, lookOf('kana-notebook'), { width: 1440, height: 900 }, false);
 
-    expect(at?.x).toBeCloseTo(1260, 0);
-    expect(at?.y).toBeCloseTo(0.42 * 960 - 30, 0);
+    expect(at?.x).toBeCloseTo(1080, 0);
+    expect(at?.y).toBeCloseTo(0.39 * 960 - 30, 0);
   });
 
   it("follows the painting's own position across a window narrower than 3:2", () => {
@@ -26,13 +26,14 @@ describe('where a point of the painting lands on screen', () => {
   it('maps into the upright crop on a phone, and is cut off where the crop leaves the object out', () => {
     const phone = { width: 390, height: 844 };
 
-    const die = picturePoint({ u: 0.455, v: 0.84 }, lookOf('emberquill'), phone, true);
-    expect(die).not.toBeNull();
-    expect(die?.y).toBeCloseTo(0.84 * 844, 0);
-    expect(die?.x).toBeGreaterThan(0);
-    expect(die?.x).toBeLessThan(phone.width / 2);
-    /* the Kyoto lantern stands just past the right edge of the upright crop */
-    expect(picturePoint({ u: 0.875, v: 0.42 }, lookOf('kana-notebook'), phone, true)).toBeNull();
+    /* the party on the ledge, left of the middle of the cave mouth's upright crop */
+    const party = picturePoint({ u: 0.4, v: 0.78 }, lookOf('emberquill'), phone, true);
+    expect(party).not.toBeNull();
+    expect(party?.y).toBeCloseTo(0.78 * 844, 0);
+    expect(party?.x).toBeGreaterThan(0);
+    expect(party?.x).toBeLessThan(phone.width / 2);
+    /* the shoji at Kyoto's right edge is past the right edge of the upright crop */
+    expect(picturePoint({ u: 0.95, v: 0.3 }, lookOf('kana-notebook'), phone, true)).toBeNull();
   });
 
   it('knows when something crowds the words or leaves the screen', () => {
